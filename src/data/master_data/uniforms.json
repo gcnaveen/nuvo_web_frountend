@@ -1,0 +1,41 @@
+[
+  {
+    "id": "UC-001",
+    "key": "formal",
+    "name": "Formal Uniforms",
+    "description": "Professional black suit, tuxedo and banquet style uniforms.",
+    "isActive": true,
+    "images": [
+      "/assets/images/uniforms/blazer_1.png",
+      "/assets/images/uniforms/blazer_2.png"
+    ]
+  },
+  {
+    "id": "UC-002",
+    "key": "royal_traditional",
+    "name": "Royal / Traditional",
+    "description": "Maharaja, Sherwani, Ethnic traditional outfits.",
+    "isActive": true,
+    "images": [
+      "/assets/images/uniforms/saree_1.png",
+      "/assets/images/uniforms/saree_2.png",
+      "/assets/images/uniforms/saree_3.png"
+    ]
+  },
+  {
+    "id": "UC-003",
+    "key": "casual_modern",
+    "name": "Casual / Modern",
+    "description": "Branded t-shirts, polo shirts and modern event outfits.",
+    "isActive": true,
+    "images": ["/assets/images/uniforms/tshirt_1.png"]
+  },
+  {
+    "id": "UC-004",
+    "key": "themed",
+    "name": "Themed Uniforms",
+    "description": "Uniforms based on event theme like Casino, Bollywood etc.",
+    "isActive": true,
+    "images": ["/assets/images/uniforms/tshirt_1.png"]
+  }
+]

@@ -1,0 +1,42 @@
+[
+  {
+    "id": "SUB-001",
+    "name": "Diamond",
+    "monthlyPrice": 9999,
+    "yearlyPrice": 99999,
+    "prioritySupport": true,
+    "isFree": false
+  },
+  {
+    "id": "SUB-002",
+    "name": "Platinum",
+    "monthlyPrice": 6999,
+    "yearlyPrice": 69999,
+    "prioritySupport": true,
+    "isFree": false
+  },
+  {
+    "id": "SUB-003",
+    "name": "Gold",
+    "monthlyPrice": 3999,
+    "yearlyPrice": 39999,
+    "prioritySupport": true,
+    "isFree": false
+  },
+  {
+    "id": "SUB-004",
+    "name": "Silver",
+    "prioritySupport": true,
+    "monthlyPrice": 0,
+    "yearlyPrice": 0,
+    "isFree": true
+  },
+  {
+    "id": "SUB-005",
+    "name": "Bronze",
+    "monthlyPrice": 0,
+    "yearlyPrice": 0,
+    "prioritySupport": true,
+    "isFree": true
+  }
+]

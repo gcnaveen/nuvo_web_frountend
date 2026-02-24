@@ -1,0 +1,92 @@
+[
+  {
+    "id": "ST-205",
+    "name": "Rahul Verma",
+    "stage_name": "Rocky Rahul",
+    "avatar": "public/assets/images/avatars/avatar1.png",
+    "phone": "+91 98762 11346",
+    "email": "rahul@mail.com",
+    "gender": "Male",
+    "experience": 6,
+    "city": "Chennai",
+    "status": "active",
+    "package": "platinum",
+    "uniformSize": "L",
+    "images_list": [
+      "https://myapp-bucket.s3.ap-south-1.amazonaws.com/staff/ST-205/gallery1.jpg",
+      "https://myapp-bucket.s3.ap-south-1.amazonaws.com/staff/ST-205/gallery2.jpg"
+    ]
+  },
+  {
+    "id": "ST-206",
+    "name": "Sneha Reddy",
+    "stage_name": "Sneha Beats",
+    "avatar": "public/assets/images/avatars/avatar2.jpg",
+    "phone": "+91 98762 11347",
+    "email": "sneha@mail.com",
+    "gender": "Female",
+    "experience": 4,
+    "city": "Bangalore",
+    "status": "onevent",
+    "package": "gold",
+    "uniformSize": "S",
+    "images_list": [
+      "https://myapp-bucket.s3.ap-south-1.amazonaws.com/staff/ST-206/gallery1.jpg",
+      "https://myapp-bucket.s3.ap-south-1.amazonaws.com/staff/ST-206/gallery2.jpg"
+    ]
+  },
+  {
+    "id": "ST-207",
+    "name": "Vikram Singh",
+    "stage_name": "VJ Vik",
+    "avatar": "public/assets/images/avatars/avatar3.avif",
+    "phone": "+91 98762 11348",
+    "email": "vikram@mail.com",
+    "gender": "Male",
+    "experience": 7,
+    "city": "Pune",
+    "status": "active",
+    "package": "diamond",
+    "uniformSize": "XL",
+    "images_list": [
+      "https://myapp-bucket.s3.ap-south-1.amazonaws.com/staff/ST-207/gallery1.jpg",
+      "https://myapp-bucket.s3.ap-south-1.amazonaws.com/staff/ST-207/gallery2.jpg"
+    ]
+  },
+  {
+    "id": "ST-208",
+    "name": "Ananya Das",
+    "stage_name": "Ananya Aura",
+    "avatar": "public/assets/images/avatars/avatar4.avif",
+    "phone": "+91 98762 11349",
+    "email": "ananya@mail.com",
+    "gender": "Female",
+    "experience": 3,
+    "city": "Kolkata",
+    "status": "inactive",
+    "package": "silver",
+    "uniformSize": "M",
+    "images_list": [
+      "https://myapp-bucket.s3.ap-south-1.amazonaws.com/staff/ST-208/gallery1.jpg",
+      "https://myapp-bucket.s3.ap-south-1.amazonaws.com/staff/ST-208/gallery2.jpg"
+    ]
+  },
+  {
+    "id": "ST-209",
+    "name": "Karthik Nair",
+    "stage_name": "Karthik Live",
+    "avatar": "public/assets/images/avatars/avatar5.avif",
+    "phone": "+91 98762 11350",
+    "email": "karthik@mail.com",
+    "gender": "Male",
+    "experience": 8,
+    "city": "Hyderabad",
+    "status": "blocked",
+    "package": "bronze",
+    "uniformSize": "L",
+    "images_list": [
+      "https://myapp-bucket.s3.ap-south-1.amazonaws.com/staff/ST-209/gallery1.jpg",
+      "https://myapp-bucket.s3.ap-south-1.amazonaws.com/staff/ST-209/gallery2.jpg"
+    ]
+  }
+]

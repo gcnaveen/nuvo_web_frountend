@@ -1,0 +1,35 @@
+[
+  {
+    "id": "TH-001",
+    "name": "Royal Palace",
+    "description": "Luxury palace-style decor with gold accents and chandeliers.",
+    "coverImage": "public/assets/images/themes/palace.jpeg",
+    "gallery": [
+      "public/assets/images/themes/g1.avif",
+      "public/assets/images/themes/g2.webp"
+    ],
+    "status": "active"
+  },
+  {
+    "id": "TH-002",
+    "name": "Casino Night",
+    "description": "Casino tables, red carpet entry and Vegas vibe.",
+    "coverImage": "public/assets/images/themes/casino.jpeg",
+    "gallery": [
+      "public/assets/images/themes/g3.jpeg",
+      "public/assets/images/themes/g4.jpeg"
+    ],
+    "status": "inactive"
+  },
+  {
+    "id": "TH-002",
+    "name": "South indian wedding ",
+    "description": "Wedding event with full south indian style",
+    "coverImage": "public/assets/images/themes/south1.webp",
+    "gallery": [
+      "public/assets/images/themes/s1.jpeg",
+      "public/assets/images/themes/s2.jpg"
+    ],
+    "status": "inactive"
+  }
+]

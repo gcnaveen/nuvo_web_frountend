@@ -1,0 +1,63 @@
+[
+  {
+    "id": "UNI-101",
+    "name": "Black Blazer",
+    "code": "UN-M-001",
+    "category": "Male",
+    "size": "M",
+    "condition": {
+      "label": "Good",
+      "badge": "success"
+    },
+    "status": {
+      "label": "Available",
+      "badge": "primary"
+    },
+    "assignedTo": null,
+    "images": [
+      "/assets/images/uniforms/blazer_1.png",
+      "/assets/images/uniforms/blazer_2.png"
+    ],
+    "description": "Premium black blazer used for corporate and formal events."
+  },
+  {
+    "id": "UNI-108",
+    "name": "Traditional Saree",
+    "code": "UN-F-012",
+    "category": "Female",
+    "size": "Free",
+    "condition": {
+      "label": "Good",
+      "badge": "success"
+    },
+    "status": {
+      "label": "Assigned",
+      "badge": "warning"
+    },
+    "assignedTo": "Anjali Verma",
+    "images": [
+      "/assets/images/uniforms/saree_1.png",
+      "/assets/images/uniforms/saree_2.png",
+      "/assets/images/uniforms/saree_3.png"
+    ],
+    "description": "Traditional saree used for weddings and cultural events."
+  },
+  {
+    "id": "UNI-115",
+    "name": "Event T-Shirt",
+    "code": "UN-U-021",
+    "category": "Unisex",
+    "size": "L",
+    "condition": {
+      "label": "Damaged",
+      "badge": "danger"
+    },
+    "status": {
+      "label": "Unavailable",
+      "badge": "secondary"
+    },
+    "assignedTo": null,
+    "images": ["/assets/images/uniforms/tshirt_1.png"],
+    "description": "Event promotional T-shirt. Currently unavailable due to damage."
+  }
+]

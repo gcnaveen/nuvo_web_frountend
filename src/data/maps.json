@@ -1,0 +1,38 @@
+[
+  {
+    "id": 1,
+    "name": "Manoj Kumar",
+    "role": "Model",
+    "status": "away",
+    "lat": 12.9716,
+    "lng": 77.5946,
+    "image_url": "/assets/images/faces/1.jpg"
+  },
+  {
+    "id": 2,
+    "name": "Shreesha atreya",
+    "role": "Model",
+    "status": "on_event",
+    "lat": 12.9352,
+    "lng": 77.6245,
+    "image_url": "/assets/images/faces/2.jpg"
+  },
+  {
+    "id": 3,
+    "name": "Satish gumani",
+    "role": "Makeup Artist",
+    "status": "offline",
+    "lat": 12.926,
+    "lng": 77.6762,
+    "image_url": "/assets/images/faces/3.jpg"
+  },
+  {
+    "id": 4,
+    "name": "Santhosh cadaboms",
+    "role": "Diamond model",
+    "status": "offline",
+    "lat": 12.854526,
+    "lng": 77.685251,
+    "image_url": "/assets/images/faces/3.jpg"
+  }
+]

@@ -1,0 +1,92 @@
+[
+  {
+    "id": "CL-101",
+    "name": "Riya Sharma",
+    "avatar": "/assets/images/faces/5.jpg",
+    "email": "riya@example.com",
+    "phone": "+91 99012 33445",
+    "city": "Bangalore",
+    "registeredOn": "2025-01-12",
+    "totalBookings": 3,
+    "status": "active",
+    "subscription": {
+      "plan": "diamond",
+      "status": "active",
+      "startDate": "2025-01-15",
+      "endDate": "2026-01-14",
+      "allowedPackages": ["diamond", "platinum", "gold"]
+    }
+  },
+  {
+    "id": "CL-108",
+    "name": "John Mathew",
+    "avatar": "/assets/images/faces/3.jpg",
+    "email": "john@example.com",
+    "phone": "+91 99882 22110",
+    "city": "Hyderabad",
+    "registeredOn": "2024-12-08",
+    "totalBookings": 1,
+    "status": "inactive",
+    "subscription": {
+      "plan": "none",
+      "status": "inactive",
+      "startDate": null,
+      "endDate": null,
+      "allowedPackages": ["silver", "bronze"]
+    }
+  },
+  {
+    "id": "CL-114",
+    "name": "Aditi Rao",
+    "avatar": "/assets/images/faces/6.jpg",
+    "email": "aditi@mail.com",
+    "phone": "+91 98765 44221",
+    "city": "Chennai",
+    "registeredOn": "2024-11-22",
+    "totalBookings": 2,
+    "status": "active",
+    "subscription": {
+      "plan": "gold",
+      "status": "active",
+      "startDate": "2024-12-01",
+      "endDate": "2025-12-01",
+      "allowedPackages": ["gold", "silver", "bronze"]
+    }
+  },
+  {
+    "id": "CL-120",
+    "name": "Sanjay Verma",
+    "avatar": "/assets/images/faces/7.jpg",
+    "email": "sanjay@mail.com",
+    "phone": "+91 91234 66554",
+    "city": "Mumbai",
+    "registeredOn": "2024-10-05",
+    "totalBookings": 5,
+    "status": "blocked",
+    "subscription": {
+      "plan": "platinum",
+      "status": "suspended",
+      "startDate": "2024-10-10",
+      "endDate": "2025-10-09",
+      "allowedPackages": []
+    }
+  },
+  {
+    "id": "CL-127",
+    "name": "Neha Kapoor",
+    "avatar": "/assets/images/faces/8.jpg",
+    "email": "neha@mail.com",
+    "phone": "+91 90987 55678",
+    "city": "Bangalore",
+    "registeredOn": "2025-01-18",
+    "totalBookings": 1,
+    "status": "active",
+    "subscription": {
+      "plan": "none",
+      "status": "inactive",
+      "startDate": null,
+      "endDate": null,
+      "allowedPackages": ["silver", "bronze"]
+    }
+  }
+]

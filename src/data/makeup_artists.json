@@ -1,0 +1,122 @@
+[
+  {
+    "id": "MUA-101",
+    "name": "Anjali Verma",
+    "avatar": "/assets/images/faces/4.jpg",
+    "phone": "+91 99123 55621",
+    "email": "anjali@mail.com",
+    "gender": "Female",
+    "experience": 5,
+    "city": "Bangalore",
+    "status": "inactive",
+    "speciality": "Bridal / HD Makeup"
+  },
+  {
+    "id": "MUA-105",
+    "name": "Neha Kapoor",
+    "avatar": "/assets/images/faces/7.jpg",
+    "phone": "+91 98765 44321",
+    "email": "neha.kapoor@mail.com",
+    "gender": "Female",
+    "experience": 8,
+    "city": "Mumbai",
+    "status": "active",
+    "speciality": "Celebrity / Airbrush Makeup"
+  },
+  {
+    "id": "MUA-109",
+    "name": "Pooja Iyer",
+    "avatar": "/assets/images/faces/8.jpg",
+    "phone": "+91 99881 77445",
+    "email": "pooja.iyer@mail.com",
+    "gender": "Female",
+    "experience": 2,
+    "city": "Chennai",
+    "status": "active",
+    "speciality": "Party / Engagement Makeup"
+  },
+  {
+    "id": "MUA-112",
+    "name": "Ritu Malhotra",
+    "avatar": "/assets/images/faces/9.jpg",
+    "phone": "+91 91234 66789",
+    "email": "ritu@mail.com",
+    "gender": "Female",
+    "experience": 6,
+    "city": "Delhi",
+    "status": "active",
+    "speciality": "Fashion / Editorial"
+  },
+  {
+    "id": "MUA-118",
+    "name": "Kavya Nair",
+    "avatar": "/assets/images/faces/10.jpg",
+    "phone": "+91 90987 55678",
+    "email": "kavya.nair@mail.com",
+    "gender": "Female",
+    "experience": 4,
+    "city": "Hyderabad",
+    "status": "active",
+    "speciality": "HD / Bridal Makeup"
+  },
+  {
+    "id": "MUA-123",
+    "name": "Shreya Gupta",
+    "avatar": "/assets/images/faces/11.jpg",
+    "phone": "+91 99654 88901",
+    "email": "shreya.g@mail.com",
+    "gender": "Female",
+    "experience": 1,
+    "city": "Pune",
+    "status": "active",
+    "speciality": "Basic / Party Makeup"
+  },
+  {
+    "id": "MUA-128",
+    "name": "Priya Sharma",
+    "avatar": "/assets/images/faces/5.jpg",
+    "phone": "+91 98145 33781",
+    "email": "priya@mail.com",
+    "gender": "Female",
+    "experience": 3,
+    "city": "Kolkata",
+    "status": "on_event",
+    "speciality": "Party Makeup / Editorial"
+  },
+  {
+    "id": "MUA-134",
+    "name": "Aishwarya Menon",
+    "avatar": "/assets/images/faces/12.jpg",
+    "phone": "+91 98711 66543",
+    "email": "aishwarya@mail.com",
+    "gender": "Female",
+    "experience": 7,
+    "city": "Kochi",
+    "status": "blocked",
+    "speciality": "Traditional / Bridal Makeup"
+  },
+  {
+    "id": "MUA-139",
+    "name": "Divya Reddy",
+    "avatar": "/assets/images/faces/13.jpg",
+    "phone": "+91 98456 22334",
+    "email": "divya.reddy@mail.com",
+    "gender": "Female",
+    "experience": 9,
+    "city": "Ahmedabad",
+    "status": "active",
+    "speciality": "Luxury Bridal / Celebrity"
+  },
+  {
+    "id": "MUA-145",
+    "name": "Sneha Nair",
+    "avatar": "/assets/images/faces/6.jpg",
+    "phone": "+91 98456 77890",
+    "email": "sneha@mail.com",
+    "gender": "Female",
+    "experience": 7,
+    "city": "Jaipur",
+    "status": "inactive",
+    "speciality": "Fashion / Editorial"
+  }
+]

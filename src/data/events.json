@@ -1,0 +1,193 @@
+[
+  {
+    "bookingId": "BK-1023",
+    "clientId": "CL-101",
+    "client": {
+      "name": "Riya Sharma",
+      "email": "riya@example.com",
+      "avatar": "/assets/images/faces/5.jpg"
+    },
+    "eventTitle": "Riya Wedding Ceremony",
+    "eventType": "Wedding",
+    "state": "Karnataka",
+    "city": "Bangalore",
+    "location": {
+      "venueName": "Royal Orchid Palace",
+      "formattedAddress": "Royal Orchid Palace, MG Road, Ashok Nagar, Bangalore, Karnataka 560001, India",
+      "latitude": 12.9716,
+      "longitude": 77.5946,
+      "placeId": "ChIJx9Lr6t4WrjsR0p0Gg1bH9lU",
+      "googleMapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJx9Lr6t4WrjsR0p0Gg1bH9lU"
+    },
+    "start": "2026-02-12T18:00:00",
+    "end": "2026-02-12T23:00:00",
+    "allDay": false,
+    "eventStatus": "in_progress",
+    "workflowStage": "staffs_assigned",
+    "createdAt": "2026-01-10T10:00:00",
+    "payment": {
+      "totalAmount": 125000,
+      "paidAmount": 25000,
+      "paymentType": "advance",
+      "paymentStatus": "partial",
+      "lastUpdated": "2026-01-15T12:00:00"
+    },
+    "team": {
+      "staffCount": 5,
+      "muaCount": 2
+    }
+  },
+  {
+    "bookingId": "BK-1024",
+    "clientId": "CL-108",
+    "client": {
+      "name": "John Mathew",
+      "email": "john@example.com",
+      "avatar": "/assets/images/faces/3.jpg"
+    },
+    "eventTitle": "Tech Corp Annual Meet",
+    "eventType": "Corporate",
+    "state": "Telangana",
+    "city": "Hyderabad",
+    "location": {
+      "venueName": "HICC Convention Center",
+      "formattedAddress": "HITEX Exhibition Center, Izzathnagar, Hyderabad, Telangana 500084, India",
+      "latitude": 17.4726,
+      "longitude": 78.3741,
+      "placeId": "ChIJM3b4kCyzyzsRrXqLk8uP5aA",
+      "googleMapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJM3b4kCyzyzsRrXqLk8uP5aA"
+    },
+    "start": "2026-02-15T10:00:00",
+    "end": "2026-02-15T16:00:00",
+    "allDay": false,
+    "eventStatus": "in_progress",
+    "workflowStage": "planning",
+    "createdAt": "2026-01-05T09:00:00",
+    "payment": {
+      "totalAmount": 80000,
+      "paidAmount": 80000,
+      "paymentType": "full",
+      "paymentStatus": "paid",
+      "lastUpdated": "2026-01-07T11:00:00"
+    },
+    "team": {
+      "staffCount": 3,
+      "muaCount": 1
+    }
+  },
+  {
+    "bookingId": "BK-1025",
+    "clientId": "CL-114",
+    "client": {
+      "name": "Aditi Rao",
+      "email": "aditi@mail.com",
+      "avatar": "/assets/images/faces/6.jpg"
+    },
+    "eventTitle": "Aditi Birthday Bash",
+    "eventType": "Birthday",
+    "state": "Tamil Nadu",
+    "city": "Chennai",
+    "location": {
+      "venueName": "Grand Bay Resort",
+      "formattedAddress": "Grand Bay Resort, East Coast Road, Mahabalipuram, Tamil Nadu 603104, India",
+      "latitude": 12.6208,
+      "longitude": 80.1945,
+      "placeId": "ChIJYzCzV3xYUjoR1zYl6vM8q3M",
+      "googleMapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJYzCzV3xYUjoR1zYl6vM8q3M"
+    },
+    "start": "2026-02-19T19:00:00",
+    "end": "2026-02-19T22:00:00",
+    "allDay": false,
+    "eventStatus": "pending",
+    "workflowStage": "created",
+    "createdAt": "2026-01-18T14:00:00",
+    "payment": {
+      "totalAmount": 45000,
+      "paidAmount": 0,
+      "paymentType": "cash",
+      "paymentStatus": "unpaid",
+      "lastUpdated": null
+    },
+    "team": {
+      "staffCount": 0,
+      "muaCount": 0
+    }
+  },
+  {
+    "bookingId": "BK-1026",
+    "clientId": "CL-120",
+    "client": {
+      "name": "Sanjay Verma",
+      "email": "sanjay@mail.com",
+      "avatar": "/assets/images/faces/7.jpg"
+    },
+    "eventTitle": "Mumbai Fashion Show",
+    "eventType": "Fashion Event",
+    "state": "Maharashtra",
+    "city": "Mumbai",
+    "location": {
+      "venueName": "NSCI Dome",
+      "formattedAddress": "NSCI Dome, Worli, Mumbai, Maharashtra 400018, India",
+      "latitude": 19.0176,
+      "longitude": 72.813,
+      "placeId": "ChIJX4z1c6vJ5zsRZ5n5CkGxXlQ",
+      "googleMapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJX4z1c6vJ5zsRZ5n5CkGxXlQ"
+    },
+    "start": "2026-02-05T00:00:00",
+    "end": "2026-02-05T23:59:59",
+    "allDay": true,
+    "eventStatus": "completed",
+    "workflowStage": "event_completed",
+    "createdAt": "2026-01-01T08:00:00",
+    "payment": {
+      "totalAmount": 210000,
+      "paidAmount": 210000,
+      "paymentType": "bank_transfer",
+      "paymentStatus": "paid",
+      "lastUpdated": "2026-02-05T23:00:00"
+    },
+    "team": {
+      "staffCount": 10,
+      "muaCount": 3
+    }
+  },
+  {
+    "bookingId": "BK-1027",
+    "clientId": "CL-127",
+    "client": {
+      "name": "Neha Kapoor",
+      "email": "neha@mail.com",
+      "avatar": "/assets/images/faces/8.jpg"
+    },
+    "eventTitle": "Neha Birthday Event",
+    "eventType": "Birthday",
+    "state": "Karnataka",
+    "city": "Bangalore",
+    "location": {
+      "venueName": "The Leela Palace",
+      "formattedAddress": "The Leela Palace, Old Airport Road, Bangalore, Karnataka 560008, India",
+      "latitude": 12.9607,
+      "longitude": 77.6483,
+      "placeId": "ChIJbU60yXoUrjsR4E9-UejD3_g",
+      "googleMapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJbU60yXoUrjsR4E9-UejD3_g"
+    },
+    "start": "2026-02-25T17:00:00",
+    "end": "2026-02-25T21:00:00",
+    "allDay": false,
+    "eventStatus": "cancelled",
+    "workflowStage": "cancelled",
+    "canceledReason": "Client personal reasons",
+    "createdAt": "2026-01-12T16:00:00",
+    "payment": {
+      "totalAmount": 60000,
+      "paidAmount": 10000,
+      "paymentType": "advance",
+      "paymentStatus": "refund_pending",
+      "lastUpdated": "2026-01-15T18:00:00"
+    },
+    "team": {
+      "staffCount": 4,
+      "muaCount": 1
+    }
+  }
+]
