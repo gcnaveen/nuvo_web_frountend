@@ -1,7 +1,18 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 const Sidebar = ({ isOpen, closeSidebar }) => {
+  const { pathname } = useLocation();
+
+  const isActive = (path) => {
+    if (path === "/") return pathname === "/" ? "active" : "";
+    return pathname.startsWith(path) ? "active" : "";
+  };
+
+  // Parent only gets "active" if we're directly on one of its children
+  // but NOT via the child's own active class — just keeps it open/expanded
+  const isParentOpen = (...paths) => paths.some((p) => pathname.startsWith(p));
+
   return (
     <div id="sidebar" className={isOpen ? "active" : ""}>
       <div className="sidebar-wrapper active">
@@ -21,73 +32,81 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
             </div>
           </div>
         </div>
+
         <div className="sidebar-menu">
           <ul className="menu">
             <li className="sidebar-title">Menu</li>
 
-            <li className="sidebar-item active">
+            {/* Dashboard */}
+            <li className={`sidebar-item ${isActive("/")}`}>
               <Link to="/" className="sidebar-link">
                 <i className="bi bi-grid-fill"></i>
                 <span>Dashboard</span>
               </Link>
             </li>
 
-            <li className="sidebar-item">
+            {/* Events */}
+            <li className={`sidebar-item ${isActive("/events")}`}>
               <Link to="/events" className="sidebar-link">
                 <i className="bi bi-stack"></i>
                 <span>Events</span>
               </Link>
             </li>
 
-            <li className="sidebar-item has-sub">
+            {/* User Management — parent never gets "active", only "open" */}
+            <li
+              className={`sidebar-item has-sub ${isParentOpen("/staff", "/makeup-artist", "/clients") ? "open" : ""}`}
+            >
               <a href="#" className="sidebar-link">
                 <i className="bi bi-person-badge-fill"></i>
                 <span>User Management</span>
               </a>
-              {/* Submenus usually require extra state to toggle in React, kept static for now */}
               <ul className="submenu" style={{ display: "block" }}>
-                <li className="submenu-item">
+                <li className={`submenu-item ${isActive("/staff")}`}>
                   <Link to="/staff" className="sidebar-link">
                     <span>Staff</span>
                   </Link>
                 </li>
-                <li className="submenu-item">
-                  <Link to="makeup-artitst" className="sidebar-link">
+                <li className={`submenu-item ${isActive("/makeup-artist")}`}>
+                  <Link to="/makeup-artist" className="sidebar-link">
                     <span>Makeup Artist</span>
                   </Link>
                 </li>
-                <li className="submenu-item">
-                  <Link to="clients" className="sidebar-link">
+                <li className={`submenu-item ${isActive("/clients")}`}>
+                  <Link to="/clients" className="sidebar-link">
                     <span>Clients</span>
                   </Link>
                 </li>
               </ul>
             </li>
 
-            <li className="sidebar-item has-sub">
+            {/* Inventory */}
+            <li
+              className={`sidebar-item has-sub ${isParentOpen("/uniforms") ? "open" : ""}`}
+            >
               <a href="#" className="sidebar-link">
                 <i className="bi bi-grid-1x2-fill"></i>
                 <span>Inventory</span>
               </a>
               <ul className="submenu" style={{ display: "block" }}>
-                <li className="submenu-item">
-                  <Link to="uniforms" className="sidebar-link">
+                <li className={`submenu-item ${isActive("/uniforms")}`}>
+                  <Link to="/uniforms" className="sidebar-link">
                     <span>Uniforms</span>
                   </Link>
                 </li>
               </ul>
             </li>
 
-            <li className="sidebar-item">
-              <a href="ui-file-uploader.html" className="sidebar-link">
+            {/* Master Data */}
+            <li className={`sidebar-item ${isActive("/master-data")}`}>
+              <Link to="/master-data" className="sidebar-link">
                 <i className="bi bi-cloud-arrow-up-fill"></i>
-                <Link to="master-data" className="sidebar-link">
-                  <span>Master Data</span>
-                </Link>
-              </a>
+                <span>Master Data</span>
+              </Link>
             </li>
 
-            <li className="sidebar-item">
+            {/* Reports */}
+            <li className={`sidebar-item ${isActive("/reports")}`}>
               <Link to="/reports" className="sidebar-link">
                 <i className="bi bi-file-earmark-medical-fill"></i>
                 <span>Reports</span>
@@ -95,6 +114,7 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
             </li>
           </ul>
         </div>
+
         <button className="sidebar-toggler btn x" onClick={closeSidebar}>
           <i data-feather="x"></i>
         </button>

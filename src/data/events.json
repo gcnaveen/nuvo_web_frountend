@@ -189,5 +189,83 @@
       "staffCount": 4,
       "muaCount": 1
     }
+  },
+  {
+    "bookingId": "BK-1028",
+    "clientId": "CL-127",
+    "client": {
+      "name": "Neha Kapoor",
+      "email": "neha@mail.com",
+      "avatar": "/assets/images/faces/8.jpg"
+    },
+    "eventTitle": "Neha Birthday Event",
+    "eventType": "Birthday",
+    "state": "Karnataka",
+    "city": "Bangalore",
+    "location": {
+      "venueName": "The Leela Palace",
+      "formattedAddress": "The Leela Palace, Old Airport Road, Bangalore, Karnataka 560008, India",
+      "latitude": 12.9607,
+      "longitude": 77.6483,
+      "placeId": "ChIJbU60yXoUrjsR4E9-UejD3_g",
+      "googleMapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJbU60yXoUrjsR4E9-UejD3_g"
+    },
+    "start": "2026-02-25T17:00:00",
+    "end": "2026-02-25T21:00:00",
+    "allDay": false,
+    "eventStatus": "cancelled",
+    "workflowStage": "cancelled",
+    "canceledReason": "Client personal reasons",
+    "createdAt": "2026-01-12T16:00:00",
+    "payment": {
+      "totalAmount": 60000,
+      "paidAmount": 10000,
+      "paymentType": "advance",
+      "paymentStatus": "refund_pending",
+      "lastUpdated": "2026-01-15T18:00:00"
+    },
+    "team": {
+      "staffCount": 4,
+      "muaCount": 1
+    }
+  },
+  {
+    "bookingId": "BK-1029",
+    "clientId": "CL-127",
+    "client": {
+      "name": "Neha Kapoor",
+      "email": "neha@mail.com",
+      "avatar": "/assets/images/faces/8.jpg"
+    },
+    "eventTitle": "sowmya Birthday Event",
+    "eventType": "Birthday",
+    "state": "Karnataka",
+    "city": "Bangalore",
+    "location": {
+      "venueName": "The Leela Palace",
+      "formattedAddress": "The Leela Palace, Old Airport Road, Bangalore, Karnataka 560008, India",
+      "latitude": 12.9607,
+      "longitude": 77.6483,
+      "placeId": "ChIJbU60yXoUrjsR4E9-UejD3_g",
+      "googleMapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJbU60yXoUrjsR4E9-UejD3_g"
+    },
+    "start": "2026-03-25T17:00:00",
+    "end": "2026-03-25T21:00:00",
+    "allDay": false,
+    "eventStatus": "completed",
+    "workflowStage": "event_completed",
+    "canceledReason": "Client personal reasons",
+    "createdAt": "2026-01-12T16:00:00",
+    "payment": {
+      "totalAmount": 60000,
+      "paidAmount": 10000,
+      "paymentType": "advance",
+      "paymentStatus": "refund_pending",
+      "lastUpdated": "2026-01-15T18:00:00"
+    },
+    "team": {
+      "staffCount": 4,
+      "muaCount": 1
+    }
   }
 ]

@@ -1,0 +1,7 @@
+- draft is required for event 
+- NUVO-CREW-01 (stage name auto generated)
+- gender for uniform categories + price 
+- price wise filter for categories.
+- Staff need uniform size
+
+

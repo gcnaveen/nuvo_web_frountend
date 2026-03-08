@@ -1,69 +1,62 @@
+// src/pages/auth/Login.jsx
+//
+// Admin login — email + password, direct token issuance.
+// No OTP step for admin web panel.
+
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { adminLogin } from "../../api/AuthApi";
 import { useAuth } from "../../auth/AuthContext";
 
 const Login = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  // Dummy users
-  const users = [
-    { email: "rakesh@gmail.com", password: "rakesh@123" },
-    { email: "rudresh@gmail.com", password: "rudresh@123" },
-  ];
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const validateEmail = (email) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  };
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
-    // Basic validation
-    if (!email || !password) {
+    if (!email.trim() || !password.trim()) {
       setError("Email and password are required");
       return;
     }
-
-    if (!validateEmail(email)) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setError("Please enter a valid email address");
       return;
     }
-
     if (password.length < 6) {
       setError("Password must be at least 6 characters");
       return;
     }
 
-    // Check dummy users
-    const userExists = users.find(
-      (user) => user.email === email && user.password === password
-    );
+    setLoading(true);
+    try {
+      const response = await adminLogin(email, password);
+      const { access_token, refresh_token, user } = response.data.data;
 
-    if (!userExists) {
-      setError("Invalid email or password");
-      return;
+      login({ access_token, refresh_token }, user);
+      navigate("/", { replace: true });
+    } catch (err) {
+      const msg = err.response?.data?.message || "Invalid email or password.";
+      setError(msg);
+    } finally {
+      setLoading(false);
     }
-
-    // Login success
-    // login(); commenting to after implementing veryfy-otp compoents 
-    // now it should redirect to /verify-otp page 
-    navigate("/verify-otp");
   };
 
   return (
     <div style={styles.page}>
-      <div className="auth-card" style={styles.card}>
+      <div style={styles.card}>
         <div className="text-center mb-4">
-          <h2 className="auth-title text-primary" style={styles.title}>
+          <h2 style={styles.title} className="text-primary">
             Nuvo Admin
           </h2>
-          <small className="text-muted">Login to continue</small>
+          <small className="text-muted">Sign in to your account</small>
         </div>
 
         {error && (
@@ -76,9 +69,11 @@ const Login = () => {
             <input
               type="email"
               className="form-control"
-              placeholder="Enter email"
+              placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              disabled={loading}
+              autoFocus
             />
           </div>
 
@@ -87,18 +82,33 @@ const Login = () => {
             <input
               type="password"
               className="form-control"
-              placeholder="Enter password"
+              placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              disabled={loading}
             />
           </div>
 
-          <button type="submit" className="btn btn-primary w-100 mt-3">
-            Login
+          <button
+            type="submit"
+            className="btn btn-primary w-100 mt-3"
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <span
+                  className="spinner-border spinner-border-sm me-2"
+                  role="status"
+                />
+                Signing in...
+              </>
+            ) : (
+              "Sign In"
+            )}
           </button>
 
-          <p className="text-center mt-3">
-            Don’t have an account?{" "}
+          <p className="text-center mt-3 mb-0">
+            Don't have an account?{" "}
             <Link to="/register" className="text-primary">
               Register
             </Link>
@@ -111,7 +121,6 @@ const Login = () => {
 
 export default Login;
 
-/* Inline styles */
 const styles = {
   page: {
     fontFamily: "Nunito, sans-serif",
