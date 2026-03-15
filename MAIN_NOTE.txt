@@ -1,7 +1,60 @@
 - draft is required for event 
-- NUVO-CREW-01 (stage name auto generated)
-- gender for uniform categories + price 
+- NUVO-CREW-01 (stage name auto generated) 
+- Gender for uniform categories + price 
 - price wise filter for categories.
 - Staff need uniform size
+
+
+
+
+----------------------------------------------------------------
+1. Events API 
+ - create events ( same for all mobile/web/ pages  ) 
+ - events detail page (with edit and delete options ) also event details page should have a page to allocate the staff for  the event. 
+ - should work on maps to view the staff 
+
+
+
+
+
+6. create apis for inventory page and make them work. 
+
+
+
+7. implement payments with phone pay. 
+
+
+
+
+
+
+5. Staff needs uniform size. 
+8. there is a miss mach in uniform selction for each staff and in uniform categories 
+currently in physical dimentions  for staff we have 
+weight 
+height
+shoe size 
+Blazer Size 
+Trouser/skirts 
+but in uniform categories  we are mentioning 
+
+
+
+
+
+
+
+
+
+
+DONE 
+-----------------------
+2. auto generate stage name for sraff 
+3. Gender + price fields for uniform categories 
+4. price wise filter for categories. (in mbile app ) 
+
+
+
+
 
 

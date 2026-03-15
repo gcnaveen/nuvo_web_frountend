@@ -1,5 +1,5 @@
-// src/pages/MasterData.jsx
-import React, { useState, useEffect, useCallback, useRef } from "react";
+// src/pages/master/MasterData.jsx
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   listThemes,
   createTheme,
@@ -17,33 +17,33 @@ import {
 
 // ── helpers ────────────────────────────────────────────────────
 const PLAN_COLORS = {
-  PLATINUM: { bg: "#f3e5f5", color: "#7b1fa2", border: "#ce93d8" },
-  DIAMOND: { bg: "#e3f2fd", color: "#1565c0", border: "#90caf9" },
-  GOLD: { bg: "#fffde7", color: "#f57f17", border: "#ffe082" },
-  SILVER: { bg: "#eceff1", color: "#455a64", border: "#b0bec5" },
-  BRONZE: { bg: "#fbe9e7", color: "#bf360c", border: "#ffab91" },
+  PLATINUM: { bg: '#f3e5f5', color: '#7b1fa2', border: '#ce93d8' },
+  DIAMOND: { bg: '#e3f2fd', color: '#1565c0', border: '#90caf9' },
+  GOLD: { bg: '#fffde7', color: '#f57f17', border: '#ffe082' },
+  SILVER: { bg: '#eceff1', color: '#455a64', border: '#b0bec5' },
+  BRONZE: { bg: '#fbe9e7', color: '#bf360c', border: '#ffab91' },
 };
 
-const PLAN_ORDER = ["PLATINUM", "DIAMOND", "GOLD", "SILVER", "BRONZE"];
+const PLAN_ORDER = ['PLATINUM', 'DIAMOND', 'GOLD', 'SILVER', 'BRONZE'];
 
 const fmtDate = (d) =>
   d
-    ? new Date(d).toLocaleDateString("en-IN", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
+    ? new Date(d).toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
       })
-    : "—";
+    : '—';
 
 // ══════════════════════════════════════════════════════════════
 export default function MasterData() {
-  const [activeTab, setActiveTab] = useState("themes");
+  const [activeTab, setActiveTab] = useState('themes');
 
   // ── Toast ──────────────────────────────────────────────────
-  const [toast, setToast] = useState({ msg: "", type: "success" });
-  const showToast = (msg, type = "success") => {
+  const [toast, setToast] = useState({ msg: '', type: 'success' });
+  const showToast = (msg, type = 'success') => {
     setToast({ msg, type });
-    setTimeout(() => setToast({ msg: "", type: "success" }), 3000);
+    setTimeout(() => setToast({ msg: '', type: 'success' }), 3000);
   };
 
   return (
@@ -107,7 +107,7 @@ export default function MasterData() {
       {toast.msg && (
         <div className={`ms-toast ${toast.type}`}>
           <i
-            className={`bi ${toast.type === "success" ? "bi-check-circle-fill text-success" : "bi-exclamation-circle-fill text-danger"} fs-5`}
+            className={`bi ${toast.type === 'success' ? 'bi-check-circle-fill text-success' : 'bi-exclamation-circle-fill text-danger'} fs-5`}
           ></i>
           {toast.msg}
         </div>
@@ -128,14 +128,14 @@ export default function MasterData() {
         {/* ── TABS ──────────────────────────────────────────── */}
         <div className="md-tabs">
           {[
-            { key: "themes", label: "Event Themes", icon: "bi-palette" },
-            { key: "uniforms", label: "Uniforms", icon: "bi-bag" },
-            { key: "subscription", label: "Subscription", icon: "bi-gem" },
-            { key: "payment", label: "Payment Terms", icon: "bi-credit-card" },
+            { key: 'themes', label: 'Event Themes', icon: 'bi-palette' },
+            { key: 'uniforms', label: 'Uniforms', icon: 'bi-bag' },
+            { key: 'subscription', label: 'Subscription', icon: 'bi-gem' },
+            { key: 'payment', label: 'Payment Terms', icon: 'bi-credit-card' },
           ].map((t) => (
             <button
               key={t.key}
-              className={`md-tab ${activeTab === t.key ? "active" : ""}`}
+              className={`md-tab ${activeTab === t.key ? 'active' : ''}`}
               onClick={() => setActiveTab(t.key)}
             >
               <i className={`bi ${t.icon} me-2`}></i>
@@ -145,12 +145,12 @@ export default function MasterData() {
         </div>
 
         {/* ── PANELS ─────────────────────────────────────────── */}
-        {activeTab === "themes" && <ThemesPanel showToast={showToast} />}
-        {activeTab === "uniforms" && <UniformsPanel showToast={showToast} />}
-        {activeTab === "subscription" && (
+        {activeTab === 'themes' && <ThemesPanel showToast={showToast} />}
+        {activeTab === 'uniforms' && <UniformsPanel showToast={showToast} />}
+        {activeTab === 'subscription' && (
           <SubscriptionPanel showToast={showToast} />
         )}
-        {activeTab === "payment" && <PaymentPanel showToast={showToast} />}
+        {activeTab === 'payment' && <PaymentPanel showToast={showToast} />}
       </div>
     </>
   );
@@ -162,7 +162,7 @@ export default function MasterData() {
 function ThemesPanel({ showToast }) {
   const [themes, setThemes] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
 
   // Modal state: null | {mode:"add"} | {mode:"edit"|"view", item}
   const [modal, setModal] = useState(null);
@@ -173,12 +173,12 @@ function ThemesPanel({ showToast }) {
 
   const fetch = useCallback(async () => {
     setLoading(true);
-    setError("");
+    setError('');
     try {
       const res = await listThemes();
-      setThemes(Array.isArray(res.data.data) ? res.data.data : []);
+      setThemes(res.data.data);
     } catch {
-      setError("Failed to load themes.");
+      setError('Failed to load themes.');
     } finally {
       setLoading(false);
     }
@@ -194,9 +194,9 @@ function ThemesPanel({ showToast }) {
       await deleteTheme(deleteTarget.id);
       setThemes((prev) => prev.filter((t) => t.id !== deleteTarget.id));
       setDeleteTarget(null);
-      showToast("Theme deleted.");
+      showToast('Theme deleted.');
     } catch (err) {
-      showToast(err.response?.data?.message || "Delete failed.", "danger");
+      showToast(err.response?.data?.message || 'Delete failed.', 'danger');
     } finally {
       setDeleting(false);
     }
@@ -210,7 +210,7 @@ function ThemesPanel({ showToast }) {
         </h5>
         <button
           className="btn btn-primary btn-sm px-3"
-          onClick={() => setModal({ mode: "add" })}
+          onClick={() => setModal({ mode: 'add' })}
         >
           <i className="bi bi-plus-lg me-1"></i>Add Theme
         </button>
@@ -229,14 +229,17 @@ function ThemesPanel({ showToast }) {
         ) : (
           <div className="row g-3">
             {themes.map((t) => (
-              <div className="col-md-6 col-lg-4" key={t.id}>
+              <div
+                className="col-md-6 col-lg-4"
+                key={t.id}
+              >
                 <div className="ms-item">
                   {t.cover_image ? (
                     <img
                       src={t.cover_image}
                       className="ms-item-thumb"
                       alt=""
-                      onError={(e) => (e.target.style.display = "none")}
+                      onError={(e) => (e.target.style.display = 'none')}
                     />
                   ) : (
                     <div className="ms-item-thumb-ph">
@@ -252,9 +255,9 @@ function ThemesPanel({ showToast }) {
                     </div>
                     <span
                       className={
-                        t.status === "ACTIVE"
-                          ? "ms-badge-active"
-                          : "ms-badge-inactive"
+                        t.status === 'ACTIVE'
+                          ? 'ms-badge-active'
+                          : 'ms-badge-inactive'
                       }
                     >
                       {t.status}
@@ -263,22 +266,22 @@ function ThemesPanel({ showToast }) {
                   <div className="d-flex flex-column gap-1">
                     <button
                       className="btn btn-sm btn-outline-primary px-2 py-1"
-                      onClick={() => setModal({ mode: "view", item: t })}
+                      onClick={() => setModal({ mode: 'view', item: t })}
                       title="View"
                     >
                       <i
                         className="bi bi-eye"
-                        style={{ fontSize: ".75rem" }}
+                        style={{ fontSize: '.75rem' }}
                       ></i>
                     </button>
                     <button
                       className="btn btn-sm btn-outline-secondary px-2 py-1"
-                      onClick={() => setModal({ mode: "edit", item: t })}
+                      onClick={() => setModal({ mode: 'edit', item: t })}
                       title="Edit"
                     >
                       <i
                         className="bi bi-pencil"
-                        style={{ fontSize: ".75rem" }}
+                        style={{ fontSize: '.75rem' }}
                       ></i>
                     </button>
                     <button
@@ -288,7 +291,7 @@ function ThemesPanel({ showToast }) {
                     >
                       <i
                         className="bi bi-trash"
-                        style={{ fontSize: ".75rem" }}
+                        style={{ fontSize: '.75rem' }}
                       ></i>
                     </button>
                   </div>
@@ -300,31 +303,31 @@ function ThemesPanel({ showToast }) {
       </div>
 
       {/* Add / Edit Modal */}
-      {modal && modal.mode !== "view" && (
+      {modal && modal.mode !== 'view' && (
         <ThemeFormModal
           mode={modal.mode}
           initial={modal.item}
           onClose={() => setModal(null)}
           onSaved={(saved) => {
-            if (modal.mode === "add") setThemes((prev) => [saved, ...prev]);
+            if (modal.mode === 'add') setThemes((prev) => [saved, ...prev]);
             else
               setThemes((prev) =>
                 prev.map((t) => (t.id === saved.id ? saved : t)),
               );
             setModal(null);
             showToast(
-              modal.mode === "add" ? "Theme created!" : "Theme updated!",
+              modal.mode === 'add' ? 'Theme created!' : 'Theme updated!',
             );
           }}
         />
       )}
 
       {/* View Modal */}
-      {modal?.mode === "view" && (
+      {modal?.mode === 'view' && (
         <ThemeViewModal
           item={modal.item}
           onClose={() => setModal(null)}
-          onEdit={() => setModal({ mode: "edit", item: modal.item })}
+          onEdit={() => setModal({ mode: 'edit', item: modal.item })}
         />
       )}
 
@@ -350,17 +353,17 @@ function ThemesPanel({ showToast }) {
 // ── Theme Form Modal ───────────────────────────────────────────
 function ThemeFormModal({ mode, initial, onClose, onSaved }) {
   const [form, setForm] = useState({
-    theme_name: initial?.theme_name || "",
-    description: initial?.description || "",
-    status: initial?.status || "ACTIVE",
+    theme_name: initial?.theme_name || '',
+    description: initial?.description || '',
+    status: initial?.status || 'ACTIVE',
   });
   const [coverFile, setCoverFile] = useState(null);
-  const [coverPreview, setCoverPreview] = useState(initial?.cover_image || "");
+  const [coverPreview, setCoverPreview] = useState(initial?.cover_image || '');
   const [galleryFiles, setGalleryFiles] = useState([]);
   const [galleryPreviews, setGalleryPreviews] = useState([]);
   const [deleteGallery, setDeleteGallery] = useState([]); // existing URLs to delete
   const [saving, setSaving] = useState(false);
-  const [err, setErr] = useState("");
+  const [err, setErr] = useState('');
   const coverRef = useRef(null);
   const galleryRef = useRef(null);
 
@@ -397,28 +400,28 @@ function ThemeFormModal({ mode, initial, onClose, onSaved }) {
 
   const handleSubmit = async () => {
     if (!form.theme_name.trim()) {
-      setErr("Theme name is required.");
+      setErr('Theme name is required.');
       return;
     }
     setSaving(true);
-    setErr("");
+    setErr('');
     try {
       const fd = new FormData();
-      fd.append("theme_name", form.theme_name.trim());
-      fd.append("description", form.description.trim());
-      fd.append("status", form.status);
-      if (coverFile) fd.append("cover_image", coverFile);
-      galleryFiles.forEach((f) => fd.append("gallery_images", f));
+      fd.append('theme_name', form.theme_name.trim());
+      fd.append('description', form.description.trim());
+      fd.append('status', form.status);
+      if (coverFile) fd.append('cover_image', coverFile);
+      galleryFiles.forEach((f) => fd.append('gallery_images', f));
       if (deleteGallery.length)
-        fd.append("delete_gallery_urls", JSON.stringify(deleteGallery));
+        fd.append('delete_gallery_urls', JSON.stringify(deleteGallery));
 
       const res =
-        mode === "add"
+        mode === 'add'
           ? await createTheme(fd)
           : await updateTheme(initial.id, fd);
       onSaved(res.data.data);
     } catch (e) {
-      setErr(e.response?.data?.message || "Save failed.");
+      setErr(e.response?.data?.message || 'Save failed.');
     } finally {
       setSaving(false);
     }
@@ -427,7 +430,7 @@ function ThemeFormModal({ mode, initial, onClose, onSaved }) {
   return (
     <div
       className="modal d-block"
-      style={{ background: "rgba(0,0,0,.5)", zIndex: 1055 }}
+      style={{ background: 'rgba(0,0,0,.5)', zIndex: 1055 }}
     >
       <div className="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
         <div
@@ -437,15 +440,18 @@ function ThemeFormModal({ mode, initial, onClose, onSaved }) {
           <div className="modal-header border-0 px-4 pt-4 pb-2">
             <div>
               <h5 className="fw-bold mb-0">
-                {mode === "add" ? "Add Event Theme" : "Edit Event Theme"}
+                {mode === 'add' ? 'Add Event Theme' : 'Edit Event Theme'}
               </h5>
               <p className="text-muted small mb-0">
-                {mode === "add"
-                  ? "Create a new theme for events."
+                {mode === 'add'
+                  ? 'Create a new theme for events.'
                   : `Editing: ${initial.theme_name}`}
               </p>
             </div>
-            <button className="btn-close" onClick={onClose}></button>
+            <button
+              className="btn-close"
+              onClick={onClose}
+            ></button>
           </div>
           <div className="modal-body px-4 py-3">
             {err && (
@@ -491,7 +497,7 @@ function ThemeFormModal({ mode, initial, onClose, onSaved }) {
                   value={form.description}
                   onChange={handleChange}
                   placeholder="Brief description..."
-                  style={{ resize: "none" }}
+                  style={{ resize: 'none' }}
                 />
               </div>
 
@@ -508,8 +514,8 @@ function ThemeFormModal({ mode, initial, onClose, onSaved }) {
                         width: 80,
                         height: 80,
                         borderRadius: 10,
-                        objectFit: "cover",
-                        border: "2px solid #e0e3ea",
+                        objectFit: 'cover',
+                        border: '2px solid #e0e3ea',
                       }}
                     />
                   )}
@@ -518,14 +524,14 @@ function ThemeFormModal({ mode, initial, onClose, onSaved }) {
                     onClick={() => coverRef.current?.click()}
                   >
                     <i className="bi bi-image me-1"></i>
-                    {coverPreview ? "Change Cover" : "Upload Cover"}
+                    {coverPreview ? 'Change Cover' : 'Upload Cover'}
                   </button>
                   {coverPreview && !coverFile && (
                     <button
                       className="btn btn-outline-danger btn-sm px-2"
                       onClick={() => {
                         setCoverFile(null);
-                        setCoverPreview("");
+                        setCoverPreview('');
                       }}
                     >
                       <i className="bi bi-x-lg"></i>
@@ -546,7 +552,7 @@ function ThemeFormModal({ mode, initial, onClose, onSaved }) {
               </div>
 
               {/* Existing gallery (edit mode) */}
-              {mode === "edit" && initial?.gallery_images?.length > 0 && (
+              {mode === 'edit' && initial?.gallery_images?.length > 0 && (
                 <div className="col-12">
                   <label className="ms-label">
                     Existing Images (click to mark for removal)
@@ -557,7 +563,7 @@ function ThemeFormModal({ mode, initial, onClose, onSaved }) {
                         className="ms-gallery-wrap"
                         key={i}
                         onClick={() => toggleDeleteExisting(url)}
-                        style={{ cursor: "pointer" }}
+                        style={{ cursor: 'pointer' }}
                       >
                         <img
                           src={url}
@@ -566,8 +572,8 @@ function ThemeFormModal({ mode, initial, onClose, onSaved }) {
                           style={{
                             opacity: deleteGallery.includes(url) ? 0.3 : 1,
                             border: deleteGallery.includes(url)
-                              ? "2px solid #dc3545"
-                              : "2px solid transparent",
+                              ? '2px solid #dc3545'
+                              : '2px solid transparent',
                           }}
                         />
                         {deleteGallery.includes(url) && (
@@ -593,8 +599,15 @@ function ThemeFormModal({ mode, initial, onClose, onSaved }) {
                   <label className="ms-label">New Images (staged)</label>
                   <div className="ms-gallery-strip">
                     {galleryPreviews.map((src, i) => (
-                      <div className="ms-gallery-wrap" key={i}>
-                        <img src={src} className="ms-gallery-thumb" alt="" />
+                      <div
+                        className="ms-gallery-wrap"
+                        key={i}
+                      >
+                        <img
+                          src={src}
+                          className="ms-gallery-thumb"
+                          alt=""
+                        />
                         <button
                           className="ms-gallery-del"
                           onClick={() => removeStagedGallery(i)}
@@ -646,7 +659,7 @@ function ThemeFormModal({ mode, initial, onClose, onSaved }) {
               ) : (
                 <>
                   <i className="bi bi-check-lg me-2"></i>
-                  {mode === "add" ? "Create Theme" : "Save Changes"}
+                  {mode === 'add' ? 'Create Theme' : 'Save Changes'}
                 </>
               )}
             </button>
@@ -662,7 +675,7 @@ function ThemeViewModal({ item, onClose, onEdit }) {
   return (
     <div
       className="modal d-block"
-      style={{ background: "rgba(0,0,0,.5)", zIndex: 1055 }}
+      style={{ background: 'rgba(0,0,0,.5)', zIndex: 1055 }}
     >
       <div className="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
         <div
@@ -671,7 +684,10 @@ function ThemeViewModal({ item, onClose, onEdit }) {
         >
           <div className="modal-header border-0 px-4 pt-4 pb-2">
             <h5 className="fw-bold mb-0">{item.theme_name}</h5>
-            <button className="btn-close" onClick={onClose}></button>
+            <button
+              className="btn-close"
+              onClick={onClose}
+            ></button>
           </div>
           <div className="modal-body px-4 py-3">
             {item.cover_image && (
@@ -679,9 +695,9 @@ function ThemeViewModal({ item, onClose, onEdit }) {
                 src={item.cover_image}
                 alt="cover"
                 style={{
-                  width: "100%",
+                  width: '100%',
                   height: 200,
-                  objectFit: "cover",
+                  objectFit: 'cover',
                   borderRadius: 12,
                   marginBottom: 20,
                 }}
@@ -692,9 +708,9 @@ function ThemeViewModal({ item, onClose, onEdit }) {
                 <span className="ms-label d-block">Status</span>
                 <span
                   className={
-                    item.status === "ACTIVE"
-                      ? "ms-badge-active"
-                      : "ms-badge-inactive"
+                    item.status === 'ACTIVE'
+                      ? 'ms-badge-active'
+                      : 'ms-badge-inactive'
                   }
                 >
                   {item.status}
@@ -707,7 +723,10 @@ function ThemeViewModal({ item, onClose, onEdit }) {
               {item.description && (
                 <div className="col-12">
                   <span className="ms-label d-block">Description</span>
-                  <p className="mb-0" style={{ fontSize: ".9rem" }}>
+                  <p
+                    className="mb-0"
+                    style={{ fontSize: '.9rem' }}
+                  >
                     {item.description}
                   </p>
                 </div>
@@ -720,14 +739,17 @@ function ThemeViewModal({ item, onClose, onEdit }) {
                 </div>
                 <div className="row g-2">
                   {item.gallery_images.map((url, i) => (
-                    <div className="col-4 col-md-3" key={i}>
+                    <div
+                      className="col-4 col-md-3"
+                      key={i}
+                    >
                       <img
                         src={url}
                         alt=""
                         style={{
-                          width: "100%",
+                          width: '100%',
                           height: 90,
-                          objectFit: "cover",
+                          objectFit: 'cover',
                           borderRadius: 8,
                         }}
                       />
@@ -738,10 +760,16 @@ function ThemeViewModal({ item, onClose, onEdit }) {
             )}
           </div>
           <div className="modal-footer border-0 px-4 pb-4 pt-2 d-flex gap-2">
-            <button className="btn btn-light flex-fill" onClick={onClose}>
+            <button
+              className="btn btn-light flex-fill"
+              onClick={onClose}
+            >
               Close
             </button>
-            <button className="btn btn-primary flex-fill" onClick={onEdit}>
+            <button
+              className="btn btn-primary flex-fill"
+              onClick={onEdit}
+            >
               <i className="bi bi-pencil me-2"></i>Edit Theme
             </button>
           </div>
@@ -757,19 +785,19 @@ function ThemeViewModal({ item, onClose, onEdit }) {
 function UniformsPanel({ showToast }) {
   const [uniforms, setUniforms] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
   const [modal, setModal] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
   const fetch = useCallback(async () => {
     setLoading(true);
-    setError("");
+    setError('');
     try {
       const res = await listUniforms();
-      setUniforms(Array.isArray(res.data.data) ? res.data.data : []);
+      setUniforms(res.data.data);
     } catch {
-      setError("Failed to load uniform categories.");
+      setError('Failed to load uniform categories.');
     } finally {
       setLoading(false);
     }
@@ -785,9 +813,9 @@ function UniformsPanel({ showToast }) {
       await deleteUniform(deleteTarget.id);
       setUniforms((prev) => prev.filter((u) => u.id !== deleteTarget.id));
       setDeleteTarget(null);
-      showToast("Uniform category deleted.");
+      showToast('Uniform category deleted.');
     } catch (err) {
-      showToast(err.response?.data?.message || "Delete failed.", "danger");
+      showToast(err.response?.data?.message || 'Delete failed.', 'danger');
     } finally {
       setDeleting(false);
     }
@@ -801,7 +829,7 @@ function UniformsPanel({ showToast }) {
         </h5>
         <button
           className="btn btn-primary btn-sm px-3"
-          onClick={() => setModal({ mode: "add" })}
+          onClick={() => setModal({ mode: 'add' })}
         >
           <i className="bi bi-plus-lg me-1"></i>Add Category
         </button>
@@ -821,14 +849,17 @@ function UniformsPanel({ showToast }) {
         ) : (
           <div className="row g-3">
             {uniforms.map((u) => (
-              <div className="col-md-6 col-lg-4" key={u.id}>
+              <div
+                className="col-md-6 col-lg-4"
+                key={u.id}
+              >
                 <div className="ms-item">
                   {u.images?.[0] ? (
                     <img
                       src={u.images[0]}
                       className="ms-item-thumb"
                       alt=""
-                      onError={(e) => (e.target.style.display = "none")}
+                      onError={(e) => (e.target.style.display = 'none')}
                     />
                   ) : (
                     <div className="ms-item-thumb-ph">
@@ -841,34 +872,36 @@ function UniformsPanel({ showToast }) {
                     </div>
                     <div className="ms-item-sub">
                       {u.unique_key} · {u.images?.length || 0} images
+                      {u.gender ? ` · ${u.gender}` : ''}
+                      {u.price > 0 ? ` · ₹${u.price}` : ''}
                     </div>
                     <span
                       className={
-                        u.is_active ? "ms-badge-active" : "ms-badge-inactive"
+                        u.is_active ? 'ms-badge-active' : 'ms-badge-inactive'
                       }
                     >
-                      {u.is_active ? "Active" : "Inactive"}
+                      {u.is_active ? 'Active' : 'Inactive'}
                     </span>
                   </div>
                   <div className="d-flex flex-column gap-1">
                     <button
                       className="btn btn-sm btn-outline-primary px-2 py-1"
-                      onClick={() => setModal({ mode: "view", item: u })}
+                      onClick={() => setModal({ mode: 'view', item: u })}
                       title="View"
                     >
                       <i
                         className="bi bi-eye"
-                        style={{ fontSize: ".75rem" }}
+                        style={{ fontSize: '.75rem' }}
                       ></i>
                     </button>
                     <button
                       className="btn btn-sm btn-outline-secondary px-2 py-1"
-                      onClick={() => setModal({ mode: "edit", item: u })}
+                      onClick={() => setModal({ mode: 'edit', item: u })}
                       title="Edit"
                     >
                       <i
                         className="bi bi-pencil"
-                        style={{ fontSize: ".75rem" }}
+                        style={{ fontSize: '.75rem' }}
                       ></i>
                     </button>
                     <button
@@ -878,7 +911,7 @@ function UniformsPanel({ showToast }) {
                     >
                       <i
                         className="bi bi-trash"
-                        style={{ fontSize: ".75rem" }}
+                        style={{ fontSize: '.75rem' }}
                       ></i>
                     </button>
                   </div>
@@ -889,30 +922,30 @@ function UniformsPanel({ showToast }) {
         )}
       </div>
 
-      {modal && modal.mode !== "view" && (
+      {modal && modal.mode !== 'view' && (
         <UniformFormModal
           mode={modal.mode}
           initial={modal.item}
           onClose={() => setModal(null)}
           onSaved={(saved) => {
-            if (modal.mode === "add") setUniforms((prev) => [saved, ...prev]);
+            if (modal.mode === 'add') setUniforms((prev) => [saved, ...prev]);
             else
               setUniforms((prev) =>
                 prev.map((u) => (u.id === saved.id ? saved : u)),
               );
             setModal(null);
             showToast(
-              modal.mode === "add" ? "Category created!" : "Category updated!",
+              modal.mode === 'add' ? 'Category created!' : 'Category updated!',
             );
           }}
         />
       )}
 
-      {modal?.mode === "view" && (
+      {modal?.mode === 'view' && (
         <UniformViewModal
           item={modal.item}
           onClose={() => setModal(null)}
-          onEdit={() => setModal({ mode: "edit", item: modal.item })}
+          onEdit={() => setModal({ mode: 'edit', item: modal.item })}
         />
       )}
 
@@ -937,21 +970,23 @@ function UniformsPanel({ showToast }) {
 // ── Uniform Form Modal ─────────────────────────────────────────
 function UniformFormModal({ mode, initial, onClose, onSaved }) {
   const [form, setForm] = useState({
-    category_name: initial?.category_name || "",
-    unique_key: initial?.unique_key || "",
-    description: initial?.description || "",
+    category_name: initial?.category_name || '',
+    unique_key: initial?.unique_key || '',
+    description: initial?.description || '',
     is_active: initial?.is_active !== false,
+    gender: initial?.gender || '',
+    price: initial?.price ?? '',
   });
   const [imageFiles, setImageFiles] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
   const [deleteImgs, setDeleteImgs] = useState([]);
   const [saving, setSaving] = useState(false);
-  const [err, setErr] = useState("");
+  const [err, setErr] = useState('');
   const imgRef = useRef(null);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setForm((p) => ({ ...p, [name]: type === "checkbox" ? checked : value }));
+    setForm((p) => ({ ...p, [name]: type === 'checkbox' ? checked : value }));
   };
 
   const handleImgsAdd = (e) => {
@@ -976,31 +1011,33 @@ function UniformFormModal({ mode, initial, onClose, onSaved }) {
 
   const handleSubmit = async () => {
     if (!form.category_name.trim()) {
-      setErr("Category name is required.");
+      setErr('Category name is required.');
       return;
     }
-    if (mode === "add" && !form.unique_key.trim()) {
-      setErr("Unique key is required.");
+    if (mode === 'add' && !form.unique_key.trim()) {
+      setErr('Unique key is required.');
       return;
     }
     setSaving(true);
-    setErr("");
+    setErr('');
     try {
       const fd = new FormData();
-      fd.append("category_name", form.category_name.trim());
-      if (mode === "add") fd.append("unique_key", form.unique_key.trim());
-      fd.append("description", form.description.trim());
-      fd.append("is_active", form.is_active ? "true" : "false");
-      imageFiles.forEach((f) => fd.append("images", f));
+      fd.append('category_name', form.category_name.trim());
+      if (mode === 'add') fd.append('unique_key', form.unique_key.trim());
+      fd.append('description', form.description.trim());
+      fd.append('is_active', form.is_active ? 'true' : 'false');
+      fd.append('gender', form.gender);
+      fd.append('price', form.price !== '' ? String(form.price) : '0');
+      imageFiles.forEach((f) => fd.append('images', f));
       if (deleteImgs.length)
-        fd.append("delete_image_urls", JSON.stringify(deleteImgs));
+        fd.append('delete_image_urls', JSON.stringify(deleteImgs));
       const res =
-        mode === "add"
+        mode === 'add'
           ? await createUniform(fd)
           : await updateUniform(initial.id, fd);
       onSaved(res.data.data);
     } catch (e) {
-      setErr(e.response?.data?.message || "Save failed.");
+      setErr(e.response?.data?.message || 'Save failed.');
     } finally {
       setSaving(false);
     }
@@ -1009,7 +1046,7 @@ function UniformFormModal({ mode, initial, onClose, onSaved }) {
   return (
     <div
       className="modal d-block"
-      style={{ background: "rgba(0,0,0,.5)", zIndex: 1055 }}
+      style={{ background: 'rgba(0,0,0,.5)', zIndex: 1055 }}
     >
       <div className="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
         <div
@@ -1019,12 +1056,15 @@ function UniformFormModal({ mode, initial, onClose, onSaved }) {
           <div className="modal-header border-0 px-4 pt-4 pb-2">
             <div>
               <h5 className="fw-bold mb-0">
-                {mode === "add"
-                  ? "Add Uniform Category"
-                  : "Edit Uniform Category"}
+                {mode === 'add'
+                  ? 'Add Uniform Category'
+                  : 'Edit Uniform Category'}
               </h5>
             </div>
-            <button className="btn-close" onClick={onClose}></button>
+            <button
+              className="btn-close"
+              onClick={onClose}
+            ></button>
           </div>
           <div className="modal-body px-4 py-3">
             {err && (
@@ -1046,18 +1086,18 @@ function UniformFormModal({ mode, initial, onClose, onSaved }) {
               </div>
               <div className="col-md-6">
                 <label className="ms-label">
-                  Unique Key {mode === "add" ? "*" : "(read-only)"}
+                  Unique Key {mode === 'add' ? '*' : '(read-only)'}
                 </label>
                 <input
                   name="unique_key"
                   className="ms-input"
                   value={form.unique_key}
                   onChange={handleChange}
-                  disabled={mode === "edit"}
+                  disabled={mode === 'edit'}
                   placeholder="e.g. western_formal"
                   style={
-                    mode === "edit"
-                      ? { opacity: 0.6, cursor: "not-allowed" }
+                    mode === 'edit'
+                      ? { opacity: 0.6, cursor: 'not-allowed' }
                       : {}
                   }
                 />
@@ -1071,7 +1111,34 @@ function UniformFormModal({ mode, initial, onClose, onSaved }) {
                   value={form.description}
                   onChange={handleChange}
                   placeholder="Brief description..."
-                  style={{ resize: "none" }}
+                  style={{ resize: 'none' }}
+                />
+              </div>
+              <div className="col-md-6">
+                <label className="ms-label">Gender</label>
+                <select
+                  name="gender"
+                  className="ms-select"
+                  value={form.gender}
+                  onChange={handleChange}
+                >
+                  <option value="">— All / Unspecified —</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Unisex">Unisex</option>
+                </select>
+              </div>
+              <div className="col-md-6">
+                <label className="ms-label">Price (₹)</label>
+                <input
+                  name="price"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  className="ms-input"
+                  value={form.price}
+                  onChange={handleChange}
+                  placeholder="0.00"
                 />
               </div>
               <div className="col-12">
@@ -1088,7 +1155,7 @@ function UniformFormModal({ mode, initial, onClose, onSaved }) {
                     className="form-check-label fw-semibold small"
                     htmlFor="unifActiveSwitch"
                   >
-                    {form.is_active ? "Active" : "Inactive"}
+                    {form.is_active ? 'Active' : 'Inactive'}
                   </label>
                 </div>
               </div>
@@ -1097,7 +1164,7 @@ function UniformFormModal({ mode, initial, onClose, onSaved }) {
                 <div className="ms-section-rule">Images</div>
               </div>
 
-              {mode === "edit" && initial?.images?.length > 0 && (
+              {mode === 'edit' && initial?.images?.length > 0 && (
                 <div className="col-12">
                   <label className="ms-label">Existing (click to remove)</label>
                   <div className="ms-gallery-strip">
@@ -1106,7 +1173,7 @@ function UniformFormModal({ mode, initial, onClose, onSaved }) {
                         className="ms-gallery-wrap"
                         key={i}
                         onClick={() => toggleDelete(url)}
-                        style={{ cursor: "pointer" }}
+                        style={{ cursor: 'pointer' }}
                       >
                         <img
                           src={url}
@@ -1115,8 +1182,8 @@ function UniformFormModal({ mode, initial, onClose, onSaved }) {
                           style={{
                             opacity: deleteImgs.includes(url) ? 0.3 : 1,
                             border: deleteImgs.includes(url)
-                              ? "2px solid #dc3545"
-                              : "2px solid transparent",
+                              ? '2px solid #dc3545'
+                              : '2px solid transparent',
                           }}
                         />
                         {deleteImgs.includes(url) && (
@@ -1135,8 +1202,15 @@ function UniformFormModal({ mode, initial, onClose, onSaved }) {
                   <label className="ms-label">New (staged)</label>
                   <div className="ms-gallery-strip">
                     {imagePreviews.map((src, i) => (
-                      <div className="ms-gallery-wrap" key={i}>
-                        <img src={src} className="ms-gallery-thumb" alt="" />
+                      <div
+                        className="ms-gallery-wrap"
+                        key={i}
+                      >
+                        <img
+                          src={src}
+                          className="ms-gallery-thumb"
+                          alt=""
+                        />
                         <button
                           className="ms-gallery-del"
                           onClick={() => removeStaged(i)}
@@ -1188,7 +1262,7 @@ function UniformFormModal({ mode, initial, onClose, onSaved }) {
               ) : (
                 <>
                   <i className="bi bi-check-lg me-2"></i>
-                  {mode === "add" ? "Create" : "Save Changes"}
+                  {mode === 'add' ? 'Create' : 'Save Changes'}
                 </>
               )}
             </button>
@@ -1204,7 +1278,7 @@ function UniformViewModal({ item, onClose, onEdit }) {
   return (
     <div
       className="modal d-block"
-      style={{ background: "rgba(0,0,0,.5)", zIndex: 1055 }}
+      style={{ background: 'rgba(0,0,0,.5)', zIndex: 1055 }}
     >
       <div className="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
         <div
@@ -1213,7 +1287,10 @@ function UniformViewModal({ item, onClose, onEdit }) {
         >
           <div className="modal-header border-0 px-4 pt-4 pb-2">
             <h5 className="fw-bold mb-0">{item.category_name}</h5>
-            <button className="btn-close" onClick={onClose}></button>
+            <button
+              className="btn-close"
+              onClick={onClose}
+            ></button>
           </div>
           <div className="modal-body px-4 py-3">
             <div className="row g-3 mb-3">
@@ -1225,20 +1302,33 @@ function UniformViewModal({ item, onClose, onEdit }) {
                 <span className="ms-label d-block">Status</span>
                 <span
                   className={
-                    item.is_active ? "ms-badge-active" : "ms-badge-inactive"
+                    item.is_active ? 'ms-badge-active' : 'ms-badge-inactive'
                   }
                 >
-                  {item.is_active ? "Active" : "Inactive"}
+                  {item.is_active ? 'Active' : 'Inactive'}
                 </span>
               </div>
               <div className="col-md-4">
                 <span className="ms-label d-block">Created</span>
                 <span className="fw-semibold">{fmtDate(item.created_at)}</span>
               </div>
+              <div className="col-md-6">
+                <span className="ms-label d-block">Gender</span>
+                <span className="fw-semibold">{item.gender || '—'}</span>
+              </div>
+              <div className="col-md-6">
+                <span className="ms-label d-block">Price</span>
+                <span className="fw-semibold">
+                  {item.price > 0 ? `₹${item.price}` : '—'}
+                </span>
+              </div>
               {item.description && (
                 <div className="col-12">
                   <span className="ms-label d-block">Description</span>
-                  <p className="mb-0" style={{ fontSize: ".9rem" }}>
+                  <p
+                    className="mb-0"
+                    style={{ fontSize: '.9rem' }}
+                  >
                     {item.description}
                   </p>
                 </div>
@@ -1251,14 +1341,17 @@ function UniformViewModal({ item, onClose, onEdit }) {
                 </div>
                 <div className="row g-2">
                   {item.images.map((url, i) => (
-                    <div className="col-4 col-md-3" key={i}>
+                    <div
+                      className="col-4 col-md-3"
+                      key={i}
+                    >
                       <img
                         src={url}
                         alt=""
                         style={{
-                          width: "100%",
+                          width: '100%',
                           height: 90,
-                          objectFit: "cover",
+                          objectFit: 'cover',
                           borderRadius: 8,
                         }}
                       />
@@ -1269,10 +1362,16 @@ function UniformViewModal({ item, onClose, onEdit }) {
             )}
           </div>
           <div className="modal-footer border-0 px-4 pb-4 pt-2 d-flex gap-2">
-            <button className="btn btn-light flex-fill" onClick={onClose}>
+            <button
+              className="btn btn-light flex-fill"
+              onClick={onClose}
+            >
               Close
             </button>
-            <button className="btn btn-primary flex-fill" onClick={onEdit}>
+            <button
+              className="btn btn-primary flex-fill"
+              onClick={onEdit}
+            >
               <i className="bi bi-pencil me-2"></i>Edit
             </button>
           </div>
@@ -1296,7 +1395,7 @@ function SubscriptionPanel({ showToast }) {
     (async () => {
       try {
         const res = await listPlans();
-        const fetched = Array.isArray(res.data.data) ? res.data.data : [];
+        const fetched = res.data.data;
         setPlans(fetched);
         const d = {};
         fetched.forEach((p) => {
@@ -1334,7 +1433,7 @@ function SubscriptionPanel({ showToast }) {
 
   const handleSave = async (planName) => {
     setSaving((prev) => ({ ...prev, [planName]: true }));
-    setErrors((prev) => ({ ...prev, [planName]: "" }));
+    setErrors((prev) => ({ ...prev, [planName]: '' }));
     try {
       const d = drafts[planName];
       const res = await updatePlan(planName, {
@@ -1354,7 +1453,7 @@ function SubscriptionPanel({ showToast }) {
     } catch (err) {
       setErrors((prev) => ({
         ...prev,
-        [planName]: err.response?.data?.message || "Save failed.",
+        [planName]: err.response?.data?.message || 'Save failed.',
       }));
     } finally {
       setSaving((prev) => ({ ...prev, [planName]: false }));
@@ -1382,7 +1481,10 @@ function SubscriptionPanel({ showToast }) {
           const isSav = saving[planName];
           const err = errors[planName];
           return (
-            <div className="col-md-6 col-lg-4" key={planName}>
+            <div
+              className="col-md-6 col-lg-4"
+              key={planName}
+            >
               <div
                 className="plan-card"
                 style={{ background: cfg.bg, borderColor: cfg.border }}
@@ -1405,7 +1507,7 @@ function SubscriptionPanel({ showToast }) {
                           onChange={(e) =>
                             handleDraftChange(
                               planName,
-                              "isFree",
+                              'isFree',
                               e.target.checked,
                             )
                           }
@@ -1429,7 +1531,7 @@ function SubscriptionPanel({ showToast }) {
                 {err && (
                   <div
                     className="alert alert-danger py-1 px-2 mb-2"
-                    style={{ fontSize: ".8rem" }}
+                    style={{ fontSize: '.8rem' }}
                   >
                     {err}
                   </div>
@@ -1437,7 +1539,10 @@ function SubscriptionPanel({ showToast }) {
 
                 <div className="row g-2 mb-3">
                   <div className="col-6">
-                    <label className="ms-label" style={{ color: cfg.color }}>
+                    <label
+                      className="ms-label"
+                      style={{ color: cfg.color }}
+                    >
                       Monthly (₹)
                     </label>
                     <input
@@ -1449,20 +1554,23 @@ function SubscriptionPanel({ showToast }) {
                       onChange={(e) =>
                         handleDraftChange(
                           planName,
-                          "monthlyPrice",
+                          'monthlyPrice',
                           e.target.value,
                         )
                       }
                       disabled={draft.isFree}
                       style={
                         draft.isFree
-                          ? { opacity: 0.5, cursor: "not-allowed" }
+                          ? { opacity: 0.5, cursor: 'not-allowed' }
                           : {}
                       }
                     />
                   </div>
                   <div className="col-6">
-                    <label className="ms-label" style={{ color: cfg.color }}>
+                    <label
+                      className="ms-label"
+                      style={{ color: cfg.color }}
+                    >
                       Yearly (₹)
                     </label>
                     <input
@@ -1474,14 +1582,14 @@ function SubscriptionPanel({ showToast }) {
                       onChange={(e) =>
                         handleDraftChange(
                           planName,
-                          "yearlyPrice",
+                          'yearlyPrice',
                           e.target.value,
                         )
                       }
                       disabled={draft.isFree}
                       style={
                         draft.isFree
-                          ? { opacity: 0.5, cursor: "not-allowed" }
+                          ? { opacity: 0.5, cursor: 'not-allowed' }
                           : {}
                       }
                     />
@@ -1497,7 +1605,7 @@ function SubscriptionPanel({ showToast }) {
                     onChange={(e) =>
                       handleDraftChange(
                         planName,
-                        "prioritySupport",
+                        'prioritySupport',
                         e.target.checked,
                       )
                     }
@@ -1515,8 +1623,8 @@ function SubscriptionPanel({ showToast }) {
                   className="btn btn-sm w-100 fw-bold"
                   style={{
                     background: cfg.color,
-                    color: "#fff",
-                    border: "none",
+                    color: '#fff',
+                    border: 'none',
                     borderRadius: 8,
                   }}
                   onClick={() => handleSave(planName)}
@@ -1546,11 +1654,11 @@ function SubscriptionPanel({ showToast }) {
 // PAYMENT PANEL
 // ══════════════════════════════════════════════════════════════
 function PaymentPanel({ showToast }) {
-  const [pct, setPct] = useState("");
+  const [pct, setPct] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [lastUpd, setLastUpd] = useState(null);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
 
   useEffect(() => {
     (async () => {
@@ -1571,17 +1679,17 @@ function PaymentPanel({ showToast }) {
   const handleSave = async () => {
     const val = parseFloat(pct);
     if (isNaN(val) || val < 0 || val > 100) {
-      setError("Please enter a valid percentage between 0 and 100.");
+      setError('Please enter a valid percentage between 0 and 100.');
       return;
     }
     setSaving(true);
-    setError("");
+    setError('');
     try {
       const res = await updatePaymentTerms({ advancePercentage: val });
       setLastUpd(res.data.data.lastUpdatedAt);
-      showToast("Payment terms updated!");
+      showToast('Payment terms updated!');
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to save.");
+      setError(err.response?.data?.message || 'Failed to save.');
     } finally {
       setSaving(false);
     }
@@ -1597,14 +1705,20 @@ function PaymentPanel({ showToast }) {
   const numPct = parseFloat(pct) || 0;
 
   return (
-    <div className="ms-card" style={{ maxWidth: 560 }}>
+    <div
+      className="ms-card"
+      style={{ maxWidth: 560 }}
+    >
       <div className="ms-card-hd">
         <h5>
           <i className="bi bi-credit-card me-2 text-primary"></i>Payment Terms
         </h5>
       </div>
       <div className="ms-card-bd">
-        <p className="text-muted mb-4" style={{ fontSize: ".9rem" }}>
+        <p
+          className="text-muted mb-4"
+          style={{ fontSize: '.9rem' }}
+        >
           Set the advance payment percentage required when a client books an
           event. The remaining balance is due as per agreement.
         </p>
@@ -1615,7 +1729,7 @@ function PaymentPanel({ showToast }) {
         <div className="text-center mb-4">
           <label
             className="ms-label d-block mb-3 text-center"
-            style={{ fontSize: ".8rem" }}
+            style={{ fontSize: '.8rem' }}
           >
             Advance Payment Required (%)
           </label>
@@ -1631,33 +1745,36 @@ function PaymentPanel({ showToast }) {
               placeholder="0"
             />
             <span
-              style={{ fontSize: "2rem", fontWeight: 800, color: "#9aa3af" }}
+              style={{ fontSize: '2rem', fontWeight: 800, color: '#9aa3af' }}
             >
               %
             </span>
           </div>
           {/* Visual bar */}
-          <div className="mt-3 mx-auto" style={{ maxWidth: 320 }}>
+          <div
+            className="mt-3 mx-auto"
+            style={{ maxWidth: 320 }}
+          >
             <div className="d-flex justify-content-between mb-1">
               <small className="text-muted">Advance</small>
               <small className="text-muted">On Completion</small>
             </div>
             <div
               style={{
-                background: "#f0f2f5",
+                background: '#f0f2f5',
                 borderRadius: 20,
                 height: 14,
-                overflow: "hidden",
-                border: "1px solid #e0e3ea",
+                overflow: 'hidden',
+                border: '1px solid #e0e3ea',
               }}
             >
               <div
                 style={{
                   width: `${Math.min(numPct, 100)}%`,
-                  background: "linear-gradient(90deg,#435ebe,#6979f8)",
-                  height: "100%",
+                  background: 'linear-gradient(90deg,#435ebe,#6979f8)',
+                  height: '100%',
                   borderRadius: 20,
-                  transition: "width .4s ease",
+                  transition: 'width .4s ease',
                 }}
               ></div>
             </div>
@@ -1673,23 +1790,23 @@ function PaymentPanel({ showToast }) {
         {/* Info box */}
         <div
           className="p-3 rounded-3 mb-4"
-          style={{ background: "#f0f4ff", border: "1px solid #d0d8f5" }}
+          style={{ background: '#f0f4ff', border: '1px solid #d0d8f5' }}
         >
           <div className="d-flex gap-3 align-items-start">
             <i className="bi bi-info-circle text-primary mt-1"></i>
-            <div style={{ fontSize: ".85rem", color: "#4a5568" }}>
+            <div style={{ fontSize: '.85rem', color: '#4a5568' }}>
               Example: For an event worth <strong>₹1,00,000</strong>, the client
-              pays{" "}
+              pays{' '}
               <strong>
-                ₹{Math.round((100000 * numPct) / 100).toLocaleString("en-IN")}
-              </strong>{" "}
-              upfront and{" "}
+                ₹{Math.round((100000 * numPct) / 100).toLocaleString('en-IN')}
+              </strong>{' '}
+              upfront and{' '}
               <strong>
                 ₹
                 {Math.round((100000 * (100 - numPct)) / 100).toLocaleString(
-                  "en-IN",
+                  'en-IN',
                 )}
-              </strong>{" "}
+              </strong>{' '}
               on completion.
             </div>
           </div>
@@ -1715,7 +1832,7 @@ function PaymentPanel({ showToast }) {
         {lastUpd && (
           <p
             className="text-center text-muted mt-3 mb-0"
-            style={{ fontSize: ".78rem" }}
+            style={{ fontSize: '.78rem' }}
           >
             <i className="bi bi-clock me-1"></i>Last updated: {fmtDate(lastUpd)}
           </p>
@@ -1732,7 +1849,7 @@ function ConfirmDeleteModal({ title, message, onConfirm, onClose, loading }) {
   return (
     <div
       className="modal d-block"
-      style={{ background: "rgba(0,0,0,.5)", zIndex: 1060 }}
+      style={{ background: 'rgba(0,0,0,.5)', zIndex: 1060 }}
     >
       <div
         className="modal-dialog modal-dialog-centered"
@@ -1750,7 +1867,10 @@ function ConfirmDeleteModal({ title, message, onConfirm, onClose, loading }) {
               <i className="bi bi-trash text-danger fs-3"></i>
             </div>
             <h5 className="fw-bold mb-2">{title}</h5>
-            <p className="text-muted mb-0" style={{ fontSize: ".9rem" }}>
+            <p
+              className="text-muted mb-0"
+              style={{ fontSize: '.9rem' }}
+            >
               {message}
             </p>
           </div>
@@ -1784,6 +1904,3 @@ function ConfirmDeleteModal({ title, message, onConfirm, onClose, loading }) {
     </div>
   );
 }
-
-
-
