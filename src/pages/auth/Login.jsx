@@ -3,34 +3,34 @@
 // Admin login — email + password, direct token issuance.
 // No OTP step for admin web panel.
 
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { adminLogin } from "../../api/AuthApi";
-import { useAuth } from "../../auth/AuthContext";
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { adminLogin } from '../../api/AuthApi';
+import { useAuth } from '../../auth/AuthContext';
 
 const Login = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
+    setError('');
 
     if (!email.trim() || !password.trim()) {
-      setError("Email and password are required");
+      setError('Email and password are required');
       return;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError("Please enter a valid email address");
+      setError('Please enter a valid email address');
       return;
     }
     if (password.length < 6) {
-      setError("Password must be at least 6 characters");
+      setError('Password must be at least 6 characters');
       return;
     }
 
@@ -40,9 +40,9 @@ const Login = () => {
       const { access_token, refresh_token, user } = response.data.data;
 
       login({ access_token, refresh_token }, user);
-      navigate("/admin", { replace: true });
+      navigate('/admin', { replace: true });
     } catch (err) {
-      const msg = err.response?.data?.message || "Invalid email or password.";
+      const msg = err.response?.data?.message || 'Invalid email or password.';
       setError(msg);
     } finally {
       setLoading(false);
@@ -53,7 +53,10 @@ const Login = () => {
     <div style={styles.page}>
       <div style={styles.card}>
         <div className="text-center mb-4">
-          <h2 style={styles.title} className="text-primary">
+          <h2
+            style={styles.title}
+            className="text-primary"
+          >
             Nuvo Admin
           </h2>
           <small className="text-muted">Sign in to your account</small>
@@ -103,13 +106,16 @@ const Login = () => {
                 Signing in...
               </>
             ) : (
-              "Sign In"
+              'Sign In'
             )}
           </button>
 
           <p className="text-center mt-3 mb-0">
-            Don't have an account?{" "}
-            <Link to="/register" className="text-primary">
+            Don't have an account?{' '}
+            <Link
+              to="/admin/register"
+              className="text-primary"
+            >
               Register
             </Link>
           </p>
@@ -123,22 +129,22 @@ export default Login;
 
 const styles = {
   page: {
-    fontFamily: "Nunito, sans-serif",
-    background: "#f2f7ff",
-    height: "100vh",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
+    fontFamily: 'Nunito, sans-serif',
+    background: '#f2f7ff',
+    height: '100vh',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   card: {
-    width: "400px",
-    background: "#fff",
-    padding: "35px 40px",
-    borderRadius: "12px",
-    boxShadow: "0 0 20px rgba(0,0,0,0.08)",
+    width: '400px',
+    background: '#fff',
+    padding: '35px 40px',
+    borderRadius: '12px',
+    boxShadow: '0 0 20px rgba(0,0,0,0.08)',
   },
   title: {
     fontWeight: 800,
-    fontSize: "28px",
+    fontSize: '28px',
   },
 };

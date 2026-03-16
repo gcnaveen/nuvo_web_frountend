@@ -744,7 +744,9 @@ export default function Events() {
                             <td className="text-end pe-4">
                               <button
                                 className="btn btn-sm btn-outline-primary"
-                                onClick={() => navigate(`/events/${ev.id}`)}
+                                onClick={() =>
+                                  navigate(`/admin/events/${ev.id}`)
+                                }
                               >
                                 <i className="bi bi-eye me-1"></i>View
                               </button>
@@ -926,7 +928,7 @@ export default function Events() {
                             className="btn btn-sm btn-outline-primary"
                             onClick={() => {
                               setDayModal(null);
-                              navigate(`/events/${ev.id}`);
+                              navigate(`/admin/events/${ev.id}`);
                             }}
                           >
                             Details

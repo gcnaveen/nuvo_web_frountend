@@ -501,7 +501,7 @@ export default function EventDetails() {
     setDeleting(true);
     try {
       await deleteEvent(id);
-      navigate('/events', { replace: true });
+      navigate('/admin/events', { replace: true });
     } catch (e) {
       showToast(e.response?.data?.message || 'Delete failed.', 'danger');
       setDeleting(false);
@@ -612,7 +612,7 @@ export default function EventDetails() {
       <div className="page-content">
         <button
           className="btn btn-light shadow-sm mb-4"
-          onClick={() => navigate('/events')}
+          onClick={() => navigate('/admin/events')}
         >
           <i className="bi bi-arrow-left me-1"></i>Back
         </button>
@@ -668,7 +668,7 @@ export default function EventDetails() {
           <div className="d-flex align-items-center gap-3">
             <button
               className="btn btn-light shadow-sm"
-              onClick={() => navigate('/events')}
+              onClick={() => navigate('/admin/events')}
             >
               <i className="bi bi-arrow-left me-1"></i>Events
             </button>
@@ -689,7 +689,7 @@ export default function EventDetails() {
                   <i className="bi bi-people me-1"></i>Allocate Staff
                 </button>
                 <Link
-                  to={`/events/${id}/track`}
+                  to={`/admin/events/${id}/track`}
                   className="btn btn-outline-dark"
                 >
                   <i className="bi bi-geo-alt me-1"></i>Track Live
@@ -1502,7 +1502,7 @@ export default function EventDetails() {
                   <button
                     className="btn btn-light btn-sm mt-3 w-100"
                     onClick={() =>
-                      navigate(`/clients/${event.client.profile_id}`)
+                      navigate(`/admin/clients/${event.client.profile_id}`)
                     }
                   >
                     View Full Profile
@@ -1605,7 +1605,7 @@ export default function EventDetails() {
                   <i className="bi bi-people me-2"></i>Allocate Staff
                 </button>
                 <Link
-                  to={`/events/${id}/track`}
+                  to={`/admin/events/${id}/track`}
                   className="btn btn-outline-dark w-100"
                 >
                   <i className="bi bi-geo-alt me-2"></i>Track Live Event

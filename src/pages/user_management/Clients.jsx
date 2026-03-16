@@ -1,31 +1,31 @@
 // src/pages/user_management/Clients.jsx
 
-import React, { useState, useEffect, useCallback, useRef } from "react";
-import { useNavigate } from "react-router-dom";
-import { listClients, createClient, deleteClient } from "../../api/clientApi";
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { listClients, createClient, deleteClient } from '../../api/clientApi';
 
 const PLAN_CONFIG = {
-  PLATINUM: { label: "Platinum", color: "#8E24AA", textColor: "#fff" },
-  DIAMOND: { label: "Diamond", color: "#1E88E5", textColor: "#fff" },
-  GOLD: { label: "Gold", color: "#D4AF37", textColor: "#000" },
-  SILVER: { label: "Silver", color: "#B0BEC5", textColor: "#000" },
-  BRONZE: { label: "Bronze", color: "#CD7F32", textColor: "#fff" },
+  PLATINUM: { label: 'Platinum', color: '#8E24AA', textColor: '#fff' },
+  DIAMOND: { label: 'Diamond', color: '#1E88E5', textColor: '#fff' },
+  GOLD: { label: 'Gold', color: '#D4AF37', textColor: '#000' },
+  SILVER: { label: 'Silver', color: '#B0BEC5', textColor: '#000' },
+  BRONZE: { label: 'Bronze', color: '#CD7F32', textColor: '#fff' },
 };
 
 const STATUS_BADGE = {
-  ACTIVE: "success",
-  INACTIVE: "secondary",
-  BLOCKED: "danger",
+  ACTIVE: 'success',
+  INACTIVE: 'secondary',
+  BLOCKED: 'danger',
 };
 
 const EMPTY_FORM = {
-  full_name: "",
-  email: "",
-  phone_number: "",
-  state: "",
-  city: "",
-  country: "India",
-  subscription_plan: "SILVER",
+  full_name: '',
+  email: '',
+  phone_number: '',
+  state: '',
+  city: '',
+  country: 'India',
+  subscription_plan: 'SILVER',
 };
 
 // ── Google Maps loader (singleton) ────────────────────────────
@@ -37,7 +37,7 @@ function loadGoogleMaps() {
       resolve(window.google.maps);
       return;
     }
-    const script = document.createElement("script");
+    const script = document.createElement('script');
     script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_KEY}&libraries=places`;
     script.async = true;
     script.onload = () => resolve(window.google.maps);
@@ -60,28 +60,28 @@ export default function Clients() {
   });
   const [cities, setCities] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
 
   // ── Filter state ───────────────────────────────────────────
-  const [search, setSearch] = useState("");
-  const [city, setCity] = useState("");
-  const [planFilter, setPlanFilter] = useState("");
-  const [status, setStatus] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [search, setSearch] = useState('');
+  const [city, setCity] = useState('');
+  const [planFilter, setPlanFilter] = useState('');
+  const [status, setStatus] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [page, setPage] = useState(1);
 
   // ── Add Client modal state ─────────────────────────────────
   const [form, setForm] = useState(EMPTY_FORM);
-  const [formError, setFormError] = useState("");
-  const [formSuccess, setFormSuccess] = useState("");
+  const [formError, setFormError] = useState('');
+  const [formSuccess, setFormSuccess] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   // ── Delete state ───────────────────────────────────────────
   const [deleteTarget, setDeleteTarget] = useState(null); // { id, name }
   const [deleting, setDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState("");
-  const [toast, setToast] = useState("");
+  const [deleteError, setDeleteError] = useState('');
+  const [toast, setToast] = useState('');
 
   // ── State/City Google Places state ────────────────────────
   const [stateSuggestions, setStateSuggestions] = useState([]);
@@ -93,7 +93,7 @@ export default function Clients() {
   // ── Fetch clients ──────────────────────────────────────────
   const fetchClients = useCallback(async () => {
     setLoading(true);
-    setError("");
+    setError('');
     try {
       const params = { page, page_size: 10 };
       if (search) params.search = search;
@@ -123,7 +123,7 @@ export default function Clients() {
         if (uniqueCities.length > 0) setCities(uniqueCities);
       }
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to load clients.");
+      setError(err.response?.data?.message || 'Failed to load clients.');
     } finally {
       setLoading(false);
     }
@@ -144,7 +144,7 @@ export default function Clients() {
   // ── State autocomplete ─────────────────────────────────────
   const handleStateInput = (e) => {
     const val = e.target.value;
-    setForm((prev) => ({ ...prev, state: val, city: "" }));
+    setForm((prev) => ({ ...prev, state: val, city: '' }));
     setCitiesForState([]);
 
     clearTimeout(stateDebounceRef.current);
@@ -160,8 +160,8 @@ export default function Clients() {
         service.getPlacePredictions(
           {
             input: val,
-            types: ["administrative_area_level_1"],
-            componentRestrictions: { country: "in" },
+            types: ['administrative_area_level_1'],
+            componentRestrictions: { country: 'in' },
           },
           (predictions, status) => {
             if (status === maps.places.PlacesServiceStatus.OK && predictions) {
@@ -183,7 +183,7 @@ export default function Clients() {
   };
 
   const selectState = (suggestion) => {
-    setForm((prev) => ({ ...prev, state: suggestion.mainText, city: "" }));
+    setForm((prev) => ({ ...prev, state: suggestion.mainText, city: '' }));
     setShowStateSug(false);
     setStateSuggestions([]);
     // Fetch cities for the selected state
@@ -194,8 +194,8 @@ export default function Clients() {
       service.getPlacePredictions(
         {
           input: suggestion.mainText,
-          types: ["(cities)"],
-          componentRestrictions: { country: "in" },
+          types: ['(cities)'],
+          componentRestrictions: { country: 'in' },
         },
         (predictions, status) => {
           setLoadingCities(false);
@@ -217,19 +217,19 @@ export default function Clients() {
   };
 
   const validateForm = () => {
-    if (!form.full_name.trim()) return "Full name is required";
-    if (!form.email.trim()) return "Email is required";
+    if (!form.full_name.trim()) return 'Full name is required';
+    if (!form.email.trim()) return 'Email is required';
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
-      return "Invalid email address";
-    if (!form.phone_number.trim()) return "Phone number is required";
-    if (!/^\d{10}$/.test(form.phone_number)) return "Phone must be 10 digits";
+      return 'Invalid email address';
+    if (!form.phone_number.trim()) return 'Phone number is required';
+    if (!/^\d{10}$/.test(form.phone_number)) return 'Phone must be 10 digits';
     return null;
   };
 
   const handleAddClient = async (e) => {
     e.preventDefault();
-    setFormError("");
-    setFormSuccess("");
+    setFormError('');
+    setFormSuccess('');
     const err = validateForm();
     if (err) {
       setFormError(err);
@@ -238,24 +238,24 @@ export default function Clients() {
     setSubmitting(true);
     try {
       await createClient(form);
-      setFormSuccess("Client created successfully!");
+      setFormSuccess('Client created successfully!');
       setForm(EMPTY_FORM);
       setCitiesForState([]);
       fetchClients();
       setTimeout(() => {
-        setFormSuccess("");
-        document.getElementById("addClientModalClose")?.click();
+        setFormSuccess('');
+        document.getElementById('addClientModalClose')?.click();
       }, 1500);
     } catch (err) {
-      setFormError(err.response?.data?.message || "Failed to create client.");
+      setFormError(err.response?.data?.message || 'Failed to create client.');
     } finally {
       setSubmitting(false);
     }
   };
 
   const closeModal = () => {
-    setFormError("");
-    setFormSuccess("");
+    setFormError('');
+    setFormSuccess('');
     setForm(EMPTY_FORM);
     setCitiesForState([]);
     setStateSuggestions([]);
@@ -265,37 +265,37 @@ export default function Clients() {
   // ── Delete handlers ────────────────────────────────────────
   const showToast = (msg) => {
     setToast(msg);
-    setTimeout(() => setToast(""), 3000);
+    setTimeout(() => setToast(''), 3000);
   };
 
   const confirmDelete = (client) => {
     setDeleteTarget({ id: client.id, name: client.full_name });
-    setDeleteError("");
+    setDeleteError('');
   };
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
     setDeleting(true);
-    setDeleteError("");
+    setDeleteError('');
     try {
       await deleteClient(deleteTarget.id);
       setDeleteTarget(null);
       fetchClients();
       showToast(`${deleteTarget.name} has been deleted.`);
     } catch (err) {
-      setDeleteError(err.response?.data?.message || "Failed to delete client.");
+      setDeleteError(err.response?.data?.message || 'Failed to delete client.');
     } finally {
       setDeleting(false);
     }
   };
 
   const resetFilters = () => {
-    setSearch("");
-    setCity("");
-    setPlanFilter("");
-    setStatus("");
-    setStartDate("");
-    setEndDate("");
+    setSearch('');
+    setCity('');
+    setPlanFilter('');
+    setStatus('');
+    setStartDate('');
+    setEndDate('');
     setPage(1);
   };
 
@@ -380,7 +380,10 @@ export default function Clients() {
                 >
                   <option value="">All Cities</option>
                   {cities.map((c) => (
-                    <option key={c} value={c}>
+                    <option
+                      key={c}
+                      value={c}
+                    >
                       {c}
                     </option>
                   ))}
@@ -465,17 +468,20 @@ export default function Clients() {
 
             {loading ? (
               <div className="text-center py-5">
-                <div className="spinner-border text-primary" role="status" />
+                <div
+                  className="spinner-border text-primary"
+                  role="status"
+                />
                 <p className="text-muted mt-3">Loading clients...</p>
               </div>
             ) : clients.length === 0 ? (
               <div className="text-center py-5 text-muted">
                 <i className="bi bi-people fs-1 d-block mb-2"></i>
-                No clients found.{" "}
+                No clients found.{' '}
                 {hasFilters && (
                   <span
                     className="text-primary"
-                    style={{ cursor: "pointer" }}
+                    style={{ cursor: 'pointer' }}
                     onClick={resetFilters}
                   >
                     Clear filters
@@ -514,11 +520,11 @@ export default function Clients() {
                                     width: 40,
                                     height: 40,
                                     flexShrink: 0,
-                                    background: "#435ebe",
+                                    background: '#435ebe',
                                     fontSize: 14,
                                   }}
                                 >
-                                  {(client.full_name || "?")[0].toUpperCase()}
+                                  {(client.full_name || '?')[0].toUpperCase()}
                                 </div>
                                 <div>
                                   <div className="fw-bold text-primary">
@@ -530,14 +536,14 @@ export default function Clients() {
                                 </div>
                               </div>
                             </td>
-                            <td>{client.phone_number || "—"}</td>
-                            <td>{client.city || "—"}</td>
+                            <td>{client.phone_number || '—'}</td>
+                            <td>{client.city || '—'}</td>
                             <td>
                               {client.joined_date
                                 ? new Date(
                                     client.joined_date,
-                                  ).toLocaleDateString("en-IN")
-                                : "—"}
+                                  ).toLocaleDateString('en-IN')
+                                : '—'}
                             </td>
                             <td>
                               <span
@@ -552,7 +558,7 @@ export default function Clients() {
                             </td>
                             <td>
                               <span
-                                className={`badge bg-${STATUS_BADGE[statusKey] || "secondary"}`}
+                                className={`badge bg-${STATUS_BADGE[statusKey] || 'secondary'}`}
                               >
                                 {client.status}
                               </span>
@@ -562,7 +568,7 @@ export default function Clients() {
                                 <button
                                   className="btn btn-sm btn-outline-primary"
                                   onClick={() =>
-                                    navigate(`/clients/${client.id}`)
+                                    navigate(`/admin/clients/${client.id}`)
                                   }
                                 >
                                   <i className="bi bi-eye me-1"></i> View
@@ -591,12 +597,12 @@ export default function Clients() {
                     {Math.min(
                       pagination.page * pagination.page_size,
                       pagination.total,
-                    )}{" "}
+                    )}{' '}
                     of {pagination.total} clients
                   </small>
                   <ul className="pagination pagination-primary mb-0">
                     <li
-                      className={`page-item ${pagination.page === 1 ? "disabled" : ""}`}
+                      className={`page-item ${pagination.page === 1 ? 'disabled' : ''}`}
                     >
                       <button
                         className="page-link"
@@ -608,7 +614,7 @@ export default function Clients() {
                     {[...Array(pagination.total_pages)].map((_, i) => (
                       <li
                         key={i}
-                        className={`page-item ${pagination.page === i + 1 ? "active" : ""}`}
+                        className={`page-item ${pagination.page === i + 1 ? 'active' : ''}`}
                       >
                         <button
                           className="page-link"
@@ -619,7 +625,7 @@ export default function Clients() {
                       </li>
                     ))}
                     <li
-                      className={`page-item ${pagination.page === pagination.total_pages ? "disabled" : ""}`}
+                      className={`page-item ${pagination.page === pagination.total_pages ? 'disabled' : ''}`}
                     >
                       <button
                         className="page-link"
@@ -644,7 +650,10 @@ export default function Clients() {
         aria-hidden="true"
       >
         <div className="modal-dialog modal-lg modal-dialog-centered">
-          <div className="modal-content shadow-lg" style={{ borderRadius: 14 }}>
+          <div
+            className="modal-content shadow-lg"
+            style={{ borderRadius: 14 }}
+          >
             <div className="modal-header border-0 p-4 pb-0">
               <h5 className="fw-bold">Register New Client</h5>
               <button
@@ -666,7 +675,10 @@ export default function Clients() {
                 </div>
               )}
 
-              <form id="addClientForm" onSubmit={handleAddClient}>
+              <form
+                id="addClientForm"
+                onSubmit={handleAddClient}
+              >
                 {/* ── Account Details ── */}
                 <div className="section-title">Account Details</div>
                 <div className="row g-3 mb-2">
@@ -750,7 +762,7 @@ export default function Clients() {
                     </div>
                     <small
                       className="text-muted"
-                      style={{ fontSize: "0.75rem" }}
+                      style={{ fontSize: '0.75rem' }}
                     >
                       Type to search Indian states
                     </small>
@@ -765,7 +777,7 @@ export default function Clients() {
                         style={{ height: 38 }}
                       >
                         <span className="spinner-border spinner-border-sm"></span>
-                        <span style={{ fontSize: "0.85rem" }}>
+                        <span style={{ fontSize: '0.85rem' }}>
                           Loading cities...
                         </span>
                       </div>
@@ -779,7 +791,10 @@ export default function Clients() {
                       >
                         <option value="">— Select city —</option>
                         {citiesForState.map((c) => (
-                          <option key={c} value={c}>
+                          <option
+                            key={c}
+                            value={c}
+                          >
                             {c}
                           </option>
                         ))}
@@ -791,8 +806,8 @@ export default function Clients() {
                         className="form-control nuvo-input"
                         placeholder={
                           form.state
-                            ? "Enter city name"
-                            : "Select a state first"
+                            ? 'Enter city name'
+                            : 'Select a state first'
                         }
                         value={form.city}
                         onChange={handleFormChange}
@@ -801,15 +816,15 @@ export default function Clients() {
                     )}
                     <small
                       className="text-muted"
-                      style={{ fontSize: "0.75rem" }}
+                      style={{ fontSize: '0.75rem' }}
                     >
                       {loadingCities
-                        ? ""
+                        ? ''
                         : citiesForState.length > 0
                           ? `Cities in ${form.state}`
                           : form.state
-                            ? "No suggestions — type manually"
-                            : ""}
+                            ? 'No suggestions — type manually'
+                            : ''}
                     </small>
                   </div>
                 </div>
@@ -874,7 +889,7 @@ export default function Clients() {
                     Creating...
                   </>
                 ) : (
-                  "Register Client"
+                  'Register Client'
                 )}
               </button>
             </div>
@@ -893,7 +908,10 @@ export default function Clients() {
           className="modal-dialog modal-dialog-centered"
           style={{ maxWidth: 420 }}
         >
-          <div className="modal-content shadow-lg" style={{ borderRadius: 14 }}>
+          <div
+            className="modal-content shadow-lg"
+            style={{ borderRadius: 14 }}
+          >
             <div className="modal-body p-4 text-center">
               <div
                 className="rounded-circle bg-danger bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3"
@@ -902,8 +920,11 @@ export default function Clients() {
                 <i className="bi bi-trash text-danger fs-3"></i>
               </div>
               <h5 className="fw-bold mb-1">Delete Client?</h5>
-              <p className="text-muted mb-0" style={{ fontSize: ".9rem" }}>
-                You are about to permanently delete{" "}
+              <p
+                className="text-muted mb-0"
+                style={{ fontSize: '.9rem' }}
+              >
+                You are about to permanently delete{' '}
                 <strong>{deleteTarget?.name}</strong>. This action cannot be
                 undone.
               </p>
@@ -946,5 +967,3 @@ export default function Clients() {
     </>
   );
 }
-
-

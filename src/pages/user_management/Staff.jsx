@@ -495,7 +495,7 @@ export default function Staff() {
                                 <button
                                   className="btn btn-sm btn-outline-primary"
                                   onClick={() =>
-                                    navigate(`/staff/${member.id}`)
+                                    navigate(`/admin/staff/${member.id}`)
                                   }
                                 >
                                   <i className="bi bi-eye me-1"></i>View

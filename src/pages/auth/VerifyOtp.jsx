@@ -4,10 +4,10 @@
 // Calls POST /auth/verify-otp/ → stores tokens → navigates to dashboard.
 // Also handles resend-otp with a 60-second cooldown timer.
 
-import React, { useRef, useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "../../auth/AuthContext";
-import { verifyOtp, resendOtp } from "../../api/AuthApi";
+import React, { useRef, useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../../auth/AuthContext';
+import { verifyOtp, resendOtp } from '../../api/AuthApi';
 
 const RESEND_COOLDOWN = 60; // seconds
 
@@ -18,22 +18,22 @@ const VerifyOtp = () => {
 
   // Email passed from Login page via router state
   // (password is not part of the OTP flow — login is email + OTP only)
-  const email = location.state?.email || "";
+  const email = location.state?.email || '';
 
   const inputsRef = useRef([]);
-  const [otp, setOtp] = useState(Array(6).fill(""));
-  const [error, setError] = useState("");
+  const [otp, setOtp] = useState(Array(6).fill(''));
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   // Resend cooldown
   const [cooldown, setCooldown] = useState(0);
-  const [resendMsg, setResendMsg] = useState("");
+  const [resendMsg, setResendMsg] = useState('');
   const cooldownRef = useRef(null);
 
   // If no email in state, send back to login
   useEffect(() => {
     if (!email) {
-      navigate("/login", { replace: true });
+      navigate('/admin/login', { replace: true });
     }
     // Auto-focus first input
     inputsRef.current[0]?.focus();
@@ -61,7 +61,7 @@ const VerifyOtp = () => {
   };
 
   const handleKeyDown = (e, index) => {
-    if (e.key === "Backspace" && !otp[index] && index > 0) {
+    if (e.key === 'Backspace' && !otp[index] && index > 0) {
       inputsRef.current[index - 1]?.focus();
     }
   };
@@ -69,11 +69,11 @@ const VerifyOtp = () => {
   const handlePaste = (e) => {
     e.preventDefault();
     const pasted = e.clipboardData
-      .getData("text")
-      .replace(/\D/g, "")
+      .getData('text')
+      .replace(/\D/g, '')
       .slice(0, 6);
     const newOtp = [...otp];
-    pasted.split("").forEach((char, i) => {
+    pasted.split('').forEach((char, i) => {
       newOtp[i] = char;
     });
     setOtp(newOtp);
@@ -85,11 +85,11 @@ const VerifyOtp = () => {
   // ── Submit ─────────────────────────────────────────────────────
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
+    setError('');
 
-    const enteredOtp = otp.join("");
+    const enteredOtp = otp.join('');
     if (enteredOtp.length < 6) {
-      setError("Please enter the complete 6-digit OTP");
+      setError('Please enter the complete 6-digit OTP');
       return;
     }
 
@@ -101,13 +101,13 @@ const VerifyOtp = () => {
       // Store tokens + user in context (which also writes to localStorage)
       login({ access_token, refresh_token }, user);
 
-      navigate("/", { replace: true });
+      navigate('/admin', { replace: true });
     } catch (err) {
       const msg =
-        err.response?.data?.message || "Invalid OTP. Please try again.";
+        err.response?.data?.message || 'Invalid OTP. Please try again.';
       setError(msg);
       // Clear the OTP inputs on failure
-      setOtp(Array(6).fill(""));
+      setOtp(Array(6).fill(''));
       inputsRef.current[0]?.focus();
     } finally {
       setLoading(false);
@@ -117,18 +117,18 @@ const VerifyOtp = () => {
   // ── Resend OTP ─────────────────────────────────────────────────
   const handleResend = async () => {
     if (cooldown > 0 || !email) return;
-    setResendMsg("");
-    setError("");
+    setResendMsg('');
+    setError('');
 
     try {
       await resendOtp(email);
       setCooldown(RESEND_COOLDOWN);
-      setResendMsg("OTP resent successfully!");
-      setOtp(Array(6).fill(""));
+      setResendMsg('OTP resent successfully!');
+      setOtp(Array(6).fill(''));
       inputsRef.current[0]?.focus();
     } catch (err) {
       const msg =
-        err.response?.data?.message || "Failed to resend OTP. Try again.";
+        err.response?.data?.message || 'Failed to resend OTP. Try again.';
       setError(msg);
     }
   };
@@ -137,12 +137,15 @@ const VerifyOtp = () => {
     <div style={styles.page}>
       <div style={styles.card}>
         <div className="text-center mb-4">
-          <h2 style={styles.title} className="text-primary">
+          <h2
+            style={styles.title}
+            className="text-primary"
+          >
             Verify OTP
           </h2>
           <small className="text-muted">
-            Enter the 6-digit code sent to{" "}
-            <strong>{email || "your email"}</strong>
+            Enter the 6-digit code sent to{' '}
+            <strong>{email || 'your email'}</strong>
           </small>
         </div>
 
@@ -191,12 +194,12 @@ const VerifyOtp = () => {
                 Verifying...
               </>
             ) : (
-              "Verify & Login"
+              'Verify & Login'
             )}
           </button>
 
           <p className="text-center mt-3 mb-0">
-            Didn't receive OTP?{" "}
+            Didn't receive OTP?{' '}
             {cooldown > 0 ? (
               <span className="text-muted">
                 Resend in <strong>{cooldown}s</strong>
@@ -204,7 +207,7 @@ const VerifyOtp = () => {
             ) : (
               <span
                 className="text-primary fw-bold"
-                style={{ cursor: "pointer" }}
+                style={{ cursor: 'pointer' }}
                 onClick={handleResend}
               >
                 Resend Code
@@ -221,30 +224,30 @@ export default VerifyOtp;
 
 const styles = {
   page: {
-    fontFamily: "Nunito, sans-serif",
-    background: "#f2f7ff",
-    height: "100vh",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
+    fontFamily: 'Nunito, sans-serif',
+    background: '#f2f7ff',
+    height: '100vh',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   card: {
-    width: "420px",
-    background: "#fff",
-    padding: "35px 40px",
-    borderRadius: "12px",
-    boxShadow: "0 0 20px rgba(0,0,0,0.08)",
+    width: '420px',
+    background: '#fff',
+    padding: '35px 40px',
+    borderRadius: '12px',
+    boxShadow: '0 0 20px rgba(0,0,0,0.08)',
   },
   title: {
     fontWeight: 800,
-    fontSize: "26px",
+    fontSize: '26px',
   },
   otpInput: {
-    width: "55px",
-    height: "55px",
-    textAlign: "center",
-    fontSize: "22px",
+    width: '55px',
+    height: '55px',
+    textAlign: 'center',
+    fontSize: '22px',
     fontWeight: 700,
-    borderRadius: "10px",
+    borderRadius: '10px',
   },
 };

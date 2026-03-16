@@ -1,58 +1,58 @@
 // src/pages/user_management/ClientDetails.jsx
-import React, { useState, useEffect, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useCallback } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   getClient,
   updateSubscription,
   changeClientStatus,
   deleteClient,
-} from "../../api/clientApi";
+} from '../../api/clientApi';
 
 // ── Constants ──────────────────────────────────────────────────────────────
 const PLAN_CONFIG = {
-  PLATINUM: { label: "Platinum", color: "#8E24AA", light: "#f3e5f5" },
-  DIAMOND: { label: "Diamond", color: "#1E88E5", light: "#e3f2fd" },
-  GOLD: { label: "Gold", color: "#D4AF37", light: "#fffde7" },
-  SILVER: { label: "Silver", color: "#78909C", light: "#eceff1" },
-  BRONZE: { label: "Bronze", color: "#A1621A", light: "#fbe9e7" },
+  PLATINUM: { label: 'Platinum', color: '#8E24AA', light: '#f3e5f5' },
+  DIAMOND: { label: 'Diamond', color: '#1E88E5', light: '#e3f2fd' },
+  GOLD: { label: 'Gold', color: '#D4AF37', light: '#fffde7' },
+  SILVER: { label: 'Silver', color: '#78909C', light: '#eceff1' },
+  BRONZE: { label: 'Bronze', color: '#A1621A', light: '#fbe9e7' },
 };
 
 const STATUS_CONFIG = {
-  ACTIVE: { label: "Active", badge: "success", icon: "bi-check-circle-fill" },
+  ACTIVE: { label: 'Active', badge: 'success', icon: 'bi-check-circle-fill' },
   INACTIVE: {
-    label: "Inactive",
-    badge: "secondary",
-    icon: "bi-dash-circle-fill",
+    label: 'Inactive',
+    badge: 'secondary',
+    icon: 'bi-dash-circle-fill',
   },
-  BLOCKED: { label: "Blocked", badge: "danger", icon: "bi-x-circle-fill" },
+  BLOCKED: { label: 'Blocked', badge: 'danger', icon: 'bi-x-circle-fill' },
 };
 
-const PLANS = ["SILVER", "BRONZE", "GOLD", "PLATINUM", "DIAMOND"];
-const STATUSES = ["ACTIVE", "INACTIVE", "BLOCKED"];
+const PLANS = ['SILVER', 'BRONZE', 'GOLD', 'PLATINUM', 'DIAMOND'];
+const STATUSES = ['ACTIVE', 'INACTIVE', 'BLOCKED'];
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 const initials = (name) =>
-  (name || "?")
-    .split(" ")
+  (name || '?')
+    .split(' ')
     .slice(0, 2)
     .map((w) => w[0])
-    .join("")
+    .join('')
     .toUpperCase();
 
 const fmtDate = (d) =>
   d
-    ? new Date(d).toLocaleDateString("en-IN", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
+    ? new Date(d).toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
       })
-    : "—";
+    : '—';
 
 // ── Read-only field ────────────────────────────────────────────────────────
 const Field = ({ label, value }) => (
   <div>
     <label className="cd-field-label">{label}</label>
-    <div className="cd-field-value">{value || "—"}</div>
+    <div className="cd-field-value">{value || '—'}</div>
   </div>
 );
 
@@ -63,24 +63,24 @@ export default function ClientDetails() {
 
   const [client, setClient] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState({});
   const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState("");
-  const [saveSuccess, setSaveSuccess] = useState("");
+  const [saveError, setSaveError] = useState('');
+  const [saveSuccess, setSaveSuccess] = useState('');
   const [deleting, setDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState("");
+  const [deleteError, setDeleteError] = useState('');
 
   // ── Fetch ─────────────────────────────────────────────────────────────
   const fetchClient = useCallback(async () => {
     setLoading(true);
-    setError("");
+    setError('');
     try {
       const res = await getClient(id);
       setClient(res.data.data);
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to load client.");
+      setError(err.response?.data?.message || 'Failed to load client.');
     } finally {
       setLoading(false);
     }
@@ -96,15 +96,15 @@ export default function ClientDetails() {
       subscription_plan: client.subscription_plan,
       status: client.status,
     });
-    setSaveError("");
-    setSaveSuccess("");
+    setSaveError('');
+    setSaveSuccess('');
     setIsEditing(true);
   };
 
   const cancelEdit = () => {
     setIsEditing(false);
     setDraft({});
-    setSaveError("");
+    setSaveError('');
   };
 
   const handleDraftChange = (e) =>
@@ -113,8 +113,8 @@ export default function ClientDetails() {
   // ── Save ──────────────────────────────────────────────────────────────
   const handleSave = async () => {
     setSaving(true);
-    setSaveError("");
-    setSaveSuccess("");
+    setSaveError('');
+    setSaveSuccess('');
     try {
       const promises = [];
       if (draft.subscription_plan !== client.subscription_plan)
@@ -131,11 +131,11 @@ export default function ClientDetails() {
         subscription_plan: draft.subscription_plan,
         status: draft.status,
       }));
-      setSaveSuccess("Changes saved successfully!");
+      setSaveSuccess('Changes saved successfully!');
       setIsEditing(false);
-      setTimeout(() => setSaveSuccess(""), 3000);
+      setTimeout(() => setSaveSuccess(''), 3000);
     } catch (err) {
-      setSaveError(err.response?.data?.message || "Failed to save changes.");
+      setSaveError(err.response?.data?.message || 'Failed to save changes.');
     } finally {
       setSaving(false);
     }
@@ -144,12 +144,12 @@ export default function ClientDetails() {
   // ── Delete ────────────────────────────────────────────────────
   const handleDelete = async () => {
     setDeleting(true);
-    setDeleteError("");
+    setDeleteError('');
     try {
       await deleteClient(client.id);
-      navigate("/clients", { replace: true });
+      navigate('/admin/clients', { replace: true });
     } catch (err) {
-      setDeleteError(err.response?.data?.message || "Failed to delete client.");
+      setDeleteError(err.response?.data?.message || 'Failed to delete client.');
       setDeleting(false);
     }
   };
@@ -176,7 +176,7 @@ export default function ClientDetails() {
       <div className="page-content">
         <button
           className="btn btn-light shadow-sm mb-4"
-          onClick={() => navigate("/clients")}
+          onClick={() => navigate('/admin/clients')}
         >
           <i className="bi bi-arrow-left me-1"></i> Back
         </button>
@@ -283,12 +283,12 @@ export default function ClientDetails() {
           <div className="d-flex align-items-center gap-3">
             <button
               className="btn btn-light shadow-sm"
-              onClick={() => navigate("/clients")}
+              onClick={() => navigate('/admin/clients')}
             >
               <i className="bi bi-arrow-left me-1"></i> Clients
             </button>
             <div>
-              <h3 className="mb-0">{client.full_name || "Client Details"}</h3>
+              <h3 className="mb-0">{client.full_name || 'Client Details'}</h3>
               <p className="text-muted mb-0 small">
                 Client Profile &amp; Subscription
               </p>
@@ -305,7 +305,10 @@ export default function ClientDetails() {
                 >
                   <i className="bi bi-trash me-1"></i>Delete
                 </button>
-                <button className="btn btn-primary px-4" onClick={startEdit}>
+                <button
+                  className="btn btn-primary px-4"
+                  onClick={startEdit}
+                >
                   <i className="bi bi-pencil-square me-2"></i>Edit
                 </button>
               </>
@@ -361,7 +364,7 @@ export default function ClientDetails() {
                     className="cd-avatar"
                     style={{
                       background: plan.color,
-                      borderColor: plan.color + "55",
+                      borderColor: plan.color + '55',
                     }}
                   >
                     {initials(client.full_name)}
@@ -370,7 +373,7 @@ export default function ClientDetails() {
                     <h5 className="fw-bold mb-0">{client.full_name}</h5>
                     <div className="text-muted small">{client.email}</div>
                     <div className="text-muted small">
-                      {client.phone_number || "No phone"}
+                      {client.phone_number || 'No phone'}
                     </div>
                   </div>
                 </div>
@@ -380,7 +383,7 @@ export default function ClientDetails() {
                   <div className="col-6">
                     <div className="cd-stat">
                       <div className="cd-stat-val">
-                        {fmtDate(client.joined_date).split(" ")[2] || "—"}
+                        {fmtDate(client.joined_date).split(' ')[2] || '—'}
                       </div>
                       <div className="cd-stat-lbl">Since</div>
                     </div>
@@ -389,9 +392,9 @@ export default function ClientDetails() {
                     <div className="cd-stat">
                       <div
                         className="cd-stat-val"
-                        style={{ fontSize: "0.85rem" }}
+                        style={{ fontSize: '0.85rem' }}
                       >
-                        {client.city || "—"}
+                        {client.city || '—'}
                       </div>
                       <div className="cd-stat-lbl">City</div>
                     </div>
@@ -409,7 +412,7 @@ export default function ClientDetails() {
                 >
                   <span
                     className="cd-pill"
-                    style={{ background: plan.color, color: "#fff" }}
+                    style={{ background: plan.color, color: '#fff' }}
                   >
                     <i className="bi bi-gem"></i>
                     {plan.label}
@@ -418,12 +421,15 @@ export default function ClientDetails() {
                     <select
                       name="subscription_plan"
                       className="cd-select"
-                      style={{ width: "auto", flex: 1, marginLeft: 8 }}
+                      style={{ width: 'auto', flex: 1, marginLeft: 8 }}
                       value={draft.subscription_plan}
                       onChange={handleDraftChange}
                     >
                       {PLANS.map((p) => (
-                        <option key={p} value={p}>
+                        <option
+                          key={p}
+                          value={p}
+                        >
                           {PLAN_CONFIG[p]?.label || p}
                         </option>
                       ))}
@@ -436,7 +442,7 @@ export default function ClientDetails() {
                 <div className="d-flex align-items-center justify-content-between gap-2">
                   <span
                     className={`badge bg-${statusCfg.badge} px-3 py-2`}
-                    style={{ fontSize: "0.8rem" }}
+                    style={{ fontSize: '0.8rem' }}
                   >
                     <i className={`bi ${statusCfg.icon} me-1`}></i>
                     {statusCfg.label}
@@ -445,12 +451,15 @@ export default function ClientDetails() {
                     <select
                       name="status"
                       className="cd-select"
-                      style={{ width: "auto", flex: 1, marginLeft: 8 }}
+                      style={{ width: 'auto', flex: 1, marginLeft: 8 }}
                       value={draft.status}
                       onChange={handleDraftChange}
                     >
                       {STATUSES.map((s) => (
-                        <option key={s} value={s}>
+                        <option
+                          key={s}
+                          value={s}
+                        >
                           {STATUS_CONFIG[s]?.label || s}
                         </option>
                       ))}
@@ -469,16 +478,28 @@ export default function ClientDetails() {
               <div className="cd-card-bd">
                 <div className="row g-3">
                   <div className="col-12">
-                    <Field label="Profile ID" value={client.id} />
+                    <Field
+                      label="Profile ID"
+                      value={client.id}
+                    />
                   </div>
                   <div className="col-12">
-                    <Field label="Joined" value={fmtDate(client.joined_date)} />
+                    <Field
+                      label="Joined"
+                      value={fmtDate(client.joined_date)}
+                    />
                   </div>
                   <div className="col-12">
-                    <Field label="Country" value={client.country} />
+                    <Field
+                      label="Country"
+                      value={client.country}
+                    />
                   </div>
                   <div className="col-12">
-                    <Field label="State" value={client.state} />
+                    <Field
+                      label="State"
+                      value={client.state}
+                    />
                   </div>
                 </div>
               </div>
@@ -496,36 +517,54 @@ export default function ClientDetails() {
               <div className="cd-card-bd">
                 <div className="row g-4">
                   <div className="col-md-6">
-                    <Field label="Full Name" value={client.full_name} />
+                    <Field
+                      label="Full Name"
+                      value={client.full_name}
+                    />
                   </div>
                   <div className="col-md-6">
-                    <Field label="Email Address" value={client.email} />
+                    <Field
+                      label="Email Address"
+                      value={client.email}
+                    />
                   </div>
                   <div className="col-md-6">
-                    <Field label="Phone Number" value={client.phone_number} />
+                    <Field
+                      label="Phone Number"
+                      value={client.phone_number}
+                    />
                   </div>
                   <div className="col-md-6">
-                    <Field label="City" value={client.city} />
+                    <Field
+                      label="City"
+                      value={client.city}
+                    />
                   </div>
                   <div className="col-md-6">
-                    <Field label="State" value={client.state} />
+                    <Field
+                      label="State"
+                      value={client.state}
+                    />
                   </div>
                   <div className="col-md-6">
-                    <Field label="Country" value={client.country} />
+                    <Field
+                      label="Country"
+                      value={client.country}
+                    />
                   </div>
                 </div>
 
                 <div
                   className="d-flex align-items-center gap-2 mt-4 p-3 rounded-3"
                   style={{
-                    background: "#f8f9fc",
-                    fontSize: "0.81rem",
-                    color: "#6b7280",
+                    background: '#f8f9fc',
+                    fontSize: '0.81rem',
+                    color: '#6b7280',
                   }}
                 >
                   <i className="bi bi-info-circle text-primary"></i>
-                  Name, email, and phone are set by the client's account. Only{" "}
-                  <strong className="ms-1 me-1">plan</strong> and{" "}
+                  Name, email, and phone are set by the client's account. Only{' '}
+                  <strong className="ms-1 me-1">plan</strong> and{' '}
                   <strong>status</strong> can be edited here.
                 </div>
               </div>
@@ -549,7 +588,10 @@ export default function ClientDetails() {
                         onChange={handleDraftChange}
                       >
                         {PLANS.map((p) => (
-                          <option key={p} value={p}>
+                          <option
+                            key={p}
+                            value={p}
+                          >
                             {PLAN_CONFIG[p]?.label || p}
                           </option>
                         ))}
@@ -558,7 +600,7 @@ export default function ClientDetails() {
                       <div className="cd-field-value">
                         <span
                           className="cd-pill"
-                          style={{ background: plan.color, color: "#fff" }}
+                          style={{ background: plan.color, color: '#fff' }}
                         >
                           <i className="bi bi-gem"></i>
                           {plan.label}
@@ -577,7 +619,10 @@ export default function ClientDetails() {
                         onChange={handleDraftChange}
                       >
                         {STATUSES.map((s) => (
-                          <option key={s} value={s}>
+                          <option
+                            key={s}
+                            value={s}
+                          >
                             {STATUS_CONFIG[s]?.label || s}
                           </option>
                         ))}
@@ -586,7 +631,7 @@ export default function ClientDetails() {
                       <div className="cd-field-value">
                         <span
                           className={`badge bg-${statusCfg.badge} px-3 py-2`}
-                          style={{ fontSize: "0.8rem" }}
+                          style={{ fontSize: '0.8rem' }}
                         >
                           <i className={`bi ${statusCfg.icon} me-1`}></i>
                           {statusCfg.label}
@@ -602,7 +647,10 @@ export default function ClientDetails() {
                     />
                   </div>
                   <div className="col-md-6">
-                    <Field label="User ID" value={client.user_id} />
+                    <Field
+                      label="User ID"
+                      value={client.user_id}
+                    />
                   </div>
                 </div>
 
@@ -618,10 +666,10 @@ export default function ClientDetails() {
                         className="cd-pill"
                         style={{
                           background: active ? cfg.color : cfg.light,
-                          color: active ? "#fff" : cfg.color,
+                          color: active ? '#fff' : cfg.color,
                           border: `1.5px solid ${cfg.color}50`,
-                          transform: active ? "scale(1.07)" : "scale(1)",
-                          transition: "all 0.2s",
+                          transform: active ? 'scale(1.07)' : 'scale(1)',
+                          transition: 'all 0.2s',
                         }}
                       >
                         {active && <i className="bi bi-check-lg"></i>}
@@ -647,7 +695,10 @@ export default function ClientDetails() {
           className="modal-dialog modal-dialog-centered"
           style={{ maxWidth: 420 }}
         >
-          <div className="modal-content shadow-lg" style={{ borderRadius: 14 }}>
+          <div
+            className="modal-content shadow-lg"
+            style={{ borderRadius: 14 }}
+          >
             <div className="modal-body p-4 text-center">
               <div
                 className="rounded-circle bg-danger bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3"
@@ -656,8 +707,11 @@ export default function ClientDetails() {
                 <i className="bi bi-trash text-danger fs-3"></i>
               </div>
               <h5 className="fw-bold mb-1">Delete Client?</h5>
-              <p className="text-muted mb-0" style={{ fontSize: ".9rem" }}>
-                You are about to permanently delete{" "}
+              <p
+                className="text-muted mb-0"
+                style={{ fontSize: '.9rem' }}
+              >
+                You are about to permanently delete{' '}
                 <strong>{client?.full_name}</strong>. This action cannot be
                 undone.
               </p>

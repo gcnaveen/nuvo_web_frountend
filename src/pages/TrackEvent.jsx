@@ -1,18 +1,8 @@
 // src/pages/TrackEvent.jsx
+// Uses window.google (loaded via index.html script tag) — no @react-google-maps/api needed.
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import {
-  GoogleMap,
-  LoadScript,
-  OverlayView,
-  Marker,
-  InfoWindow,
-} from '@react-google-maps/api';
 import { trackEvent } from '../api/eventsApi';
-
-// ── Map style ──────────────────────────────────────────────────
-const MAP_STYLE = { width: '100%', height: '76vh', borderRadius: 12 };
-const LIBRARIES = ['places'];
 
 // ── Status config ──────────────────────────────────────────────
 const CREW_STATUS = {
@@ -25,8 +15,6 @@ const CREW_STATUS = {
   offline: { label: 'Not on Duty', color: '#6c757d', icon: 'bi-dash-circle' },
 };
 const crewSt = (s) => CREW_STATUS[s] || CREW_STATUS.offline;
-
-// ── Helpers ────────────────────────────────────────────────────
 const initials = (name) =>
   (name || '?')
     .split(' ')
@@ -34,19 +22,25 @@ const initials = (name) =>
     .map((w) => w[0])
     .join('')
     .toUpperCase();
-const POLL_INTERVAL = 15_000; // 15 sec
+const POLL_INTERVAL = 15_000;
 
 // ══════════════════════════════════════════════════════════════
 export default function TrackEvent() {
   const { id } = useParams();
-  const [map, setMap] = useState(null);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [activePin, setActivePin] = useState(null); // profile_id of open InfoWindow
+  const [activePin, setActivePin] = useState(null);
   const pollRef = useRef(null);
 
-  // ── Fetch tracking data ────────────────────────────────────
+  // ── Map refs ───────────────────────────────────────────────
+  const mapRef = useRef(null); // DOM div
+  const mapInstanceRef = useRef(null); // google.maps.Map
+  const venueMarkerRef = useRef(null);
+  const crewMarkersRef = useRef({}); // { profile_id: AdvancedMarkerElement | Marker }
+  const infoWindowRef = useRef(null);
+
+  // ── Fetch ──────────────────────────────────────────────────
   const fetchTracking = useCallback(
     async (silent = false) => {
       if (!silent) setLoading(true);
@@ -68,40 +62,133 @@ export default function TrackEvent() {
 
   useEffect(() => {
     fetchTracking();
-    // Poll every 15 seconds for live location updates
     pollRef.current = setInterval(() => fetchTracking(true), POLL_INTERVAL);
     return () => clearInterval(pollRef.current);
   }, [fetchTracking]);
 
-  // ── Fit map to all visible pins ───────────────────────────
-  const onMapLoad = useCallback((mapInstance) => {
-    setMap(mapInstance);
-  }, []);
-
+  // ── Init map once ──────────────────────────────────────────
   useEffect(() => {
-    if (!map || !data) return;
-    const crewWithLocation = (data.crew || []).filter((c) => c.lat && c.lng);
+    if (!mapRef.current || !window.google || mapInstanceRef.current) return;
+    mapInstanceRef.current = new window.google.maps.Map(mapRef.current, {
+      center: { lat: 20.5937, lng: 78.9629 },
+      zoom: 5,
+      zoomControl: true,
+      mapTypeControl: false,
+      streetViewControl: false,
+      fullscreenControl: true,
+    });
+    infoWindowRef.current = new window.google.maps.InfoWindow();
+  }, [loading]); // run after first load completes so mapRef is visible
 
-    if (crewWithLocation.length > 0) {
-      const bounds = new window.google.maps.LatLngBounds();
-      crewWithLocation.forEach((c) =>
-        bounds.extend({ lat: c.lat, lng: c.lng }),
-      );
-      // Also include venue
-      if (data.event?.venue_lat && data.event?.venue_lng) {
-        bounds.extend({ lat: data.event.venue_lat, lng: data.event.venue_lng });
+  // ── Update markers whenever data changes ──────────────────
+  useEffect(() => {
+    if (!mapInstanceRef.current || !window.google || !data) return;
+    const G = window.google.maps;
+    const map = mapInstanceRef.current;
+    const { event: ev, crew } = data;
+
+    // ── Venue marker ────────────────────────────────────────
+    if (venueMarkerRef.current) {
+      venueMarkerRef.current.setMap(null);
+      venueMarkerRef.current = null;
+    }
+    if (ev?.venue_lat && ev?.venue_lng) {
+      venueMarkerRef.current = new G.Marker({
+        position: { lat: ev.venue_lat, lng: ev.venue_lng },
+        map,
+        title: ev.venue_name || 'Venue',
+        icon: {
+          path: G.SymbolPath.CIRCLE,
+          scale: 14,
+          fillColor: '#dc3545',
+          fillOpacity: 1,
+          strokeColor: '#fff',
+          strokeWeight: 2,
+        },
+        label: { text: '📍', fontSize: '20px' },
+        zIndex: 10,
+      });
+    }
+
+    // ── Crew markers ─────────────────────────────────────────
+    // Remove stale markers
+    const incomingIds = new Set((crew || []).map((c) => c.id));
+    Object.keys(crewMarkersRef.current).forEach((pid) => {
+      if (!incomingIds.has(pid)) {
+        crewMarkersRef.current[pid].setMap(null);
+        delete crewMarkersRef.current[pid];
       }
+    });
+
+    (crew || [])
+      .filter((c) => c.lat && c.lng)
+      .forEach((c) => {
+        const st = crewSt(c.status);
+        const pos = { lat: c.lat, lng: c.lng };
+
+        if (crewMarkersRef.current[c.id]) {
+          // Update existing marker position
+          crewMarkersRef.current[c.id].setPosition(pos);
+        } else {
+          // Create new marker
+          const marker = new G.Marker({
+            position: pos,
+            map,
+            title: c.name || c.stage_name,
+            icon: {
+              path: G.SymbolPath.CIRCLE,
+              scale: 12,
+              fillColor: st.color,
+              fillOpacity: 1,
+              strokeColor: '#fff',
+              strokeWeight: 2,
+            },
+            label: {
+              text: (c.name || '?')[0].toUpperCase(),
+              color: '#fff',
+              fontSize: '11px',
+              fontWeight: 'bold',
+            },
+            zIndex: 20,
+          });
+
+          marker.addListener('click', () => {
+            const content = `
+            <div style="font-family:inherit;min-width:160px">
+              <div style="font-weight:700;font-size:.9rem;margin-bottom:4px">${c.name || c.stage_name || 'Staff'}</div>
+              ${c.stage_name ? `<div style="font-size:.75rem;color:#9aa3af;margin-bottom:6px">${c.stage_name}</div>` : ''}
+              <div style="display:inline-block;background:${st.color}18;color:${st.color};border-radius:4px;padding:2px 8px;font-size:.72rem;font-weight:700">
+                ${st.label}
+              </div>
+              ${c.timestamp ? `<div style="font-size:.68rem;color:#9aa3af;margin-top:6px">Updated: ${new Date(c.timestamp).toLocaleTimeString('en-IN')}</div>` : ''}
+            </div>`;
+            infoWindowRef.current.setContent(content);
+            infoWindowRef.current.open(map, marker);
+            setActivePin(c.id);
+          });
+
+          crewMarkersRef.current[c.id] = marker;
+        }
+      });
+
+    // ── Fit bounds to all markers ─────────────────────────────
+    const crewWithLoc = (crew || []).filter((c) => c.lat && c.lng);
+    if (crewWithLoc.length > 0) {
+      const bounds = new G.LatLngBounds();
+      crewWithLoc.forEach((c) => bounds.extend({ lat: c.lat, lng: c.lng }));
+      if (ev?.venue_lat && ev?.venue_lng)
+        bounds.extend({ lat: ev.venue_lat, lng: ev.venue_lng });
       map.fitBounds(bounds, { top: 60, bottom: 60, left: 40, right: 40 });
-    } else if (data.event?.venue_lat && data.event?.venue_lng) {
-      // No staff locations yet — show venue
-      map.setCenter({ lat: data.event.venue_lat, lng: data.event.venue_lng });
+    } else if (ev?.venue_lat && ev?.venue_lng) {
+      map.setCenter({ lat: ev.venue_lat, lng: ev.venue_lng });
       map.setZoom(15);
     }
-  }, [map, data]);
+  }, [data]);
 
-  // ── Fly to staff pin ───────────────────────────────────────
+  // ── Fly to crew pin ────────────────────────────────────────
   const flyTo = (crew) => {
-    if (!map || !crew.lat || !crew.lng) return;
+    if (!mapInstanceRef.current || !crew.lat || !crew.lng) return;
+    const map = mapInstanceRef.current;
     const currentZoom = map.getZoom();
     if (currentZoom > 13) map.setZoom(13);
     setTimeout(() => {
@@ -109,9 +196,16 @@ export default function TrackEvent() {
       setTimeout(() => map.setZoom(16), 800);
     }, 400);
     setActivePin(crew.id);
+    // Trigger click on the marker to show InfoWindow
+    if (crewMarkersRef.current[crew.id]) {
+      window.google.maps.event.trigger(
+        crewMarkersRef.current[crew.id],
+        'click',
+      );
+    }
   };
 
-  // ── Render guards ─────────────────────────────────────────
+  // ── Render guards ──────────────────────────────────────────
   if (loading)
     return (
       <div
@@ -131,7 +225,7 @@ export default function TrackEvent() {
     return (
       <div className="page-content">
         <Link
-          to={`/events/${id}`}
+          to={`/admin/events/${id}`}
           className="btn btn-light shadow-sm mb-4"
         >
           <i className="bi bi-arrow-left me-1"></i>Back
@@ -141,12 +235,13 @@ export default function TrackEvent() {
     );
   if (!data) return null;
 
-  const { event: ev, crew, total_crew, online } = data;
+  const { event: ev, crew, total_crew } = data;
   const eventStarted =
     ev?.event_start_datetime && new Date(ev.event_start_datetime) <= new Date();
-
-  const onlineCount = crew.filter((c) => c.status !== 'offline').length;
-  const atVenueCount = crew.filter((c) => c.status === 'on_event').length;
+  const onlineCount = (crew || []).filter((c) => c.status !== 'offline').length;
+  const atVenueCount = (crew || []).filter(
+    (c) => c.status === 'on_event',
+  ).length;
 
   return (
     <>
@@ -156,13 +251,6 @@ export default function TrackEvent() {
         .tr-card-hd h6 { margin:0;font-size:.82rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#4a5568; }
         .staff-btn { border:1.5px solid #eef0f4;border-radius:10px;background:#fff;transition:.2s;cursor:pointer;padding:10px 12px;width:100%;text-align:left; }
         .staff-btn:hover { background:#f0f4ff;border-color:#435ebe; }
-        .custom-marker { position:absolute;transform:translate(-50%,-100%);display:flex;flex-direction:column;align-items:center;cursor:pointer; }
-        .marker-bubble { background:white;padding:3px;border-radius:50%;box-shadow:0 4px 12px rgba(0,0,0,.25);border:2.5px solid white;transition:transform .2s; }
-        .marker-bubble:hover { transform:scale(1.12);z-index:999; }
-        .marker-bubble img { width:38px;height:38px;border-radius:50%;object-fit:cover; }
-        .marker-bubble::after { content:'';position:absolute;bottom:-7px;left:50%;transform:translateX(-50%);border-width:7px 7px 0;border-style:solid;border-color:white transparent transparent; }
-        .marker-label { background:rgba(0,0,0,.72);color:#fff;padding:2px 7px;border-radius:4px;font-size:10px;margin-top:5px;font-weight:600;white-space:nowrap; }
-        .venue-pin { width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#dc3545;color:#fff;font-size:1.1rem;box-shadow:0 3px 10px rgba(220,53,69,.4); }
         .stat-box { text-align:center;padding:12px 8px;border-radius:10px; }
         .stat-val { font-size:1.4rem;font-weight:800;color:#2c3249;line-height:1; }
         .stat-lbl { font-size:.68rem;text-transform:uppercase;letter-spacing:.8px;color:#9aa3af;font-weight:700;margin-top:3px; }
@@ -170,12 +258,12 @@ export default function TrackEvent() {
         @keyframes trPulse { 0%,100%{opacity:1}50%{opacity:.4} }
       `}</style>
 
-      {/* ── Header ──────────────────────────────────────────── */}
+      {/* ── Header ─────────────────────────────────────────── */}
       <div className="page-heading">
         <div className="d-flex justify-content-between align-items-center flex-wrap gap-2">
           <div>
             <Link
-              to={`/events/${id}`}
+              to={`/admin/events/${id}`}
               className="btn btn-light shadow-sm mb-2"
             >
               <i className="bi bi-arrow-left me-1"></i>Event Details
@@ -213,7 +301,7 @@ export default function TrackEvent() {
       </div>
 
       <div className="page-content">
-        {/* ── Stats row ─────────────────────────────────────── */}
+        {/* ── Stats ──────────────────────────────────────────── */}
         <div className="row g-3 mb-4">
           {[
             {
@@ -269,135 +357,36 @@ export default function TrackEvent() {
         </div>
 
         <div className="row g-4">
-          {/* ── Map ─────────────────────────────────────────── */}
+          {/* ── Map ───────────────────────────────────────────── */}
           <div className="col-lg-8">
             <div className="tr-card">
               <div className="tr-card-hd">
                 <h6>
                   <i className="bi bi-map me-2 text-primary"></i>Live Location
                 </h6>
+                {!window.google && (
+                  <small className="text-warning">
+                    <i className="bi bi-exclamation-triangle me-1"></i>Maps
+                    loading…
+                  </small>
+                )}
               </div>
               <div
-                style={{ overflow: 'hidden', borderRadius: '0 0 14px 14px' }}
-              >
-                <LoadScript
-                  googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_KEY}
-                  libraries={LIBRARIES}
-                >
-                  <GoogleMap
-                    mapContainerStyle={MAP_STYLE}
-                    zoom={12}
-                    onLoad={onMapLoad}
-                    options={{
-                      disableDefaultUI: false,
-                      zoomControl: true,
-                      fullscreenControl: true,
-                    }}
-                  >
-                    {/* Venue marker */}
-                    {ev?.venue_lat && ev?.venue_lng && (
-                      <OverlayView
-                        position={{ lat: ev.venue_lat, lng: ev.venue_lng }}
-                        mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
-                      >
-                        <div className="custom-marker">
-                          <div className="venue-pin">
-                            <i className="bi bi-building"></i>
-                          </div>
-                          <div
-                            className="marker-label"
-                            style={{ background: 'rgba(220,53,69,.85)' }}
-                          >
-                            📍 {ev.venue_name || 'Venue'}
-                          </div>
-                        </div>
-                      </OverlayView>
-                    )}
-
-                    {/* Crew markers */}
-                    {crew
-                      .filter((c) => c.lat && c.lng)
-                      .map((c) => {
-                        const st = crewSt(c.status);
-                        return (
-                          <OverlayView
-                            key={c.id}
-                            position={{ lat: c.lat, lng: c.lng }}
-                            mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
-                          >
-                            <div
-                              className="custom-marker"
-                              onClick={() => {
-                                flyTo(c);
-                                setActivePin(c.id);
-                              }}
-                            >
-                              <div
-                                className="marker-bubble"
-                                style={{ borderColor: st.color }}
-                              >
-                                {c.image_url ? (
-                                  <img
-                                    src={c.image_url}
-                                    alt={c.name}
-                                  />
-                                ) : (
-                                  <div
-                                    style={{
-                                      width: 38,
-                                      height: 38,
-                                      borderRadius: '50%',
-                                      background: st.color,
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      justifyContent: 'center',
-                                      color: '#fff',
-                                      fontWeight: 700,
-                                      fontSize: '.85rem',
-                                    }}
-                                  >
-                                    {initials(c.name)}
-                                  </div>
-                                )}
-                              </div>
-                              <div className="marker-label">
-                                {c.name || c.stage_name}
-                              </div>
-                            </div>
-                          </OverlayView>
-                        );
-                      })}
-
-                    {/* No-location crew still shown if not started */}
-                    {!eventStarted &&
-                      crew.filter((c) => !c.lat && !c.lng).length > 0 &&
-                      ev?.venue_lat &&
-                      ev?.venue_lng && (
-                        <InfoWindow
-                          position={{
-                            lat: ev.venue_lat + 0.002,
-                            lng: ev.venue_lng,
-                          }}
-                        >
-                          <div style={{ fontSize: '.82rem', maxWidth: 200 }}>
-                            <strong>Event hasn't started.</strong>
-                            <br />
-                            Staff locations will appear here once they go
-                            on-duty.
-                          </div>
-                        </InfoWindow>
-                      )}
-                  </GoogleMap>
-                </LoadScript>
-              </div>
+                ref={mapRef}
+                style={{
+                  width: '100%',
+                  height: '62vh',
+                  borderRadius: '0 0 14px 14px',
+                }}
+              />
             </div>
           </div>
 
-          {/* ── Staff list ──────────────────────────────────── */}
+          {/* ── Crew list ─────────────────────────────────────── */}
           <div className="col-lg-4">
             <div
               className="tr-card"
-              style={{ maxHeight: '82vh', overflowY: 'auto' }}
+              style={{ maxHeight: '72vh', overflowY: 'auto' }}
             >
               <div className="tr-card-hd">
                 <h6>
@@ -412,7 +401,7 @@ export default function TrackEvent() {
                 </span>
               </div>
               <div style={{ padding: '12px' }}>
-                {crew.length === 0 ? (
+                {!crew || crew.length === 0 ? (
                   <div className="text-center py-4 text-muted">
                     <i className="bi bi-people fs-2 d-block mb-2"></i>
                     <small>No crew assigned.</small>
