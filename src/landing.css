@@ -1,0 +1,114 @@
+/* ============================================================
+   landing.css — NUVÓ landing page styles
+   Imported only by landing pages; scoped to avoid bleeding
+   into the Bootstrap-based admin UI.
+   ============================================================ */
+
+/* ── REQUIRED: Tailwind v4 — must be first ─────────────────── */
+@import 'tailwindcss';
+
+/* ── Montserrat font faces ─────────────────────────────────── */
+@font-face {
+  font-family: 'Montserrat';
+  src: url('./assets/fonts/Montserrat-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Montserrat';
+  src: url('./assets/fonts/Montserrat-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Montserrat';
+  src: url('./assets/fonts/Montserrat-SemiBold.ttf') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Montserrat';
+  src: url('./assets/fonts/Montserrat-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Montserrat';
+  src: url('./assets/fonts/Montserrat-Light.ttf') format('truetype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Montserrat';
+  src: url('./assets/fonts/Montserrat-ExtraBold.ttf') format('truetype');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Montserrat';
+  src: url('./assets/fonts/Montserrat-Black.ttf') format('truetype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ── CSS custom properties (scoped to .nuvo-landing) ──────── */
+/* Defined on .nuvo-landing — NOT :root — so Bootstrap admin   */
+/* CSS variables are never overridden.                         */
+.nuvo-landing {
+  --color-deep-espresso: #5b4c3a;
+  --color-rich-earth: #8a7356;
+  --color-soft-mushroom: #c4b39a;
+  --color-warm-putty: #ded1ba;
+  --color-bone-white: #f4efe6;
+
+  --color-text-primary: var(--color-deep-espresso);
+  --color-text-secondary: var(--color-rich-earth);
+  --color-bg-base: var(--color-bone-white);
+  --color-bg-elevated: #ffffff;
+  --color-accent: var(--color-rich-earth);
+  --color-border: var(--color-warm-putty);
+
+  --motion-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --motion-duration-fast: 0.2s;
+  --motion-duration-normal: 0.4s;
+  --motion-duration-slow: 0.6s;
+
+  --font-body: 'Montserrat', ui-sans-serif, system-ui, sans-serif;
+  --font-heading: 'Montserrat', ui-sans-serif, system-ui, sans-serif;
+
+  font-family: var(--font-body);
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-base);
+}
+
+/* All children of .nuvo-landing use Montserrat */
+.nuvo-landing *,
+.nuvo-landing *::before,
+.nuvo-landing *::after {
+  font-family: var(--font-body);
+}
+
+/* ── Utility helpers ───────────────────────────────────────── */
+.nuvo-landing .font-heading {
+  font-family: var(--font-heading);
+}
+.nuvo-landing .font-body {
+  font-family: var(--font-body);
+}
+.nuvo-landing nav a,
+.nuvo-landing button[type='button'].menu-trigger {
+  font-weight: 500;
+}
+.nuvo-landing .nav-link-strong {
+  font-weight: 600;
+}
+.nuvo-landing .cta-button {
+  font-weight: 600;
+}

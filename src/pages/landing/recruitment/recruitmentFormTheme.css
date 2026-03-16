@@ -1,0 +1,72 @@
+/* Recruitment form – NUVÓ theme (Montserrat, earth tones) */
+.recruitment-form-page {
+  font-family: var(--font-body);
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-base);
+  min-height: 100vh;
+}
+
+.recruitment-form-page .ant-form-item-label > label,
+.recruitment-form-page .ant-checkbox-wrapper,
+.recruitment-form-page .ant-radio-wrapper {
+  color: var(--color-deep-espresso) !important;
+  font-family: var(--font-body);
+}
+
+.recruitment-form-page .ant-input,
+.recruitment-form-page .ant-input-affix-wrapper,
+.recruitment-form-page .ant-select-selector,
+.recruitment-form-page .ant-picker {
+  font-family: var(--font-body);
+  border-color: var(--color-border);
+  color: var(--color-deep-espresso);
+}
+
+.recruitment-form-page .ant-input:hover,
+.recruitment-form-page .ant-input:focus,
+.recruitment-form-page .ant-select-focused .ant-select-selector,
+.recruitment-form-page .ant-picker:hover {
+  border-color: var(--color-rich-earth) !important;
+  box-shadow: 0 0 0 1px var(--color-rich-earth) !important;
+}
+
+.recruitment-form-page .ant-card {
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-elevated);
+}
+
+.recruitment-form-page .section-divider {
+  color: var(--color-deep-espresso) !important;
+  border-color: var(--color-rich-earth) !important;
+  font-weight: 600;
+  font-family: var(--font-heading);
+}
+
+.recruitment-form-page .ant-btn-primary {
+  background: var(--color-deep-espresso) !important;
+  border-color: var(--color-deep-espresso) !important;
+  font-weight: 600;
+  font-family: var(--font-body);
+}
+
+.recruitment-form-page .ant-btn-primary:hover {
+  background: var(--color-rich-earth) !important;
+  border-color: var(--color-rich-earth) !important;
+}
+
+.recruitment-form-page .ant-upload.ant-upload-select-picture-card {
+  border-color: var(--color-rich-earth);
+  background: var(--color-bone-white);
+}
+
+.recruitment-form-page .ant-upload.ant-upload-select-picture-card:hover {
+  border-color: var(--color-deep-espresso);
+}
+
+.recruitment-form-page .upload-heading {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  color: var(--color-deep-espresso);
+  margin-bottom: 0.5rem;
+}

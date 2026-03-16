@@ -11,7 +11,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0"
     />
-    <title>test-admin</title>
+    <title>NUVÓ Admin</title>
     <link
       rel="preconnect"
       href="https://fonts.gstatic.com"
@@ -24,12 +24,10 @@
       rel="stylesheet"
       href="public/assets/css/bootstrap.css"
     />
-
     <link
       rel="stylesheet"
       href="public/assets/vendors/iconly/bold.css"
     />
-
     <link
       rel="stylesheet"
       href="public/assets/vendors/perfect-scrollbar/perfect-scrollbar.css"
@@ -42,18 +40,17 @@
       rel="stylesheet"
       href="public/assets/css/app.css"
     />
-    <link
-      rel="shortcut icon"
-      href="public/assets/images/favicon.svg"
-      type="image/x-icon"
-    />
     <script>
-      // Load Google Maps asynchronously so the app boots first
+      // Google Maps async loader callback
       window.__gmapsCallback = () => {
         window.__gmapsLoaded = true;
       };
     </script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=%VITE_GOOGLE_MAPS_KEY%&libraries=places"></script>
+    <script
+      async
+      defer
+      src="https://maps.googleapis.com/maps/api/js?key=%VITE_GOOGLE_MAPS_KEY%&libraries=places&callback=__gmapsCallback"
+    ></script>
   </head>
   <body>
     <div id="root"></div>
@@ -61,14 +58,10 @@
       type="module"
       src="/src/main.jsx"
     ></script>
-
-    <!-- my js scripts  -->
     <script src="public/assets/vendors/perfect-scrollbar/perfect-scrollbar.min.js"></script>
     <script src="public/assets/js/bootstrap.bundle.min.js"></script>
-
     <script src="public/assets/vendors/apexcharts/apexcharts.js"></script>
     <script src="public/assets/js/pages/dashboard.js"></script>
-
     <script src="public/assets/js/main.js"></script>
   </body>
 </html>

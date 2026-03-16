@@ -1,0 +1,41 @@
+{
+  "firstName": "Jane",
+  "lastName": "Doe",
+  "address": "123 Park Street",
+  "city": "Bengaluru",
+  "country": "India",
+  "placeOfBirth": "Mumbai",
+  "dob": "1995-06-15T00:00:00.000Z",
+  "status": "single",
+  "telephone": "+91 80 12345678",
+  "cellPhone": "+91 9876543210",
+  "email": "jane.doe@example.com",
+  "weight": "58",
+  "height": "165",
+  "shoeSize": 6,
+  "blazerSize": "M",
+  "trouserSize": "M",
+  "student": "no",
+  "school": "St. Xavier's College",
+  "degree": "Bachelor of Arts",
+  "languages": [
+    { "name": "English", "proficiency": "Fluent" },
+    { "name": "Hindi", "proficiency": "Native" }
+  ],
+  "hostessExperience": "yes",
+  "groupResponsible": "yes",
+  "agency": "NUVÓ Hosting",
+  "experienceAreas": ["modeling", "waiter/waitress", "group management"],
+  "workType": "both",
+  "holidayWork": "yes",
+  "profilePhoto": ["media-id-from-s3-or-media-api-1"],
+  "images": [
+    "media-id-from-s3-or-media-api-2",
+    "media-id-from-s3-or-media-api-3"
+  ],
+  "availability": {
+    "fullDay": false,
+    "partTime": false,
+    "both": true
+  }
+}

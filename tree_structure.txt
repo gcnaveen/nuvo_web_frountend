@@ -1,0 +1,58 @@
+shashak                                                     ->.  me.  
+        
+pages/Homepage.jsx                                          → src/pages/landing/Homepage.jsx
+pages/recruitment/RecruitmentFormPage.jsx                   → src/pages/landing/recruitment/RecruitmentFormPage.jsx
+pages/recruitment/RecruitmentForm.jsx                       → src/pages/landing/recruitment/RecruitmentForm.jsx
+pages/recruitment/buildPayload.js                           → src/pages/landing/recruitment/buildPayload.js
+pages/recruitment/recruitmentFormTheme.css                  → src/pages/landing/recruitment/recruitmentFormTheme.css
+pages/recruitment/sections/DimensionsSection.jsx            → src/pages/landing/recruitment/sections/DimensionsSection.jsx
+pages/recruitment/sections/EducationSection.jsx             → src/pages/landing/recruitment/sections/EducationSection.jsx
+pages/recruitment/sections/ExperienceSection.jsx            → src/pages/landing/recruitment/sections/ExperienceSection.jsx
+pages/recruitment/sections/LanguagesSection.jsx             → src/pages/landing/recruitment/sections/LanguagesSection.jsx
+pages/recruitment/sections/PersonalInfoSection.jsx          → src/pages/landing/recruitment/sections/PersonalInfoSection.jsx
+pages/recruitment/sections/SectionDivider.jsx               → src/pages/landing/recruitment/sections/SectionDivider.jsx
+pages/recruitment/sections/UploadSection.jsx                → src/pages/landing/recruitment/sections/UploadSection.jsx
+
+sections/Hero.jsx
+sections/About.jsx
+sections/Founders.jsx
+sections/WhatCWDFyou.jsx
+sections/GetApp.jsx
+sections/Crew.jsx
+sections/SelectMood.jsx
+
+components/Header.jsx                                      → src/landing_components/Header.jsx
+components/Footer.jsx                                      → src/landing_components/Footer.jsx
+components/Menu.jsx                                        → src/landing_components/Menu.jsx
+
+index.css           → src/landing.css          (rename it — don't overwrite admin index.css)
+config.js           → src/landing_config.js    (rename it)
+constants/links.js  → src/constants/links.js
+assets/fonts/       → src/assets/fonts/        (all the Montserrat .ttf files)
+
+
+From nuvo_hosting_frontend/public/assets/ → copy to admin-ui/public/assets/
+
+public/assets/moods/            → public/assets/moods/
+public/assets/footer/           → public/assets/footer/
+public/assets/NUVO_LOGO.png     → public/assets/NUVO_LOGO.png
+public/assets/nuvo-bg-hero.png  → public/assets/nuvo-bg-hero.png
+public/assets/logo.png          → public/assets/logo.png
+public/assets/founder.png       → public/assets/founder.png
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

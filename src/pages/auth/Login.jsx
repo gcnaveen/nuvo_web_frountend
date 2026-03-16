@@ -40,7 +40,7 @@ const Login = () => {
       const { access_token, refresh_token, user } = response.data.data;
 
       login({ access_token, refresh_token }, user);
-      navigate("/", { replace: true });
+      navigate("/admin", { replace: true });
     } catch (err) {
       const msg = err.response?.data?.message || "Invalid email or password.";
       setError(msg);

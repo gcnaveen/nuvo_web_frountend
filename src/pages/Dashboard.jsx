@@ -1,6 +1,6 @@
-import React, { useMemo } from "react";
-import { Link } from "react-router-dom";
-import eventsData from "../data/events.json";
+import React, { useMemo } from 'react';
+import { Link } from 'react-router-dom';
+import eventsData from '../data/events.json';
 
 export default function Dashboard() {
   // --- METRICS CALCULATION ---
@@ -13,7 +13,7 @@ export default function Dashboard() {
 
     eventsData.forEach((event) => {
       const eventDate = new Date(event.start);
-      if (eventDate >= now && event.workflowStage !== "cancelled") {
+      if (eventDate >= now && event.workflowStage !== 'cancelled') {
         upcoming++;
       }
 
@@ -22,8 +22,8 @@ export default function Dashboard() {
 
       totalRevenue += paid;
       if (
-        event.payment?.paymentStatus !== "paid" &&
-        event.workflowStage !== "cancelled"
+        event.payment?.paymentStatus !== 'paid' &&
+        event.workflowStage !== 'cancelled'
       ) {
         pendingRevenue += total - paid;
       }
@@ -45,13 +45,13 @@ export default function Dashboard() {
   // Helper for Workflow Badges
   const getBadgeColor = (stage) => {
     const map = {
-      created: "primary",
-      planning: "info",
-      staffs_assigned: "warning",
-      event_completed: "success",
-      cancelled: "danger",
+      created: 'primary',
+      planning: 'info',
+      staffs_assigned: 'warning',
+      event_completed: 'success',
+      cancelled: 'danger',
     };
-    return map[stage] || "secondary";
+    return map[stage] || 'secondary';
   };
 
   return (
@@ -80,11 +80,11 @@ export default function Dashboard() {
         </div>
         <div className="text-end d-none d-md-block">
           <p className="text-muted small mb-0">
-            {new Date().toLocaleDateString("en-US", {
-              weekday: "long",
-              year: "numeric",
-              month: "long",
-              day: "numeric",
+            {new Date().toLocaleDateString('en-US', {
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
             })}
           </p>
         </div>
@@ -173,38 +173,38 @@ export default function Dashboard() {
               </div>
               <div
                 className="card-body d-flex align-items-end justify-content-center"
-                style={{ height: "250px", paddingBottom: "0" }}
+                style={{ height: '250px', paddingBottom: '0' }}
               >
                 {/* Visual CSS Chart Placeholder */}
                 <div className="w-100 d-flex align-items-end justify-content-between border-bottom pb-2 h-100 px-4">
                   <div
                     className="mock-chart-bar"
-                    style={{ height: "40%" }}
+                    style={{ height: '40%' }}
                     title="Sep"
                   ></div>
                   <div
                     className="mock-chart-bar"
-                    style={{ height: "65%" }}
+                    style={{ height: '65%' }}
                     title="Oct"
                   ></div>
                   <div
                     className="mock-chart-bar"
-                    style={{ height: "45%" }}
+                    style={{ height: '45%' }}
                     title="Nov"
                   ></div>
                   <div
                     className="mock-chart-bar"
-                    style={{ height: "85%" }}
+                    style={{ height: '85%' }}
                     title="Dec"
                   ></div>
                   <div
                     className="mock-chart-bar"
-                    style={{ height: "55%" }}
+                    style={{ height: '55%' }}
                     title="Jan"
                   ></div>
                   <div
                     className="mock-chart-bar"
-                    style={{ height: "95%", backgroundColor: "#1E88E5" }}
+                    style={{ height: '95%', backgroundColor: '#1E88E5' }}
                     title="Feb"
                   ></div>
                 </div>
@@ -224,7 +224,7 @@ export default function Dashboard() {
               <div className="card-header bg-white pt-4 pb-3 border-bottom d-flex justify-content-between align-items-center">
                 <h5 className="fw-bold mb-0">Recent Bookings</h5>
                 <Link
-                  to="/events"
+                  to="/admin/events"
                   className="btn btn-sm btn-light text-primary fw-bold"
                 >
                   View All <i className="bi bi-arrow-right"></i>
@@ -255,8 +255,8 @@ export default function Dashboard() {
                           <td>
                             <div className="fw-semibold">
                               {new Date(event.start).toLocaleDateString(
-                                "en-GB",
-                                { day: "numeric", month: "short" },
+                                'en-GB',
+                                { day: 'numeric', month: 'short' },
                               )}
                             </div>
                           </td>
@@ -264,23 +264,23 @@ export default function Dashboard() {
                             <span
                               className={`badge bg-light-${getBadgeColor(event.workflowStage)} text-${getBadgeColor(event.workflowStage)} text-uppercase`}
                             >
-                              {event.workflowStage.replace("_", " ")}
+                              {event.workflowStage.replace('_', ' ')}
                             </span>
                           </td>
                           <td className="text-end pe-4">
-                            {event.payment.paymentStatus === "paid" ? (
+                            {event.payment.paymentStatus === 'paid' ? (
                               <span className="text-success fw-bold">
-                                <i className="bi bi-check-circle-fill me-1"></i>{" "}
+                                <i className="bi bi-check-circle-fill me-1"></i>{' '}
                                 Paid
                               </span>
-                            ) : event.payment.paymentStatus === "partial" ? (
+                            ) : event.payment.paymentStatus === 'partial' ? (
                               <span className="text-warning fw-bold">
-                                <i className="bi bi-clock-fill me-1"></i>{" "}
+                                <i className="bi bi-clock-fill me-1"></i>{' '}
                                 Advance
                               </span>
                             ) : (
                               <span className="text-danger fw-bold">
-                                <i className="bi bi-x-circle-fill me-1"></i>{" "}
+                                <i className="bi bi-x-circle-fill me-1"></i>{' '}
                                 Unpaid
                               </span>
                             )}
@@ -299,7 +299,7 @@ export default function Dashboard() {
             {/* LIVE EVENT TRACKING */}
             <div
               className="card shadow-sm border-0 mb-4 map-placeholder"
-              style={{ height: "280px" }}
+              style={{ height: '280px' }}
             >
               <div className="map-overlay">
                 <span className="badge bg-danger mb-2 pulse-animation">
@@ -314,7 +314,7 @@ export default function Dashboard() {
                   to="/events/track"
                   className="btn btn-primary btn-sm w-100 fw-bold shadow"
                 >
-                  Open Live Tracker{" "}
+                  Open Live Tracker{' '}
                   <i className="bi bi-box-arrow-up-right ms-1"></i>
                 </Link>
               </div>
@@ -360,7 +360,7 @@ export default function Dashboard() {
                     </div>
                   </div>
                   <Link
-                    to="/uniforms"
+                    to="/admin/uniforms"
                     className="btn btn-sm btn-outline-warning text-dark px-2 py-1"
                   >
                     View
