@@ -1,18 +1,34 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="/vite.svg"
+    />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
     <title>test-admin</title>
-    <link rel="preconnect" href="https://fonts.gstatic.com" />
+    <link
+      rel="preconnect"
+      href="https://fonts.gstatic.com"
+    />
     <link
       href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="public/assets/css/bootstrap.css" />
+    <link
+      rel="stylesheet"
+      href="public/assets/css/bootstrap.css"
+    />
 
-    <link rel="stylesheet" href="public/assets/vendors/iconly/bold.css" />
+    <link
+      rel="stylesheet"
+      href="public/assets/vendors/iconly/bold.css"
+    />
 
     <link
       rel="stylesheet"
@@ -22,16 +38,29 @@
       rel="stylesheet"
       href="public/assets/vendors/bootstrap-icons/bootstrap-icons.css"
     />
-    <link rel="stylesheet" href="public/assets/css/app.css" />
+    <link
+      rel="stylesheet"
+      href="public/assets/css/app.css"
+    />
     <link
       rel="shortcut icon"
       href="public/assets/images/favicon.svg"
       type="image/x-icon"
     />
+    <script>
+      // Load Google Maps asynchronously so the app boots first
+      window.__gmapsCallback = () => {
+        window.__gmapsLoaded = true;
+      };
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=%VITE_GOOGLE_MAPS_KEY%&libraries=places"></script>
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
+    <script
+      type="module"
+      src="/src/main.jsx"
+    ></script>
 
     <!-- my js scripts  -->
     <script src="public/assets/vendors/perfect-scrollbar/perfect-scrollbar.min.js"></script>

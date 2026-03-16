@@ -161,6 +161,14 @@ export default function Uniforms() {
     }));
   };
 
+  const handleInUseChange = (size, newInUse) => {
+    const val = Math.max(0, parseInt(newInUse) || 0);
+    setEditStock((prev) => ({
+      ...prev,
+      [size]: { ...prev[size], in_use: val },
+    }));
+  };
+
   const handleSaveStock = async () => {
     if (!selected) return;
     setSaving(true);
@@ -563,17 +571,45 @@ export default function Uniforms() {
                             {item.total_stock}
                           </td>
                           <td className="text-center">
-                            <span className="badge bg-secondary bg-opacity-10 text-secondary px-3 py-2">
+                            <span
+                              style={{
+                                background: '#f0f2f5',
+                                color: '#4a5568',
+                                borderRadius: 8,
+                                padding: '4px 14px',
+                                fontWeight: 700,
+                                fontSize: '.85rem',
+                                display: 'inline-block',
+                              }}
+                            >
                               {item.total_in_use}
                             </span>
                           </td>
                           <td className="text-center">
-                            <span
-                              className={`badge bg-${status} bg-opacity-10 text-${status} fw-bold px-3 py-2`}
-                              style={{ fontSize: '.85rem' }}
-                            >
-                              {item.total_available}
-                            </span>
+                            {(() => {
+                              const colors = {
+                                success: { bg: '#e8f5e9', color: '#2e7d32' },
+                                warning: { bg: '#fff8e1', color: '#f57f17' },
+                                danger: { bg: '#fce4ec', color: '#c62828' },
+                                secondary: { bg: '#f5f5f5', color: '#757575' },
+                              };
+                              const c = colors[status] || colors.secondary;
+                              return (
+                                <span
+                                  style={{
+                                    background: c.bg,
+                                    color: c.color,
+                                    borderRadius: 8,
+                                    padding: '4px 14px',
+                                    fontWeight: 800,
+                                    fontSize: '.88rem',
+                                    display: 'inline-block',
+                                  }}
+                                >
+                                  {item.total_available}
+                                </span>
+                              );
+                            })()}
                           </td>
                           <td className="text-end pe-4">
                             <button
@@ -640,10 +676,10 @@ export default function Uniforms() {
               <div className="alert alert-light border d-flex align-items-start gap-3 mb-4">
                 <i className="bi bi-info-circle-fill text-primary fs-5 mt-1"></i>
                 <small className="text-muted">
-                  Update <strong>Total Owned</strong> quantities when purchasing
-                  new stock or retiring damaged items. The{' '}
-                  <strong>In Use</strong> count is managed automatically by
-                  active events and cannot be edited here.
+                  Update <strong>Total Owned</strong> when purchasing new stock
+                  or retiring items. You can also manually correct{' '}
+                  <strong>In Use</strong> if needed (e.g. after a manual event
+                  adjustment). Total must always be ≥ In Use.
                 </small>
               </div>
 
@@ -669,33 +705,61 @@ export default function Uniforms() {
                 </div>
               </div>
 
-              {/* Stock table */}
+              {/* Stock table — 5 columns */}
               {selected && (
                 <div className="border rounded-3 overflow-hidden">
+                  {/* Header */}
                   <div
-                    className="stock-row px-3 py-2"
-                    style={{ background: '#f8f9fc' }}
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: '80px 1fr 1fr 130px 130px',
+                      gap: 10,
+                      alignItems: 'center',
+                      background: '#f8f9fc',
+                      padding: '10px 16px',
+                    }}
                   >
                     <span className="small fw-bold text-muted">SIZE</span>
-                    <span className="small fw-bold text-muted text-center">
-                      IN USE
-                    </span>
                     <span className="small fw-bold text-muted text-center">
                       AVAILABLE
                     </span>
                     <span className="small fw-bold text-muted text-center">
+                      SET IN USE
+                    </span>
+                    <span className="small fw-bold text-muted text-center">
                       TOTAL OWNED
                     </span>
+                    <span
+                      className="small fw-bold"
+                      style={{
+                        color: '#435ebe',
+                        textAlign: 'center',
+                        fontSize: '.68rem',
+                        textTransform: 'uppercase',
+                        letterSpacing: '.8px',
+                      }}
+                    >
+                      ✏ EDIT IN USE
+                    </span>
                   </div>
-                  <div className="px-3">
+                  {/* Rows */}
+                  <div style={{ padding: '0 16px' }}>
                     {Object.entries(editStock).map(([size, data]) => {
                       const available = (data.total || 0) - (data.in_use || 0);
                       const isLow =
                         data.total > 0 && available / data.total < 0.2;
+                      const isInvalid = (data.in_use || 0) > (data.total || 0);
                       return (
                         <div
                           key={size}
-                          className="stock-row"
+                          style={{
+                            display: 'grid',
+                            gridTemplateColumns: '80px 1fr 1fr 130px 130px',
+                            gap: 10,
+                            alignItems: 'center',
+                            padding: '10px 0',
+                            borderBottom: '1px solid #f5f6fa',
+                          }}
                         >
                           <span
                             className="fw-bold"
@@ -703,25 +767,70 @@ export default function Uniforms() {
                           >
                             {size === 'OS' ? 'Free Size' : `Size ${size}`}
                           </span>
+                          {/* Available (computed, display only) */}
                           <div className="text-center">
-                            <span className="badge bg-secondary">
+                            <span
+                              style={{
+                                background: isInvalid
+                                  ? '#fce4ec'
+                                  : isLow
+                                    ? '#fff8e1'
+                                    : '#e8f5e9',
+                                color: isInvalid
+                                  ? '#c62828'
+                                  : isLow
+                                    ? '#f57f17'
+                                    : '#2e7d32',
+                                borderRadius: 7,
+                                padding: '4px 12px',
+                                fontWeight: 800,
+                                fontSize: '.85rem',
+                                display: 'inline-block',
+                              }}
+                            >
+                              {isInvalid ? '⚠' : available}
+                            </span>
+                          </div>
+                          {/* In Use display */}
+                          <div className="text-center">
+                            <span
+                              style={{
+                                background: '#f0f2f5',
+                                color: '#4a5568',
+                                borderRadius: 7,
+                                padding: '4px 12px',
+                                fontWeight: 700,
+                                fontSize: '.85rem',
+                                display: 'inline-block',
+                              }}
+                            >
                               {data.in_use || 0}
                             </span>
                           </div>
-                          <div className="text-center">
-                            <span
-                              className={`badge ${isLow ? 'bg-danger' : 'bg-success'} bg-opacity-10 ${isLow ? 'text-danger' : 'text-success'} fw-semibold`}
-                            >
-                              {available}
-                            </span>
-                          </div>
+                          {/* Total Owned input */}
                           <input
                             type="number"
                             className="stock-input"
                             min={data.in_use || 0}
                             value={data.total || 0}
+                            style={isInvalid ? { borderColor: '#dc3545' } : {}}
                             onChange={(e) =>
                               handleStockChange(size, e.target.value)
+                            }
+                          />
+                          {/* In Use editable input */}
+                          <input
+                            type="number"
+                            className="stock-input"
+                            min={0}
+                            max={data.total || 0}
+                            value={data.in_use || 0}
+                            style={{
+                              borderColor: isInvalid ? '#dc3545' : '#435ebe',
+                              borderWidth: '1.5px',
+                            }}
+                            onChange={(e) =>
+                              handleInUseChange(size, e.target.value)
                             }
                           />
                         </div>
@@ -733,26 +842,50 @@ export default function Uniforms() {
                     const totals = calcTotals(editStock);
                     return (
                       <div
-                        className="stock-row px-3 py-3"
-                        style={{ background: '#f8f9fc' }}
+                        style={{
+                          display: 'grid',
+                          gridTemplateColumns: '80px 1fr 1fr 130px 130px',
+                          gap: 10,
+                          alignItems: 'center',
+                          background: '#f8f9fc',
+                          padding: '12px 16px',
+                        }}
                       >
                         <span className="small fw-bold text-muted">TOTAL</span>
                         <div className="text-center">
-                          <span className="fw-bold">{totals.inUse}</span>
-                        </div>
-                        <div className="text-center">
-                          <span className="fw-bold text-success">
+                          <span
+                            style={{
+                              fontWeight: 800,
+                              color: '#2e7d32',
+                              fontSize: '.9rem',
+                            }}
+                          >
                             {totals.available}
                           </span>
                         </div>
                         <div className="text-center">
                           <span
-                            className="fw-bold text-primary"
-                            style={{ fontSize: '.9rem' }}
+                            style={{
+                              fontWeight: 800,
+                              color: '#4a5568',
+                              fontSize: '.9rem',
+                            }}
+                          >
+                            {totals.inUse}
+                          </span>
+                        </div>
+                        <div className="text-center">
+                          <span
+                            style={{
+                              fontWeight: 800,
+                              color: '#435ebe',
+                              fontSize: '.9rem',
+                            }}
                           >
                             {totals.total}
                           </span>
                         </div>
+                        <div></div>
                       </div>
                     );
                   })()}
