@@ -176,7 +176,7 @@ function ThemesPanel({ showToast }) {
     setError('');
     try {
       const res = await listThemes();
-      setThemes(res.data.data);
+      setThemes(Array.isArray(res.data.data) ? res.data.data : []);
     } catch {
       setError('Failed to load themes.');
     } finally {
@@ -795,7 +795,7 @@ function UniformsPanel({ showToast }) {
     setError('');
     try {
       const res = await listUniforms();
-      setUniforms(res.data.data);
+      setUniforms(Array.isArray(res.data.data) ? res.data.data : []);
     } catch {
       setError('Failed to load uniform categories.');
     } finally {
@@ -1395,7 +1395,7 @@ function SubscriptionPanel({ showToast }) {
     (async () => {
       try {
         const res = await listPlans();
-        const fetched = res.data.data;
+        const fetched = Array.isArray(res.data.data) ? res.data.data : [];
         setPlans(fetched);
         const d = {};
         fetched.forEach((p) => {
