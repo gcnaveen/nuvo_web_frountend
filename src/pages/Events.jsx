@@ -5,21 +5,24 @@ import React, {
   useCallback,
   useRef,
   useMemo,
-} from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
-import format from 'date-fns/format';
-import parse from 'date-fns/parse';
-import startOfWeek from 'date-fns/startOfWeek';
-import getDay from 'date-fns/getDay';
-import addMonths from 'date-fns/addMonths';
-import subMonths from 'date-fns/subMonths';
-import isSameDay from 'date-fns/isSameDay';
-import 'react-big-calendar/lib/css/react-big-calendar.css';
+} from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Calendar, dateFnsLocalizer } from "react-big-calendar";
+import format from "date-fns/format";
+import parse from "date-fns/parse";
+import startOfWeek from "date-fns/startOfWeek";
+import getDay from "date-fns/getDay";
+import addMonths from "date-fns/addMonths";
+import subMonths from "date-fns/subMonths";
+import isSameDay from "date-fns/isSameDay";
+import "react-big-calendar/lib/css/react-big-calendar.css";
 
-import { listEvents, createEvent } from '../api/eventsApi';
-import { listThemes, listUniforms, listPlans } from '../api/masterApi';
-import api from '../api/axiosInstance';
+import { listEvents, createEvent } from "../api/eventsApi";
+import { listThemes, listUniforms, listPlans } from "../api/masterApi";
+import api from "../api/axiosInstance";
+
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 
 // ── Calendar localizer ─────────────────────────────────────────
 const localizer = dateFnsLocalizer({
@@ -32,83 +35,85 @@ const localizer = dateFnsLocalizer({
 
 // ── Status config ──────────────────────────────────────────────
 const STATUS_CFG = {
-  created: { label: 'Created', hex: '#435ebe', badge: 'primary' },
-  planning_started: { label: 'Planning', hex: '#0dcaf0', badge: 'info' },
+  created: { label: "Created", hex: "#435ebe", badge: "primary" },
+  planning_started: { label: "Planning", hex: "#0dcaf0", badge: "info" },
   staff_allocated: {
-    label: 'Staff Allocated',
-    hex: '#ffc107',
-    badge: 'warning',
+    label: "Staff Allocated",
+    hex: "#ffc107",
+    badge: "warning",
   },
-  completed: { label: 'Completed', hex: '#198754', badge: 'success' },
-  cancelled: { label: 'Cancelled', hex: '#dc3545', badge: 'danger' },
+  completed: { label: "Completed", hex: "#198754", badge: "success" },
+  cancelled: { label: "Cancelled", hex: "#dc3545", badge: "danger" },
 };
 const statusCfg = (s) =>
-  STATUS_CFG[s] || { label: s, hex: '#6c757d', badge: 'secondary' };
+  STATUS_CFG[s] || { label: s, hex: "#6c757d", badge: "secondary" };
 
 // ── Helpers ────────────────────────────────────────────────────
-const fmtDate = (d) => (d ? format(new Date(d), 'd MMM yyyy') : '—');
-const fmtTime = (d) => (d ? format(new Date(d), 'h:mm a') : '');
+const fmtDate = (d) => (d ? format(new Date(d), "d MMM yyyy") : "—");
+const fmtTime = (d) => (d ? format(new Date(d), "h:mm a") : "");
 const INDIAN_STATES = [
-  'Andhra Pradesh',
-  'Arunachal Pradesh',
-  'Assam',
-  'Bihar',
-  'Chhattisgarh',
-  'Goa',
-  'Gujarat',
-  'Haryana',
-  'Himachal Pradesh',
-  'Jharkhand',
-  'Karnataka',
-  'Kerala',
-  'Madhya Pradesh',
-  'Maharashtra',
-  'Manipur',
-  'Meghalaya',
-  'Mizoram',
-  'Nagaland',
-  'Odisha',
-  'Punjab',
-  'Rajasthan',
-  'Sikkim',
-  'Tamil Nadu',
-  'Telangana',
-  'Tripura',
-  'Uttar Pradesh',
-  'Uttarakhand',
-  'West Bengal',
-  'Andaman & Nicobar Islands',
-  'Chandigarh',
-  'Dadra & Nagar Haveli',
-  'Daman & Diu',
-  'Delhi',
-  'Jammu & Kashmir',
-  'Ladakh',
-  'Lakshadweep',
-  'Puducherry',
+  "Andhra Pradesh",
+  "Arunachal Pradesh",
+  "Assam",
+  "Bihar",
+  "Chhattisgarh",
+  "Goa",
+  "Gujarat",
+  "Haryana",
+  "Himachal Pradesh",
+  "Jharkhand",
+  "Karnataka",
+  "Kerala",
+  "Madhya Pradesh",
+  "Maharashtra",
+  "Manipur",
+  "Meghalaya",
+  "Mizoram",
+  "Nagaland",
+  "Odisha",
+  "Punjab",
+  "Rajasthan",
+  "Sikkim",
+  "Tamil Nadu",
+  "Telangana",
+  "Tripura",
+  "Uttar Pradesh",
+  "Uttarakhand",
+  "West Bengal",
+  "Andaman & Nicobar Islands",
+  "Chandigarh",
+  "Dadra & Nagar Haveli",
+  "Daman & Diu",
+  "Delhi",
+  "Jammu & Kashmir",
+  "Ladakh",
+  "Lakshadweep",
+  "Puducherry",
 ];
 
 // ══════════════════════════════════════════════════════════════
 export default function Events() {
+  const [exporting, setExporting] = useState(false);
+
   const navigate = useNavigate();
 
   // ── Data ───────────────────────────────────────────────────────
   const [events, setEvents] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   // ── View ───────────────────────────────────────────────────────
-  const [viewMode, setViewMode] = useState('table'); // table | calendar
+  const [viewMode, setViewMode] = useState("table"); // table | calendar
   const [calDate, setCalDate] = useState(new Date());
-  const [calView, setCalView] = useState('month');
+  const [calView, setCalView] = useState("month");
 
   // ── Filters ────────────────────────────────────────────────────
-  const [search, setSearch] = useState('');
-  const [cityFilter, setCityFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [search, setSearch] = useState("");
+  const [cityFilter, setCityFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 15;
   const searchTimer = useRef(null);
@@ -125,25 +130,25 @@ export default function Events() {
   });
   const [clients, setClients] = useState([]);
   const [form, setForm] = useState(initialForm());
-  const [venueInput, setVenueInput] = useState('');
+  const [venueInput, setVenueInput] = useState("");
   const [venueSugs, setVenueSugs] = useState([]);
   const [venueLoading, setVenueLoading] = useState(false);
   const venueTimer = useRef(null);
   const autocompleteRef = useRef(null);
   const [adding, setAdding] = useState(false);
-  const [addError, setAddError] = useState('');
+  const [addError, setAddError] = useState("");
 
   // ── Toast ──────────────────────────────────────────────────────
-  const [toast, setToast] = useState({ msg: '', type: 'success' });
-  const showToast = (msg, type = 'success') => {
+  const [toast, setToast] = useState({ msg: "", type: "success" });
+  const showToast = (msg, type = "success") => {
     setToast({ msg, type });
-    setTimeout(() => setToast({ msg: '', type: 'success' }), 3500);
+    setTimeout(() => setToast({ msg: "", type: "success" }), 3500);
   };
 
   // ── Fetch events ───────────────────────────────────────────────
   const fetchEvents = useCallback(async () => {
     setLoading(true);
-    setError('');
+    setError("");
     try {
       const params = { page, page_size: PAGE_SIZE };
       if (search) params.search = search;
@@ -155,7 +160,7 @@ export default function Events() {
       setEvents(res.data.data.results || []);
       setTotal(res.data.data.pagination?.total || 0);
     } catch (e) {
-      setError(e.response?.data?.message || 'Failed to load events.');
+      setError(e.response?.data?.message || "Failed to load events.");
     } finally {
       setLoading(false);
     }
@@ -170,15 +175,15 @@ export default function Events() {
   // ── Fetch master data for add modal ───────────────────────────
   const openAddModal = async () => {
     setAddOpen(true);
-    setAddError('');
+    setAddError("");
     setForm(initialForm());
-    setVenueInput('');
+    setVenueInput("");
     try {
       const [th, un, pl, cl] = await Promise.all([
         listThemes(),
         listUniforms(),
         listPlans(),
-        api.get('/users/api/clients/'),
+        api.get("/users/api/clients/"),
       ]);
       setMasterData({
         themes: Array.isArray(th.data.data) ? th.data.data : [],
@@ -194,7 +199,7 @@ export default function Events() {
   };
 
   // ── Venue pick mode: "search" | "map" ────────────────────────
-  const [venueMode, setVenueMode] = useState('search');
+  const [venueMode, setVenueMode] = useState("search");
   const [mapPin, setMapPin] = useState(null); // { lat, lng } of dropped pin
   const [mapGeoLoading, setMapGeoLoading] = useState(false);
   const venueMapRef = useRef(null);
@@ -209,7 +214,7 @@ export default function Events() {
       new window.google.maps.Geocoder().geocode(
         { address: `${cityName}, India` },
         (results, status) => {
-          if (status === 'OK' && results[0]) {
+          if (status === "OK" && results[0]) {
             const c = {
               lat: results[0].geometry.location.lat(),
               lng: results[0].geometry.location.lng(),
@@ -240,26 +245,26 @@ export default function Events() {
         : { center: { lat: 20.5937, lng: 78.9629 }, radius: 2000000 };
       try {
         const { AutocompleteSuggestion } =
-          await window.google.maps.importLibrary('places');
+          await window.google.maps.importLibrary("places");
         const { suggestions } =
           await AutocompleteSuggestion.fetchAutocompleteSuggestions({
             input: val,
-            language: 'en',
+            language: "en",
             locationBias,
           });
         setVenueLoading(false);
         setVenueSugs(
           suggestions.slice(0, 6).map((s) => ({
             place_id: s.placePrediction.placeId,
-            main_text: s.placePrediction.mainText?.toString() || '',
-            secondary_text: s.placePrediction.secondaryText?.toString() || '',
-            description: s.placePrediction.text?.toString() || '',
+            main_text: s.placePrediction.mainText?.toString() || "",
+            secondary_text: s.placePrediction.secondaryText?.toString() || "",
+            description: s.placePrediction.text?.toString() || "",
           })),
         );
       } catch {
         try {
           const service = new window.google.maps.places.AutocompleteService();
-          const opts = { input: val, types: ['establishment', 'geocode'] };
+          const opts = { input: val, types: ["establishment", "geocode"] };
           if (cityCoords) {
             opts.location = new window.google.maps.LatLng(
               cityCoords.lat,
@@ -273,7 +278,7 @@ export default function Events() {
               (predictions || []).slice(0, 6).map((p) => ({
                 place_id: p.place_id,
                 main_text: p.structured_formatting?.main_text || p.description,
-                secondary_text: p.structured_formatting?.secondary_text || '',
+                secondary_text: p.structured_formatting?.secondary_text || "",
                 description: p.description,
               })),
             );
@@ -291,14 +296,14 @@ export default function Events() {
     new Promise((resolve) => {
       const geocoder = new window.google.maps.Geocoder();
       geocoder.geocode({ placeId }, (results, status) => {
-        if (status === 'OK' && results[0]) {
+        if (status === "OK" && results[0]) {
           const r = results[0];
           // Extract city and state from address components
-          let city = '',
-            state = '';
+          let city = "",
+            state = "";
           for (const comp of r.address_components) {
-            if (comp.types.includes('locality')) city = comp.long_name;
-            if (comp.types.includes('administrative_area_level_1'))
+            if (comp.types.includes("locality")) city = comp.long_name;
+            if (comp.types.includes("administrative_area_level_1"))
               state = comp.long_name;
           }
           resolve({
@@ -345,28 +350,28 @@ export default function Events() {
       const geocoder = new window.google.maps.Geocoder();
       geocoder.geocode({ location: { lat, lng } }, (results, status) => {
         setMapGeoLoading(false);
-        if (status === 'OK' && results[0]) {
+        if (status === "OK" && results[0]) {
           const r = results[0];
-          let city = '',
-            state = '',
-            venueName = '';
+          let city = "",
+            state = "",
+            venueName = "";
           for (const comp of r.address_components) {
             if (
-              comp.types.includes('premise') ||
-              comp.types.includes('establishment')
+              comp.types.includes("premise") ||
+              comp.types.includes("establishment")
             )
               venueName = comp.long_name;
-            if (comp.types.includes('locality')) city = comp.long_name;
-            if (comp.types.includes('administrative_area_level_1'))
+            if (comp.types.includes("locality")) city = comp.long_name;
+            if (comp.types.includes("administrative_area_level_1"))
               state = comp.long_name;
           }
-          if (!venueName) venueName = r.formatted_address.split(',')[0];
+          if (!venueName) venueName = r.formatted_address.split(",")[0];
           const venue = {
             venue_name: venueName,
             formatted_address: r.formatted_address,
             latitude: lat,
             longitude: lng,
-            place_id: r.place_id || '',
+            place_id: r.place_id || "",
             google_maps_url: `https://www.google.com/maps?q=${lat},${lng}`,
           };
           setForm((p) => ({
@@ -392,24 +397,24 @@ export default function Events() {
   const handleCreateEvent = async (e) => {
     e.preventDefault();
     if (!form.event_name.trim()) {
-      setAddError('Event name is required.');
+      setAddError("Event name is required.");
       return;
     }
     if (!form.client_id) {
-      setAddError('Please select a client.');
+      setAddError("Please select a client.");
       return;
     }
     if (!form.venue) {
-      setAddError('Please select a venue from the suggestions.');
+      setAddError("Please select a venue from the suggestions.");
       return;
     }
     if (!form.event_start_datetime || !form.event_end_datetime) {
-      setAddError('Start and end datetime required.');
+      setAddError("Start and end datetime required.");
       return;
     }
 
     setAdding(true);
-    setAddError('');
+    setAddError("");
     try {
       const payload = {
         event_name: form.event_name,
@@ -445,9 +450,9 @@ export default function Events() {
       setEvents((prev) => [res.data.data, ...prev]);
       setTotal((t) => t + 1);
       setAddOpen(false);
-      showToast('Event created successfully!');
+      showToast("Event created successfully!");
     } catch (e) {
-      setAddError(e.response?.data?.message || 'Failed to create event.');
+      setAddError(e.response?.data?.message || "Failed to create event.");
     } finally {
       setAdding(false);
     }
@@ -475,6 +480,80 @@ export default function Events() {
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
+  // -- handle events export ----------------
+  const handleExportExcel = async () => {
+    try {
+      setExporting(true);
+
+      let allEvents = [];
+      let currentPage = 1;
+      let totalPages = 1;
+
+      do {
+        const params = {
+          page: currentPage,
+          page_size: 100, // 🔥 faster
+        };
+
+        if (search) params.search = search;
+        if (cityFilter) params.city = cityFilter;
+        if (statusFilter) params.status = statusFilter;
+        if (startDate) params.start_date = startDate;
+        if (endDate) params.end_date = endDate;
+
+        const res = await listEvents(params);
+        const data = res.data.data;
+
+        allEvents = [...allEvents, ...(data.results || [])];
+
+        // ⚠️ your API uses total instead of total_pages
+        totalPages = Math.ceil(
+          (data.pagination?.total || 0) / params.page_size,
+        );
+
+        currentPage++;
+      } while (currentPage <= totalPages);
+
+      // 🔥 Format data
+      const formattedData = allEvents.map((e) => ({
+        "Event Name": e.event_name,
+        "Event Type": e.event_type,
+        Client: e.client?.full_name,
+        City: e.city,
+        State: e.state,
+        Venue: e.venue?.venue_name,
+        Address: e.venue?.formatted_address,
+        "Start Date": e.event_start_datetime
+          ? new Date(e.event_start_datetime).toLocaleString("en-IN")
+          : "",
+        "End Date": e.event_end_datetime
+          ? new Date(e.event_end_datetime).toLocaleString("en-IN")
+          : "",
+        "Crew Count": e.crew_count,
+        Status: e.status,
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(formattedData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Events");
+
+      const excelBuffer = XLSX.write(workbook, {
+        bookType: "xlsx",
+        type: "array",
+      });
+
+      const file = new Blob([excelBuffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8",
+      });
+
+      saveAs(file, "events.xlsx");
+    } catch (err) {
+      console.error("Export failed", err);
+    } finally {
+      setExporting(false);
+    }
+  };
+
   // ── Render ─────────────────────────────────────────────────────
   return (
     <>
@@ -500,7 +579,7 @@ export default function Events() {
       {toast.msg && (
         <div className={`ev-toast ${toast.type}`}>
           <i
-            className={`bi ${toast.type === 'success' ? 'bi-check-circle-fill text-success' : 'bi-exclamation-circle-fill text-danger'} fs-5`}
+            className={`bi ${toast.type === "success" ? "bi-check-circle-fill text-success" : "bi-exclamation-circle-fill text-danger"} fs-5`}
           ></i>
           {toast.msg}
         </div>
@@ -518,27 +597,37 @@ export default function Events() {
           <div className="d-flex gap-2 align-items-center">
             <div className="btn-group">
               <button
-                className={`btn ${viewMode === 'table' ? 'btn-primary' : 'btn-outline-primary'}`}
-                onClick={() => setViewMode('table')}
+                className={`btn ${viewMode === "table" ? "btn-primary" : "btn-outline-primary"}`}
+                onClick={() => setViewMode("table")}
                 title="Table"
               >
                 <i className="bi bi-table"></i>
               </button>
               <button
-                className={`btn ${viewMode === 'calendar' ? 'btn-primary' : 'btn-outline-primary'}`}
-                onClick={() => setViewMode('calendar')}
+                className={`btn ${viewMode === "calendar" ? "btn-primary" : "btn-outline-primary"}`}
+                onClick={() => setViewMode("calendar")}
                 title="Calendar"
               >
                 <i className="bi bi-calendar3"></i>
               </button>
             </div>
-            <button className="btn btn-outline-success">
-              <i className="bi bi-file-earmark-excel me-1"></i>Export
-            </button>
             <button
-              className="btn btn-primary"
-              onClick={openAddModal}
+              className="btn btn-outline-success"
+              onClick={handleExportExcel}
+              disabled={exporting}
             >
+              {exporting ? (
+                <>
+                  <span className="spinner-border spinner-border-sm me-2"></span>
+                  Exporting...
+                </>
+              ) : (
+                <>
+                  <i className="bi bi-file-earmark-excel me-1"></i>Export
+                </>
+              )}
+            </button>
+            <button className="btn btn-primary" onClick={openAddModal}>
               <i className="bi bi-calendar-plus me-1"></i>Add Event
             </button>
           </div>
@@ -586,10 +675,7 @@ export default function Events() {
                 >
                   <option value="">All Stages</option>
                   {Object.entries(STATUS_CFG).map(([k, v]) => (
-                    <option
-                      key={k}
-                      value={k}
-                    >
+                    <option key={k} value={k}>
                       {v.label}
                     </option>
                   ))}
@@ -627,11 +713,11 @@ export default function Events() {
                   <button
                     className="btn btn-outline-secondary btn-sm"
                     onClick={() => {
-                      setSearch('');
-                      setCityFilter('');
-                      setStatusFilter('');
-                      setStartDate('');
-                      setEndDate('');
+                      setSearch("");
+                      setCityFilter("");
+                      setStatusFilter("");
+                      setStartDate("");
+                      setEndDate("");
                       setPage(1);
                     }}
                   >
@@ -645,7 +731,7 @@ export default function Events() {
 
         {error && <div className="alert alert-danger">{error}</div>}
 
-        {viewMode === 'table' ? (
+        {viewMode === "table" ? (
           /* ── TABLE VIEW ──────────────────────────────────────── */
           <div className="card shadow-sm border-0">
             <div className="card-body p-0">
@@ -681,25 +767,25 @@ export default function Events() {
                             <td className="ps-4">
                               <div
                                 className="fw-bold"
-                                style={{ fontSize: '.9rem' }}
+                                style={{ fontSize: ".9rem" }}
                               >
                                 {ev.event_name}
                               </div>
                               <small className="text-muted">
-                                {ev.event_type || '—'}
+                                {ev.event_type || "—"}
                               </small>
                             </td>
                             <td>
                               <div
                                 className="fw-semibold"
-                                style={{ fontSize: '.88rem' }}
+                                style={{ fontSize: ".88rem" }}
                               >
-                                {ev.client?.full_name || '—'}
+                                {ev.client?.full_name || "—"}
                               </div>
                               <small className="text-muted">{ev.city}</small>
                             </td>
                             <td>
-                              <div style={{ fontSize: '.87rem' }}>
+                              <div style={{ fontSize: ".87rem" }}>
                                 {fmtDate(ev.event_start_datetime)}
                               </div>
                               <small className="text-muted">
@@ -709,19 +795,19 @@ export default function Events() {
                             <td>
                               <div
                                 className="text-truncate"
-                                style={{ maxWidth: 180, fontSize: '.87rem' }}
+                                style={{ maxWidth: 180, fontSize: ".87rem" }}
                                 title={ev.venue?.venue_name}
                               >
-                                {ev.venue?.venue_name || '—'}
+                                {ev.venue?.venue_name || "—"}
                               </div>
                               <small className="text-muted">
                                 {ev.venue?.formatted_address
                                   ? ev.venue.formatted_address
-                                      .split(',')
+                                      .split(",")
                                       .slice(-2)
-                                      .join(',')
+                                      .join(",")
                                       .trim()
-                                  : ''}
+                                  : ""}
                               </small>
                             </td>
                             <td className="text-center fw-bold">
@@ -730,12 +816,12 @@ export default function Events() {
                             <td>
                               <span
                                 style={{
-                                  background: sc.hex + '18',
+                                  background: sc.hex + "18",
                                   color: sc.hex,
                                   borderRadius: 6,
-                                  padding: '3px 10px',
+                                  padding: "3px 10px",
                                   fontWeight: 700,
-                                  fontSize: '.75rem',
+                                  fontSize: ".75rem",
                                 }}
                               >
                                 {sc.label}
@@ -779,7 +865,7 @@ export default function Events() {
                     ).map((p) => (
                       <button
                         key={p}
-                        className={`btn btn-sm ${page === p ? 'btn-primary' : 'btn-outline-secondary'}`}
+                        className={`btn btn-sm ${page === p ? "btn-primary" : "btn-outline-secondary"}`}
                         onClick={() => setPage(p)}
                       >
                         {p}
@@ -802,7 +888,7 @@ export default function Events() {
           <div className="card shadow-sm border-0">
             <div className="card-body">
               <div className="d-flex justify-content-between align-items-center mb-4">
-                <h5 className="fw-bold mb-0">{format(calDate, 'MMMM yyyy')}</h5>
+                <h5 className="fw-bold mb-0">{format(calDate, "MMMM yyyy")}</h5>
                 <div className="btn-group">
                   <button
                     className="btn btn-light border"
@@ -844,9 +930,9 @@ export default function Events() {
                     return {
                       style: {
                         backgroundColor: hex,
-                        border: 'none',
-                        color: hex === '#ffc107' ? '#000' : '#fff',
-                        fontSize: '.78rem',
+                        border: "none",
+                        color: hex === "#ffc107" ? "#000" : "#fff",
+                        fontSize: ".78rem",
                       },
                     };
                   }}
@@ -861,7 +947,7 @@ export default function Events() {
       {dayModal && (
         <div
           className="modal d-block"
-          style={{ background: 'rgba(0,0,0,.5)', zIndex: 1055 }}
+          style={{ background: "rgba(0,0,0,.5)", zIndex: 1055 }}
         >
           <div className="modal-dialog modal-dialog-centered modal-lg">
             <div
@@ -870,7 +956,7 @@ export default function Events() {
             >
               <div className="modal-header border-0 px-4 pt-4 pb-2">
                 <h5 className="fw-bold mb-0">
-                  Events on {format(dayModal.date, 'd MMMM yyyy')}
+                  Events on {format(dayModal.date, "d MMMM yyyy")}
                 </h5>
                 <button
                   className="btn-close"
@@ -906,7 +992,7 @@ export default function Events() {
                           <div className="fw-bold">{ev.event_name}</div>
                           <small className="text-muted">
                             <i className="bi bi-person me-1"></i>
-                            {ev.client?.full_name} ·{' '}
+                            {ev.client?.full_name} ·{" "}
                             <i className="bi bi-geo-alt ms-1 me-1"></i>
                             {ev.venue?.venue_name}
                           </small>
@@ -914,12 +1000,12 @@ export default function Events() {
                         <div className="d-flex gap-2 align-items-center">
                           <span
                             style={{
-                              background: sc.hex + '18',
+                              background: sc.hex + "18",
                               color: sc.hex,
                               borderRadius: 6,
-                              padding: '3px 10px',
+                              padding: "3px 10px",
                               fontWeight: 700,
-                              fontSize: '.75rem',
+                              fontSize: ".75rem",
                             }}
                           >
                             {sc.label}
@@ -948,13 +1034,13 @@ export default function Events() {
       {addOpen && (
         <div
           className="modal d-block"
-          style={{ background: 'rgba(0,0,0,.5)', zIndex: 1055 }}
+          style={{ background: "rgba(0,0,0,.5)", zIndex: 1055 }}
         >
           <div
-            className={`modal-dialog modal-dialog-centered modal-dialog-scrollable ${venueMode === 'map' ? '' : 'modal-xl'}`}
+            className={`modal-dialog modal-dialog-centered modal-dialog-scrollable ${venueMode === "map" ? "" : "modal-xl"}`}
             style={
-              venueMode === 'map'
-                ? { maxWidth: 'min(1280px, 96vw)', margin: '16px auto' }
+              venueMode === "map"
+                ? { maxWidth: "min(1280px, 96vw)", margin: "16px auto" }
                 : {}
             }
           >
@@ -986,10 +1072,7 @@ export default function Events() {
                     {addError}
                   </div>
                 )}
-                <form
-                  id="addEventForm"
-                  onSubmit={handleCreateEvent}
-                >
+                <form id="addEventForm" onSubmit={handleCreateEvent}>
                   <div className="row g-4">
                     {/* ── Col 1: Client + Event Info ── */}
                     <div className="col-lg-4 border-end pe-lg-4">
@@ -1005,10 +1088,7 @@ export default function Events() {
                         >
                           <option value="">— Select client —</option>
                           {clients.map((c) => (
-                            <option
-                              key={c.id}
-                              value={c.id}
-                            >
+                            <option key={c.id} value={c.id}>
                               {c.full_name} ({c.email})
                             </option>
                           ))}
@@ -1035,11 +1115,11 @@ export default function Events() {
                           disabled={adding}
                         >
                           {[
-                            'Wedding',
-                            'Corporate',
-                            'Birthday',
-                            'Fashion Event',
-                            'Other',
+                            "Wedding",
+                            "Corporate",
+                            "Birthday",
+                            "Fashion Event",
+                            "Other",
                           ].map((t) => (
                             <option key={t}>{t}</option>
                           ))}
@@ -1105,10 +1185,7 @@ export default function Events() {
                           >
                             <option value="">— Select State —</option>
                             {INDIAN_STATES.map((s) => (
-                              <option
-                                key={s}
-                                value={s}
-                              >
+                              <option key={s} value={s}>
                                 {s}
                               </option>
                             ))}
@@ -1123,17 +1200,17 @@ export default function Events() {
                             onChange={handleFormChange}
                             placeholder="e.g. Bengaluru"
                             disabled={adding || !form.state}
-                            title={!form.state ? 'Select a state first' : ''}
+                            title={!form.state ? "Select a state first" : ""}
                             style={
                               !form.state
-                                ? { opacity: 0.6, cursor: 'not-allowed' }
+                                ? { opacity: 0.6, cursor: "not-allowed" }
                                 : {}
                             }
                           />
                           {form.state && !form.city && (
                             <small
                               className="text-muted"
-                              style={{ fontSize: '.7rem' }}
+                              style={{ fontSize: ".7rem" }}
                             >
                               Enter city to scope venue search
                             </small>
@@ -1152,18 +1229,18 @@ export default function Events() {
                               type="button"
                               className={`btn btn-xs px-2 py-1`}
                               style={{
-                                fontSize: '.72rem',
+                                fontSize: ".72rem",
                                 fontWeight: 700,
                                 borderRadius: 6,
                                 background:
-                                  venueMode === 'search'
-                                    ? '#435ebe'
-                                    : '#f0f2f5',
+                                  venueMode === "search"
+                                    ? "#435ebe"
+                                    : "#f0f2f5",
                                 color:
-                                  venueMode === 'search' ? '#fff' : '#6c757d',
-                                border: 'none',
+                                  venueMode === "search" ? "#fff" : "#6c757d",
+                                border: "none",
                               }}
-                              onClick={() => setVenueMode('search')}
+                              onClick={() => setVenueMode("search")}
                             >
                               <i className="bi bi-search me-1"></i>Search
                             </button>
@@ -1171,24 +1248,24 @@ export default function Events() {
                               type="button"
                               className={`btn btn-xs px-2 py-1`}
                               style={{
-                                fontSize: '.72rem',
+                                fontSize: ".72rem",
                                 fontWeight: 700,
                                 borderRadius: 6,
                                 background:
-                                  venueMode === 'map' ? '#435ebe' : '#f0f2f5',
-                                color: venueMode === 'map' ? '#fff' : '#6c757d',
-                                border: 'none',
+                                  venueMode === "map" ? "#435ebe" : "#f0f2f5",
+                                color: venueMode === "map" ? "#fff" : "#6c757d",
+                                border: "none",
                               }}
-                              onClick={() => setVenueMode('map')}
+                              onClick={() => setVenueMode("map")}
                             >
                               <i className="bi bi-map me-1"></i>Pick on Map
                             </button>
                           </div>
                         </div>
 
-                        {venueMode === 'search' ? (
+                        {venueMode === "search" ? (
                           /* ── Text search mode ───────────── */
-                          <div style={{ position: 'relative' }}>
+                          <div style={{ position: "relative" }}>
                             <div className="input-group">
                               <span className="input-group-text bg-light border-0">
                                 <i className="bi bi-geo-alt text-primary"></i>
@@ -1205,7 +1282,7 @@ export default function Events() {
                                 placeholder={
                                   form.city
                                     ? `Search venue in ${form.city}…`
-                                    : 'Search venue or address…'
+                                    : "Search venue or address…"
                                 }
                                 disabled={adding}
                               />
@@ -1219,12 +1296,12 @@ export default function Events() {
                               <div
                                 className="border rounded-3 shadow-sm mt-1"
                                 style={{
-                                  position: 'absolute',
+                                  position: "absolute",
                                   zIndex: 1060,
-                                  background: '#fff',
-                                  width: '100%',
+                                  background: "#fff",
+                                  width: "100%",
                                   maxHeight: 200,
-                                  overflowY: 'auto',
+                                  overflowY: "auto",
                                 }}
                               >
                                 {venueSugs.map((s) => (
@@ -1252,33 +1329,30 @@ export default function Events() {
                           <div
                             style={{
                               borderRadius: 10,
-                              overflow: 'hidden',
-                              border: '1.5px solid #e0e3ea',
+                              overflow: "hidden",
+                              border: "1.5px solid #e0e3ea",
                             }}
                           >
                             <div
                               style={{
-                                background: '#f0f4ff',
-                                padding: '6px 12px',
-                                fontSize: '.75rem',
+                                background: "#f0f4ff",
+                                padding: "6px 12px",
+                                fontSize: ".75rem",
                                 fontWeight: 600,
-                                color: '#435ebe',
+                                color: "#435ebe",
                               }}
                             >
                               <i className="bi bi-hand-index me-1"></i>
                               {mapGeoLoading
-                                ? 'Detecting location…'
-                                : 'Click anywhere on the map to pin the venue'}
+                                ? "Detecting location…"
+                                : "Click anywhere on the map to pin the venue"}
                             </div>
-                            <div
-                              id="venuePickMap"
-                              style={{ height: 360 }}
-                            >
+                            <div id="venuePickMap" style={{ height: 360 }}>
                               {/* GoogleMap rendered inline via a ref-attached div — loaded by the global Maps script */}
                               <VenuePickMap
                                 pin={mapPin}
                                 onMapClick={handleMapClick}
-                                cityHint={form.city || 'India'}
+                                cityHint={form.city || "India"}
                               />
                             </div>
                           </div>
@@ -1289,9 +1363,9 @@ export default function Events() {
                           <div
                             className="mt-2 p-2 rounded-2 d-flex align-items-start gap-2"
                             style={{
-                              background: '#e8f5e9',
-                              border: '1px solid #a5d6a7',
-                              fontSize: '.8rem',
+                              background: "#e8f5e9",
+                              border: "1px solid #a5d6a7",
+                              fontSize: ".8rem",
                             }}
                           >
                             <i className="bi bi-check-circle-fill text-success mt-1 flex-shrink-0"></i>
@@ -1299,7 +1373,7 @@ export default function Events() {
                               <strong>{form.venue.venue_name}</strong>
                               <div
                                 className="text-muted"
-                                style={{ fontSize: '.73rem' }}
+                                style={{ fontSize: ".73rem" }}
                               >
                                 {form.venue.formatted_address}
                               </div>
@@ -1310,13 +1384,13 @@ export default function Events() {
                               style={{ lineHeight: 1 }}
                               onClick={() => {
                                 setForm((p) => ({ ...p, venue: null }));
-                                setVenueInput('');
+                                setVenueInput("");
                                 setMapPin(null);
                               }}
                             >
                               <i
                                 className="bi bi-x-lg"
-                                style={{ fontSize: '.7rem' }}
+                                style={{ fontSize: ".7rem" }}
                               ></i>
                             </button>
                           </div>
@@ -1363,10 +1437,7 @@ export default function Events() {
                         >
                           <option value="">— None —</option>
                           {masterData.themes.map((t) => (
-                            <option
-                              key={t.id}
-                              value={t.id}
-                            >
+                            <option key={t.id} value={t.id}>
                               {t.theme_name}
                             </option>
                           ))}
@@ -1383,10 +1454,7 @@ export default function Events() {
                         >
                           <option value="">— None —</option>
                           {masterData.uniforms.map((u) => (
-                            <option
-                              key={u.id}
-                              value={u.id}
-                            >
+                            <option key={u.id} value={u.id}>
                               {u.category_name}
                             </option>
                           ))}
@@ -1403,10 +1471,7 @@ export default function Events() {
                         >
                           <option value="">— None —</option>
                           {masterData.plans.map((p) => (
-                            <option
-                              key={p.id}
-                              value={p.id}
-                            >
+                            <option key={p.id} value={p.id}>
                               {p.name}
                             </option>
                           ))}
@@ -1533,7 +1598,7 @@ function VenuePickMap({ pin, onMapClick, cityHint }) {
       streetViewControl: false,
       fullscreenControl: true,
     });
-    listenerRef.current = m.addListener('click', onMapClick);
+    listenerRef.current = m.addListener("click", onMapClick);
     mapInstanceRef.current = m;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -1544,7 +1609,7 @@ function VenuePickMap({ pin, onMapClick, cityHint }) {
     if (listenerRef.current)
       window.google.maps.event.removeListener(listenerRef.current);
     listenerRef.current = mapInstanceRef.current.addListener(
-      'click',
+      "click",
       onMapClick,
     );
   }, [onMapClick]);
@@ -1555,13 +1620,13 @@ function VenuePickMap({ pin, onMapClick, cityHint }) {
       !mapInstanceRef.current ||
       !window.google ||
       !cityHint ||
-      cityHint === 'India'
+      cityHint === "India"
     )
       return;
     new window.google.maps.Geocoder().geocode(
       { address: `${cityHint}, India` },
       (results, status) => {
-        if (status === 'OK' && results[0] && mapInstanceRef.current) {
+        if (status === "OK" && results[0] && mapInstanceRef.current) {
           mapInstanceRef.current.setCenter(results[0].geometry.location);
           mapInstanceRef.current.setZoom(12);
         }
@@ -1581,43 +1646,38 @@ function VenuePickMap({ pin, onMapClick, cityHint }) {
         position: pin,
         map: mapInstanceRef.current,
         animation: window.google.maps.Animation.DROP,
-        title: 'Selected venue',
+        title: "Selected venue",
       });
       mapInstanceRef.current.panTo(pin);
       mapInstanceRef.current.setZoom(16);
     }
   }, [pin]);
 
-  return (
-    <div
-      ref={mapRef}
-      style={{ width: '100%', height: '100%' }}
-    />
-  );
+  return <div ref={mapRef} style={{ width: "100%", height: "100%" }} />;
 }
 
 // ── Default form state ─────────────────────────────────────────
 function initialForm() {
   return {
-    client_id: '',
-    event_name: '',
-    event_type: 'Wedding',
-    city: '',
-    state: '',
+    client_id: "",
+    event_name: "",
+    event_type: "Wedding",
+    city: "",
+    state: "",
     venue: null,
-    event_start_datetime: '',
-    event_end_datetime: '',
+    event_start_datetime: "",
+    event_end_datetime: "",
     no_of_days: 1,
-    working_hours: '',
+    working_hours: "",
     crew_count: 0,
-    theme_id: '',
-    uniform_id: '',
-    package_id: '',
-    total_amount: '',
-    gst_amount: '',
-    tax_amount: '',
-    gst_company: '',
-    gst_number: '',
-    gst_address: '',
+    theme_id: "",
+    uniform_id: "",
+    package_id: "",
+    total_amount: "",
+    gst_amount: "",
+    tax_amount: "",
+    gst_company: "",
+    gst_number: "",
+    gst_address: "",
   };
 }

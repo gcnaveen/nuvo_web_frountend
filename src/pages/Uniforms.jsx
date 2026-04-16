@@ -1,14 +1,14 @@
 // src/pages/Uniforms.jsx
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   listInventory,
   getInventorySummary,
   updateStock,
   createUniform,
-} from '../api/masterApi';
+} from "../api/masterApi";
 
 // ── Constants ──────────────────────────────────────────────────
-const STANDARD_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+const STANDARD_SIZES = ["XS", "S", "M", "L", "XL", "XXL"];
 const EMPTY_SIZES = Object.fromEntries(
   STANDARD_SIZES.map((s) => [s, { total: 0, in_use: 0 }]),
 );
@@ -25,21 +25,21 @@ const calcTotals = (stock = {}) => {
 };
 
 const stockRatioStatus = (available, total) => {
-  if (total === 0) return 'secondary';
+  if (total === 0) return "secondary";
   const ratio = available / total;
-  if (ratio < 0.2) return 'danger';
-  if (ratio < 0.5) return 'warning';
-  return 'success';
+  if (ratio < 0.2) return "danger";
+  if (ratio < 0.5) return "warning";
+  return "success";
 };
 
 const fmtDate = (d) =>
   d
-    ? new Date(d).toLocaleDateString('en-IN', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
+    ? new Date(d).toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
       })
-    : '—';
+    : "—";
 
 // ══════════════════════════════════════════════════════════════
 export default function Uniforms() {
@@ -47,10 +47,10 @@ export default function Uniforms() {
   const [inventory, setInventory] = useState([]);
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   // ── Filters ───────────────────────────────────────────────────
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const [lowStock, setLowStock] = useState(false);
   const searchDebounce = useRef(null);
 
@@ -59,38 +59,38 @@ export default function Uniforms() {
   const [editStock, setEditStock] = useState({});
   const [editHasSizes, setEditHasSizes] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState('');
+  const [saveError, setSaveError] = useState("");
 
   // ── Add Category modal ────────────────────────────────────────
   const [addModal, setAddModal] = useState(false);
   const [addForm, setAddForm] = useState({
-    category_name: '',
-    unique_key: '',
-    description: '',
-    gender: 'unisex',
-    price: '',
+    category_name: "",
+    unique_key: "",
+    description: "",
+    gender: "unisex",
+    price: "",
     is_active: true,
     has_sizes: true,
   });
-  const [addError, setAddError] = useState('');
+  const [addError, setAddError] = useState("");
   const [adding, setAdding] = useState(false);
-  const [addSuccess, setAddSuccess] = useState('');
+  const [addSuccess, setAddSuccess] = useState("");
 
   // ── Toast ─────────────────────────────────────────────────────
-  const [toast, setToast] = useState({ msg: '', type: 'success' });
-  const showToast = (msg, type = 'success') => {
+  const [toast, setToast] = useState({ msg: "", type: "success" });
+  const showToast = (msg, type = "success") => {
     setToast({ msg, type });
-    setTimeout(() => setToast({ msg: '', type: 'success' }), 3000);
+    setTimeout(() => setToast({ msg: "", type: "success" }), 3000);
   };
 
   // ── Fetch ──────────────────────────────────────────────────────
   const fetchAll = useCallback(async () => {
     setLoading(true);
-    setError('');
+    setError("");
     try {
       const params = {};
       if (search) params.search = search;
-      if (lowStock) params.low_stock = 'true';
+      if (lowStock) params.low_stock = "true";
       const [invRes, sumRes] = await Promise.all([
         listInventory(params),
         getInventorySummary(),
@@ -98,7 +98,7 @@ export default function Uniforms() {
       setInventory(Array.isArray(invRes.data.data) ? invRes.data.data : []);
       setSummary(sumRes.data.data || null);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load inventory.');
+      setError(err.response?.data?.message || "Failed to load inventory.");
     } finally {
       setLoading(false);
     }
@@ -127,11 +127,11 @@ export default function Uniforms() {
           stockCopy[s] = { total: 0, in_use: 0 };
         });
       } else {
-        stockCopy['OS'] = { total: 0, in_use: 0 };
+        stockCopy["OS"] = { total: 0, in_use: 0 };
       }
     }
     setEditStock(stockCopy);
-    setSaveError('');
+    setSaveError("");
   };
 
   const handleHasSizesToggle = (hasSizes) => {
@@ -172,7 +172,7 @@ export default function Uniforms() {
   const handleSaveStock = async () => {
     if (!selected) return;
     setSaving(true);
-    setSaveError('');
+    setSaveError("");
     try {
       const res = await updateStock(selected.id, {
         has_sizes: editHasSizes,
@@ -186,9 +186,9 @@ export default function Uniforms() {
       const sumRes = await getInventorySummary();
       setSummary(sumRes.data.data);
       setSelected(null);
-      showToast('Stock updated successfully!');
+      showToast("Stock updated successfully!");
     } catch (err) {
-      setSaveError(err.response?.data?.message || 'Failed to update stock.');
+      setSaveError(err.response?.data?.message || "Failed to update stock.");
     } finally {
       setSaving(false);
     }
@@ -197,15 +197,15 @@ export default function Uniforms() {
   // ── Add Category ───────────────────────────────────────────────
   const handleAddChange = (e) => {
     const { name, value, type, checked } = e.target;
-    let v = type === 'checkbox' ? checked : value;
+    let v = type === "checkbox" ? checked : value;
     // Auto-generate unique_key from category_name
     setAddForm((prev) => {
       const next = { ...prev, [name]: v };
-      if (name === 'category_name') {
+      if (name === "category_name") {
         next.unique_key = value
           .toLowerCase()
-          .replace(/\s+/g, '_')
-          .replace(/[^a-z0-9_]/g, '');
+          .replace(/\s+/g, "_")
+          .replace(/[^a-z0-9_]/g, "");
       }
       return next;
     });
@@ -213,44 +213,44 @@ export default function Uniforms() {
 
   const handleAddSubmit = async (e) => {
     e.preventDefault();
-    setAddError('');
-    setAddSuccess('');
+    setAddError("");
+    setAddSuccess("");
     if (!addForm.category_name.trim()) {
-      setAddError('Category name is required.');
+      setAddError("Category name is required.");
       return;
     }
     if (!addForm.unique_key.trim()) {
-      setAddError('Unique key is required.');
+      setAddError("Unique key is required.");
       return;
     }
     setAdding(true);
     try {
       const fd = new FormData();
-      fd.append('category_name', addForm.category_name.trim());
-      fd.append('unique_key', addForm.unique_key.trim());
-      fd.append('description', addForm.description.trim());
-      fd.append('gender', addForm.gender);
-      fd.append('price', addForm.price || '0');
-      fd.append('is_active', addForm.is_active ? 'true' : 'false');
+      fd.append("category_name", addForm.category_name.trim());
+      fd.append("unique_key", addForm.unique_key.trim());
+      fd.append("description", addForm.description.trim());
+      fd.append("gender", addForm.gender);
+      fd.append("price", addForm.price || "0");
+      fd.append("is_active", addForm.is_active ? "true" : "false");
       await createUniform(fd);
-      setAddSuccess('Category created! You can now manage its stock.');
+      setAddSuccess("Category created! You can now manage its stock.");
       setAddForm({
-        category_name: '',
-        unique_key: '',
-        description: '',
-        gender: 'unisex',
-        price: '',
+        category_name: "",
+        unique_key: "",
+        description: "",
+        gender: "unisex",
+        price: "",
         is_active: true,
         has_sizes: true,
       });
       fetchAll();
       setTimeout(() => {
         setAddModal(false);
-        setAddSuccess('');
-        showToast('Uniform category created!');
+        setAddSuccess("");
+        showToast("Uniform category created!");
       }, 1800);
     } catch (err) {
-      setAddError(err.response?.data?.message || 'Failed to create category.');
+      setAddError(err.response?.data?.message || "Failed to create category.");
     } finally {
       setAdding(false);
     }
@@ -283,7 +283,7 @@ export default function Uniforms() {
       {toast.msg && (
         <div className={`inv-toast ${toast.type}`}>
           <i
-            className={`bi ${toast.type === 'success' ? 'bi-check-circle-fill text-success' : 'bi-exclamation-circle-fill text-danger'} fs-5`}
+            className={`bi ${toast.type === "success" ? "bi-check-circle-fill text-success" : "bi-exclamation-circle-fill text-danger"} fs-5`}
           ></i>
           {toast.msg}
         </div>
@@ -299,15 +299,12 @@ export default function Uniforms() {
             </p>
           </div>
           <div className="d-flex gap-2">
-            <button className="btn btn-outline-success">
-              <i className="bi bi-file-earmark-excel me-1"></i>Export Report
-            </button>
             <button
               className="btn btn-primary"
               onClick={() => {
                 setAddModal(true);
-                setAddError('');
-                setAddSuccess('');
+                setAddError("");
+                setAddSuccess("");
               }}
             >
               <i className="bi bi-plus-lg me-1"></i>Add Uniform Category
@@ -322,45 +319,42 @@ export default function Uniforms() {
           <div className="row g-3 mb-4">
             {[
               {
-                label: 'Categories',
+                label: "Categories",
                 val: summary.total_categories,
-                icon: 'bi-tags',
-                bg: '#e8f5e9',
-                color: '#2e7d32',
+                icon: "bi-tags",
+                bg: "#e8f5e9",
+                color: "#2e7d32",
               },
               {
-                label: 'Total Items',
+                label: "Total Items",
                 val: summary.total_items,
-                icon: 'bi-box-seam',
-                bg: '#e3f2fd',
-                color: '#1565c0',
+                icon: "bi-box-seam",
+                bg: "#e3f2fd",
+                color: "#1565c0",
               },
               {
-                label: 'In Use',
+                label: "In Use",
                 val: summary.total_in_use,
-                icon: 'bi-people-fill',
-                bg: '#fff3e0',
-                color: '#e65100',
+                icon: "bi-people-fill",
+                bg: "#fff3e0",
+                color: "#e65100",
               },
               {
-                label: 'Available',
+                label: "Available",
                 val: summary.total_available,
-                icon: 'bi-check-circle',
-                bg: '#f3e5f5',
-                color: '#7b1fa2',
+                icon: "bi-check-circle",
+                bg: "#f3e5f5",
+                color: "#7b1fa2",
               },
               {
-                label: 'Low Stock',
+                label: "Low Stock",
                 val: summary.low_stock_count,
-                icon: 'bi-exclamation-triangle',
-                bg: '#fce4ec',
-                color: '#c62828',
+                icon: "bi-exclamation-triangle",
+                bg: "#fce4ec",
+                color: "#c62828",
               },
             ].map((s) => (
-              <div
-                className="col-6 col-md-4 col-lg"
-                key={s.label}
-              >
+              <div className="col-6 col-md-4 col-lg" key={s.label}>
                 <div className="inv-stat-card">
                   <div
                     className="inv-stat-icon"
@@ -369,7 +363,7 @@ export default function Uniforms() {
                     <i className={`bi ${s.icon}`}></i>
                   </div>
                   <div>
-                    <div className="inv-stat-val">{s.val ?? '—'}</div>
+                    <div className="inv-stat-val">{s.val ?? "—"}</div>
                     <div className="inv-stat-lbl">{s.label}</div>
                   </div>
                 </div>
@@ -419,7 +413,7 @@ export default function Uniforms() {
                   <button
                     className="btn btn-outline-secondary btn-sm"
                     onClick={() => {
-                      setSearch('');
+                      setSearch("");
                       setLowStock(false);
                     }}
                   >
@@ -443,12 +437,12 @@ export default function Uniforms() {
             ) : inventory.length === 0 ? (
               <div className="text-center py-5 text-muted">
                 <i className="bi bi-box-seam fs-1 d-block mb-2"></i>
-                No inventory items found.{' '}
+                No inventory items found.{" "}
                 {(search || lowStock) && (
                   <button
                     className="btn btn-link p-0 text-primary"
                     onClick={() => {
-                      setSearch('');
+                      setSearch("");
                       setLowStock(false);
                     }}
                   >
@@ -488,7 +482,7 @@ export default function Uniforms() {
                                   className="rounded border"
                                   width="46"
                                   height="46"
-                                  style={{ objectFit: 'cover', flexShrink: 0 }}
+                                  style={{ objectFit: "cover", flexShrink: 0 }}
                                 />
                               ) : (
                                 <div
@@ -505,7 +499,7 @@ export default function Uniforms() {
                               <div>
                                 <div
                                   className="fw-bold"
-                                  style={{ fontSize: '.9rem' }}
+                                  style={{ fontSize: ".9rem" }}
                                 >
                                   {item.category_name}
                                 </div>
@@ -517,15 +511,15 @@ export default function Uniforms() {
                           </td>
                           <td>
                             <span
-                              className={`badge ${item.is_active ? 'bg-success bg-opacity-10 text-success' : 'bg-secondary bg-opacity-10 text-secondary'}`}
+                              className={`badge ${item.is_active ? "bg-success bg-opacity-10 text-success" : "bg-secondary bg-opacity-10 text-secondary"}`}
                             >
-                              {item.is_active ? 'Active' : 'Inactive'}
+                              {item.is_active ? "Active" : "Inactive"}
                             </span>
                           </td>
                           <td>
                             <div className="small">
                               <span className="text-muted">
-                                {item.gender || '—'}
+                                {item.gender || "—"}
                               </span>
                               {item.price > 0 && (
                                 <>
@@ -573,13 +567,13 @@ export default function Uniforms() {
                           <td className="text-center">
                             <span
                               style={{
-                                background: '#f0f2f5',
-                                color: '#4a5568',
+                                background: "#f0f2f5",
+                                color: "#4a5568",
                                 borderRadius: 8,
-                                padding: '4px 14px',
+                                padding: "4px 14px",
                                 fontWeight: 700,
-                                fontSize: '.85rem',
-                                display: 'inline-block',
+                                fontSize: ".85rem",
+                                display: "inline-block",
                               }}
                             >
                               {item.total_in_use}
@@ -588,10 +582,10 @@ export default function Uniforms() {
                           <td className="text-center">
                             {(() => {
                               const colors = {
-                                success: { bg: '#e8f5e9', color: '#2e7d32' },
-                                warning: { bg: '#fff8e1', color: '#f57f17' },
-                                danger: { bg: '#fce4ec', color: '#c62828' },
-                                secondary: { bg: '#f5f5f5', color: '#757575' },
+                                success: { bg: "#e8f5e9", color: "#2e7d32" },
+                                warning: { bg: "#fff8e1", color: "#f57f17" },
+                                danger: { bg: "#fce4ec", color: "#c62828" },
+                                secondary: { bg: "#f5f5f5", color: "#757575" },
                               };
                               const c = colors[status] || colors.secondary;
                               return (
@@ -600,10 +594,10 @@ export default function Uniforms() {
                                     background: c.bg,
                                     color: c.color,
                                     borderRadius: 8,
-                                    padding: '4px 14px',
+                                    padding: "4px 14px",
                                     fontWeight: 800,
-                                    fontSize: '.88rem',
-                                    display: 'inline-block',
+                                    fontSize: ".88rem",
+                                    display: "inline-block",
                                   }}
                                 >
                                   {item.total_available}
@@ -652,7 +646,7 @@ export default function Uniforms() {
                   {selected?.category_name}
                   {selected?.price > 0 && (
                     <>
-                      {' '}
+                      {" "}
                       · <strong>₹{selected.price}</strong> per unit
                     </>
                   )}
@@ -677,7 +671,7 @@ export default function Uniforms() {
                 <i className="bi bi-info-circle-fill text-primary fs-5 mt-1"></i>
                 <small className="text-muted">
                   Update <strong>Total Owned</strong> when purchasing new stock
-                  or retiring items. You can also manually correct{' '}
+                  or retiring items. You can also manually correct{" "}
                   <strong>In Use</strong> if needed (e.g. after a manual event
                   adjustment). Total must always be ≥ In Use.
                 </small>
@@ -690,13 +684,13 @@ export default function Uniforms() {
                 </label>
                 <div className="d-flex gap-2">
                   <button
-                    className={`size-toggle-btn ${editHasSizes ? 'active' : ''}`}
+                    className={`size-toggle-btn ${editHasSizes ? "active" : ""}`}
                     onClick={() => handleHasSizesToggle(true)}
                   >
                     <i className="bi bi-grid me-1"></i>Multiple Sizes
                   </button>
                   <button
-                    className={`size-toggle-btn ${!editHasSizes ? 'active' : ''}`}
+                    className={`size-toggle-btn ${!editHasSizes ? "active" : ""}`}
                     onClick={() => handleHasSizesToggle(false)}
                   >
                     <i className="bi bi-dash-circle me-1"></i>Free Size (One
@@ -711,12 +705,12 @@ export default function Uniforms() {
                   {/* Header */}
                   <div
                     style={{
-                      display: 'grid',
-                      gridTemplateColumns: '80px 1fr 1fr 130px 130px',
+                      display: "grid",
+                      gridTemplateColumns: "80px 1fr 1fr 130px 130px",
                       gap: 10,
-                      alignItems: 'center',
-                      background: '#f8f9fc',
-                      padding: '10px 16px',
+                      alignItems: "center",
+                      background: "#f8f9fc",
+                      padding: "10px 16px",
                     }}
                   >
                     <span className="small fw-bold text-muted">SIZE</span>
@@ -732,18 +726,18 @@ export default function Uniforms() {
                     <span
                       className="small fw-bold"
                       style={{
-                        color: '#435ebe',
-                        textAlign: 'center',
-                        fontSize: '.68rem',
-                        textTransform: 'uppercase',
-                        letterSpacing: '.8px',
+                        color: "#435ebe",
+                        textAlign: "center",
+                        fontSize: ".68rem",
+                        textTransform: "uppercase",
+                        letterSpacing: ".8px",
                       }}
                     >
                       ✏ EDIT IN USE
                     </span>
                   </div>
                   {/* Rows */}
-                  <div style={{ padding: '0 16px' }}>
+                  <div style={{ padding: "0 16px" }}>
                     {Object.entries(editStock).map(([size, data]) => {
                       const available = (data.total || 0) - (data.in_use || 0);
                       const isLow =
@@ -753,55 +747,55 @@ export default function Uniforms() {
                         <div
                           key={size}
                           style={{
-                            display: 'grid',
-                            gridTemplateColumns: '80px 1fr 1fr 130px 130px',
+                            display: "grid",
+                            gridTemplateColumns: "80px 1fr 1fr 130px 130px",
                             gap: 10,
-                            alignItems: 'center',
-                            padding: '10px 0',
-                            borderBottom: '1px solid #f5f6fa',
+                            alignItems: "center",
+                            padding: "10px 0",
+                            borderBottom: "1px solid #f5f6fa",
                           }}
                         >
                           <span
                             className="fw-bold"
-                            style={{ fontSize: '.9rem' }}
+                            style={{ fontSize: ".9rem" }}
                           >
-                            {size === 'OS' ? 'Free Size' : `Size ${size}`}
+                            {size === "OS" ? "Free Size" : `Size ${size}`}
                           </span>
                           {/* Available (computed, display only) */}
                           <div className="text-center">
                             <span
                               style={{
                                 background: isInvalid
-                                  ? '#fce4ec'
+                                  ? "#fce4ec"
                                   : isLow
-                                    ? '#fff8e1'
-                                    : '#e8f5e9',
+                                    ? "#fff8e1"
+                                    : "#e8f5e9",
                                 color: isInvalid
-                                  ? '#c62828'
+                                  ? "#c62828"
                                   : isLow
-                                    ? '#f57f17'
-                                    : '#2e7d32',
+                                    ? "#f57f17"
+                                    : "#2e7d32",
                                 borderRadius: 7,
-                                padding: '4px 12px',
+                                padding: "4px 12px",
                                 fontWeight: 800,
-                                fontSize: '.85rem',
-                                display: 'inline-block',
+                                fontSize: ".85rem",
+                                display: "inline-block",
                               }}
                             >
-                              {isInvalid ? '⚠' : available}
+                              {isInvalid ? "⚠" : available}
                             </span>
                           </div>
                           {/* In Use display */}
                           <div className="text-center">
                             <span
                               style={{
-                                background: '#f0f2f5',
-                                color: '#4a5568',
+                                background: "#f0f2f5",
+                                color: "#4a5568",
                                 borderRadius: 7,
-                                padding: '4px 12px',
+                                padding: "4px 12px",
                                 fontWeight: 700,
-                                fontSize: '.85rem',
-                                display: 'inline-block',
+                                fontSize: ".85rem",
+                                display: "inline-block",
                               }}
                             >
                               {data.in_use || 0}
@@ -813,7 +807,7 @@ export default function Uniforms() {
                             className="stock-input"
                             min={data.in_use || 0}
                             value={data.total || 0}
-                            style={isInvalid ? { borderColor: '#dc3545' } : {}}
+                            style={isInvalid ? { borderColor: "#dc3545" } : {}}
                             onChange={(e) =>
                               handleStockChange(size, e.target.value)
                             }
@@ -826,8 +820,8 @@ export default function Uniforms() {
                             max={data.total || 0}
                             value={data.in_use || 0}
                             style={{
-                              borderColor: isInvalid ? '#dc3545' : '#435ebe',
-                              borderWidth: '1.5px',
+                              borderColor: isInvalid ? "#dc3545" : "#435ebe",
+                              borderWidth: "1.5px",
                             }}
                             onChange={(e) =>
                               handleInUseChange(size, e.target.value)
@@ -843,12 +837,12 @@ export default function Uniforms() {
                     return (
                       <div
                         style={{
-                          display: 'grid',
-                          gridTemplateColumns: '80px 1fr 1fr 130px 130px',
+                          display: "grid",
+                          gridTemplateColumns: "80px 1fr 1fr 130px 130px",
                           gap: 10,
-                          alignItems: 'center',
-                          background: '#f8f9fc',
-                          padding: '12px 16px',
+                          alignItems: "center",
+                          background: "#f8f9fc",
+                          padding: "12px 16px",
                         }}
                       >
                         <span className="small fw-bold text-muted">TOTAL</span>
@@ -856,8 +850,8 @@ export default function Uniforms() {
                           <span
                             style={{
                               fontWeight: 800,
-                              color: '#2e7d32',
-                              fontSize: '.9rem',
+                              color: "#2e7d32",
+                              fontSize: ".9rem",
                             }}
                           >
                             {totals.available}
@@ -867,8 +861,8 @@ export default function Uniforms() {
                           <span
                             style={{
                               fontWeight: 800,
-                              color: '#4a5568',
-                              fontSize: '.9rem',
+                              color: "#4a5568",
+                              fontSize: ".9rem",
                             }}
                           >
                             {totals.inUse}
@@ -878,8 +872,8 @@ export default function Uniforms() {
                           <span
                             style={{
                               fontWeight: 800,
-                              color: '#435ebe',
-                              fontSize: '.9rem',
+                              color: "#435ebe",
+                              fontSize: ".9rem",
                             }}
                           >
                             {totals.total}
@@ -894,10 +888,7 @@ export default function Uniforms() {
             </div>
 
             <div className="modal-footer border-0 p-4 pt-0">
-              <button
-                className="btn btn-light px-4"
-                data-bs-dismiss="modal"
-              >
+              <button className="btn btn-light px-4" data-bs-dismiss="modal">
                 Cancel
               </button>
               <button
@@ -925,7 +916,7 @@ export default function Uniforms() {
       {addModal && (
         <div
           className="modal d-block"
-          style={{ background: 'rgba(0,0,0,.5)', zIndex: 1055 }}
+          style={{ background: "rgba(0,0,0,.5)", zIndex: 1055 }}
         >
           <div className="modal-dialog modal-dialog-centered">
             <div
@@ -957,10 +948,7 @@ export default function Uniforms() {
                     {addSuccess}
                   </div>
                 )}
-                <form
-                  id="addUniformForm"
-                  onSubmit={handleAddSubmit}
-                >
+                <form id="addUniformForm" onSubmit={handleAddSubmit}>
                   <div className="row g-3">
                     <div className="col-12">
                       <label className="small fw-bold">Category Name *</label>
@@ -997,7 +985,7 @@ export default function Uniforms() {
                         value={addForm.description}
                         onChange={handleAddChange}
                         placeholder="Brief description..."
-                        style={{ resize: 'none' }}
+                        style={{ resize: "none" }}
                         disabled={adding}
                       />
                     </div>
@@ -1046,7 +1034,7 @@ export default function Uniforms() {
                           className="form-check-label fw-semibold small"
                           htmlFor="addActiveSwitch"
                         >
-                          {addForm.is_active ? 'Active' : 'Inactive'}
+                          {addForm.is_active ? "Active" : "Inactive"}
                         </label>
                       </div>
                     </div>

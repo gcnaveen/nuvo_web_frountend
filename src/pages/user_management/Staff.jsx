@@ -1,45 +1,47 @@
 // src/pages/user_management/Staff.jsx
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { listStaff, createStaff, deleteStaff } from '../../api/staffApi';
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { listStaff, createStaff, deleteStaff } from "../../api/staffApi";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 
 const PACKAGE_CONFIG = {
-  PLATINUM: { label: 'Platinum', color: '#8E24AA', textColor: '#fff' },
-  DIAMOND: { label: 'Diamond', color: '#1E88E5', textColor: '#fff' },
-  GOLD: { label: 'Gold', color: '#D4AF37', textColor: '#000' },
-  SILVER: { label: 'Silver', color: '#B0BEC5', textColor: '#000' },
-  BRONZE: { label: 'Bronze', color: '#CD7F32', textColor: '#fff' },
+  PLATINUM: { label: "Platinum", color: "#8E24AA", textColor: "#fff" },
+  DIAMOND: { label: "Diamond", color: "#1E88E5", textColor: "#fff" },
+  GOLD: { label: "Gold", color: "#D4AF37", textColor: "#000" },
+  SILVER: { label: "Silver", color: "#B0BEC5", textColor: "#000" },
+  BRONZE: { label: "Bronze", color: "#CD7F32", textColor: "#fff" },
 };
 
 const STATUS_BADGE = {
-  ACTIVE: 'success',
-  ONEVENT: 'warning',
-  INACTIVE: 'secondary',
-  BLOCKED: 'danger',
+  ACTIVE: "success",
+  ONEVENT: "warning",
+  INACTIVE: "secondary",
+  BLOCKED: "danger",
 };
 
 const EMPTY_FORM = {
-  full_name: '',
-  email: '',
-  phone_number: '',
-  gender: 'Male',
-  city: '',
-  state: '',
-  country: 'India',
-  package: 'SILVER',
-  experience_in_years: '',
-  price_of_staff: '',
+  full_name: "",
+  email: "",
+  phone_number: "",
+  gender: "Male",
+  city: "",
+  state: "",
+  country: "India",
+  package: "SILVER",
+  experience_in_years: "",
+  price_of_staff: "",
 };
 
 const initials = (name) =>
-  (name || '?')
-    .split(' ')
+  (name || "?")
+    .split(" ")
     .slice(0, 2)
     .map((w) => w[0])
-    .join('')
+    .join("")
     .toUpperCase();
 
-const fmtDate = (d) => (d ? new Date(d).toLocaleDateString('en-IN') : '—');
+const fmtDate = (d) => (d ? new Date(d).toLocaleDateString("en-IN") : "—");
 
 export default function Staff() {
   const navigate = useNavigate();
@@ -53,38 +55,40 @@ export default function Staff() {
   });
   const [cities, setCities] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
-  const [search, setSearch] = useState('');
-  const [city, setCity] = useState('');
-  const [pkg, setPkg] = useState('');
-  const [status, setStatus] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [search, setSearch] = useState("");
+  const [city, setCity] = useState("");
+  const [pkg, setPkg] = useState("");
+  const [status, setStatus] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [page, setPage] = useState(1);
 
   const [form, setForm] = useState(EMPTY_FORM);
-  const [formError, setFormError] = useState('');
-  const [formSuccess, setFormSuccess] = useState('');
+  const [formError, setFormError] = useState("");
+  const [formSuccess, setFormSuccess] = useState("");
   const [submitting, setSubmitting] = useState(false);
   // Stage name shown after creation
-  const [createdStageName, setCreatedStageName] = useState('');
+  const [createdStageName, setCreatedStageName] = useState("");
 
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState('');
-  const [toast, setToast] = useState('');
+  const [deleteError, setDeleteError] = useState("");
+  const [toast, setToast] = useState("");
   const searchDebounce = useRef(null);
+
+  const [exporting, setExporting] = useState(false);
 
   const showToast = (msg) => {
     setToast(msg);
-    setTimeout(() => setToast(''), 3500);
+    setTimeout(() => setToast(""), 3500);
   };
 
   // ── Fetch ──────────────────────────────────────────────────────
   const fetchStaff = useCallback(async () => {
     setLoading(true);
-    setError('');
+    setError("");
     try {
       const params = { page, page_size: 15 };
       if (search) params.search = search;
@@ -106,7 +110,7 @@ export default function Staff() {
         if (unique.length) setCities(unique);
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load staff.');
+      setError(err.response?.data?.message || "Failed to load staff.");
     } finally {
       setLoading(false);
     }
@@ -125,26 +129,96 @@ export default function Staff() {
     fetchStaff();
   }, [city, pkg, status, startDate, endDate, page]);
 
+  // -- Export to Excel ---------------------------------
+  const handleExportExcel = async () => {
+    try {
+      setExporting(true);
+
+      let allStaff = [];
+      let currentPage = 1;
+      let totalPages = 1;
+
+      do {
+        const params = {
+          page: currentPage,
+          page_size: 100,
+        };
+
+        if (search) params.search = search;
+        if (city) params.city = city;
+        if (pkg) params.package = pkg;
+        if (status) params.status = status;
+        if (startDate) params.start_date = startDate;
+        if (endDate) params.end_date = endDate;
+
+        const res = await listStaff(params);
+        const data = res.data.data;
+
+        allStaff = [...allStaff, ...(data.results || [])];
+        totalPages = data.pagination.total_pages;
+
+        currentPage++;
+      } while (currentPage <= totalPages);
+
+      // 🔥 Format for Excel
+      const formattedData = allStaff.map((s) => ({
+        Name: s.full_name,
+        Email: s.email,
+        Phone: s.phone_number,
+        Gender: s.gender,
+        City: s.city,
+        State: s.state,
+        Package: s.package,
+        Status: s.status,
+        "Stage Name": s.stage_name,
+        Experience: s.experience_in_years,
+        Price: s.price_of_staff,
+        Joined: s.joined_date
+          ? new Date(s.joined_date).toLocaleDateString("en-IN")
+          : "",
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(formattedData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Staff");
+
+      const excelBuffer = XLSX.write(workbook, {
+        bookType: "xlsx",
+        type: "array",
+      });
+
+      const file = new Blob([excelBuffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8",
+      });
+
+      saveAs(file, "staff.xlsx");
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setExporting(false);
+    }
+  };
+
   // ── Create ─────────────────────────────────────────────────────
   const handleFormChange = (e) =>
     setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
 
   const validateForm = () => {
-    if (!form.full_name.trim()) return 'Full name is required';
-    if (!form.email.trim()) return 'Email is required';
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) return 'Invalid email';
-    if (!form.phone_number.trim()) return 'Phone number is required';
-    if (!/^\d{10}$/.test(form.phone_number)) return 'Phone must be 10 digits';
-    if (!form.gender) return 'Gender is required';
-    if (!form.city.trim()) return 'City is required';
+    if (!form.full_name.trim()) return "Full name is required";
+    if (!form.email.trim()) return "Email is required";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) return "Invalid email";
+    if (!form.phone_number.trim()) return "Phone number is required";
+    if (!/^\d{10}$/.test(form.phone_number)) return "Phone must be 10 digits";
+    if (!form.gender) return "Gender is required";
+    if (!form.city.trim()) return "City is required";
     return null;
   };
 
   const handleCreate = async (e) => {
     e.preventDefault();
-    setFormError('');
-    setFormSuccess('');
-    setCreatedStageName('');
+    setFormError("");
+    setFormSuccess("");
+    setCreatedStageName("");
     const err = validateForm();
     if (err) {
       setFormError(err);
@@ -158,60 +232,71 @@ export default function Staff() {
         price_of_staff: parseFloat(form.price_of_staff) || 0,
       };
       const res = await createStaff(payload);
-      const stageName = res.data.data?.stage_name || '';
+      const stageName = res.data.data?.stage_name || "";
       setCreatedStageName(stageName);
       setFormSuccess(`Staff created! Auto stage name: "${stageName}"`);
       setForm(EMPTY_FORM);
       fetchStaff();
       setTimeout(() => {
-        setFormSuccess('');
-        setCreatedStageName('');
-        document.getElementById('addStaffModalClose')?.click();
+        setFormSuccess("");
+        setCreatedStageName("");
+        document.getElementById("addStaffModalClose")?.click();
         showToast(`Staff created! Stage name: "${stageName}"`);
       }, 2500);
     } catch (err) {
-      setFormError(err.response?.data?.message || 'Failed to create staff.');
+      setFormError(err.response?.data?.message || "Failed to create staff.");
     } finally {
       setSubmitting(false);
     }
   };
 
   const closeModal = () => {
-    setFormError('');
-    setFormSuccess('');
-    setCreatedStageName('');
+    setFormError("");
+    setFormSuccess("");
+    setCreatedStageName("");
     setForm(EMPTY_FORM);
   };
 
   // ── Delete ─────────────────────────────────────────────────────
   const confirmDelete = (member) => {
     setDeleteTarget({ id: member.id, name: member.full_name });
-    setDeleteError('');
+    setDeleteError("");
   };
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
+
     setDeleting(true);
-    setDeleteError('');
+    setDeleteError("");
+
     try {
       await deleteStaff(deleteTarget.id);
+
+      // 🔥 CLOSE MODAL PROPERLY
+      const modalEl = document.getElementById("deleteStaffModal");
+      const modalInstance = window.bootstrap.Modal.getInstance(modalEl);
+
+      if (modalInstance) {
+        modalInstance.hide();
+      }
+
       setDeleteTarget(null);
       fetchStaff();
       showToast(`${deleteTarget.name} has been deleted.`);
     } catch (err) {
-      setDeleteError(err.response?.data?.message || 'Failed to delete.');
+      setDeleteError(err.response?.data?.message || "Failed to delete.");
     } finally {
       setDeleting(false);
     }
   };
 
   const resetFilters = () => {
-    setSearch('');
-    setCity('');
-    setPkg('');
-    setStatus('');
-    setStartDate('');
-    setEndDate('');
+    setSearch("");
+    setCity("");
+    setPkg("");
+    setStatus("");
+    setStartDate("");
+    setEndDate("");
     setPage(1);
   };
   const hasFilters = search || city || pkg || status || startDate || endDate;
@@ -251,8 +336,21 @@ export default function Staff() {
             </p>
           </div>
           <div className="d-flex gap-2">
-            <button className="btn btn-outline-success">
-              <i className="bi bi-file-earmark-excel"></i> Export Excel
+            <button
+              className="btn btn-outline-success"
+              onClick={handleExportExcel}
+              disabled={exporting}
+            >
+              {exporting ? (
+                <>
+                  <span className="spinner-border spinner-border-sm me-2"></span>
+                  Exporting...
+                </>
+              ) : (
+                <>
+                  <i className="bi bi-file-earmark-excel"></i> Export Excel
+                </>
+              )}
             </button>
             <button
               className="btn btn-primary"
@@ -292,10 +390,7 @@ export default function Staff() {
                 >
                   <option value="">All Cities</option>
                   {cities.map((c) => (
-                    <option
-                      key={c}
-                      value={c}
-                    >
+                    <option key={c} value={c}>
                       {c}
                     </option>
                   ))}
@@ -313,10 +408,7 @@ export default function Staff() {
                 >
                   <option value="">All Packages</option>
                   {Object.entries(PACKAGE_CONFIG).map(([k, v]) => (
-                    <option
-                      key={k}
-                      value={k}
-                    >
+                    <option key={k} value={k}>
                       {v.label}
                     </option>
                   ))}
@@ -387,11 +479,11 @@ export default function Staff() {
             ) : staff.length === 0 ? (
               <div className="text-center py-5 text-muted">
                 <i className="bi bi-people fs-1 d-block mb-2"></i>No staff
-                found.{' '}
+                found.{" "}
                 {hasFilters && (
                   <span
                     className="text-primary"
-                    style={{ cursor: 'pointer' }}
+                    style={{ cursor: "pointer" }}
                     onClick={resetFilters}
                   >
                     Clear filters
@@ -417,9 +509,9 @@ export default function Staff() {
                       {staff.map((member) => {
                         const pkgKey = member.package?.toUpperCase();
                         const p = PACKAGE_CONFIG[pkgKey] || {
-                          label: member.package || '—',
-                          color: '#eee',
-                          textColor: '#333',
+                          label: member.package || "—",
+                          color: "#eee",
+                          textColor: "#333",
                         };
                         const stKey = member.status?.toUpperCase();
                         return (
@@ -432,7 +524,7 @@ export default function Staff() {
                                     width: 40,
                                     height: 40,
                                     flexShrink: 0,
-                                    background: '#435ebe',
+                                    background: "#435ebe",
                                     fontSize: 13,
                                   }}
                                 >
@@ -441,7 +533,7 @@ export default function Staff() {
                                       src={member.profile_picture}
                                       alt=""
                                       className="w-100 h-100"
-                                      style={{ objectFit: 'cover' }}
+                                      style={{ objectFit: "cover" }}
                                     />
                                   ) : (
                                     initials(member.full_name)
@@ -452,7 +544,7 @@ export default function Staff() {
                                     {member.full_name}
                                   </div>
                                   <small className="text-muted">
-                                    {member.gender || '—'}
+                                    {member.gender || "—"}
                                   </small>
                                 </div>
                               </div>
@@ -461,7 +553,7 @@ export default function Staff() {
                               {member.stage_name ? (
                                 <span
                                   className="badge bg-light text-dark border"
-                                  style={{ fontStyle: 'italic' }}
+                                  style={{ fontStyle: "italic" }}
                                 >
                                   {member.stage_name}
                                 </span>
@@ -475,19 +567,19 @@ export default function Staff() {
                                 style={{
                                   backgroundColor: p.color,
                                   color: p.textColor,
-                                  padding: '0.45em 0.8em',
+                                  padding: "0.45em 0.8em",
                                 }}
                               >
                                 {p.label}
                               </span>
                             </td>
-                            <td>{member.city || '—'}</td>
+                            <td>{member.city || "—"}</td>
                             <td>{fmtDate(member.joined_date)}</td>
                             <td>
                               <span
-                                className={`badge bg-${STATUS_BADGE[stKey] || 'secondary'}`}
+                                className={`badge bg-${STATUS_BADGE[stKey] || "secondary"}`}
                               >
-                                {member.status || '—'}
+                                {member.status || "—"}
                               </span>
                             </td>
                             <td className="text-end">
@@ -522,12 +614,12 @@ export default function Staff() {
                     {Math.min(
                       pagination.page * pagination.page_size,
                       pagination.total,
-                    )}{' '}
+                    )}{" "}
                     of {pagination.total} staff
                   </small>
                   <ul className="pagination pagination-primary mb-0">
                     <li
-                      className={`page-item ${pagination.page === 1 ? 'disabled' : ''}`}
+                      className={`page-item ${pagination.page === 1 ? "disabled" : ""}`}
                     >
                       <button
                         className="page-link"
@@ -540,7 +632,7 @@ export default function Staff() {
                       (_, i) => (
                         <li
                           key={i}
-                          className={`page-item ${pagination.page === i + 1 ? 'active' : ''}`}
+                          className={`page-item ${pagination.page === i + 1 ? "active" : ""}`}
                         >
                           <button
                             className="page-link"
@@ -552,7 +644,7 @@ export default function Staff() {
                       ),
                     )}
                     <li
-                      className={`page-item ${pagination.page === pagination.total_pages ? 'disabled' : ''}`}
+                      className={`page-item ${pagination.page === pagination.total_pages ? "disabled" : ""}`}
                     >
                       <button
                         className="page-link"
@@ -577,10 +669,7 @@ export default function Staff() {
         aria-hidden="true"
       >
         <div className="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-          <div
-            className="modal-content shadow-lg"
-            style={{ borderRadius: 14 }}
-          >
+          <div className="modal-content shadow-lg" style={{ borderRadius: 14 }}>
             <div className="modal-header border-0 p-4 pb-0">
               <div className="d-flex align-items-center gap-3">
                 <div className="bg-light rounded-circle p-2">
@@ -624,7 +713,7 @@ export default function Staff() {
                       <div className="sn-value">✨ {createdStageName}</div>
                       <small
                         className="text-muted"
-                        style={{ fontSize: '.72rem' }}
+                        style={{ fontSize: ".72rem" }}
                       >
                         This can be changed from the staff profile
                       </small>
@@ -633,10 +722,7 @@ export default function Staff() {
                 </div>
               )}
 
-              <form
-                id="addStaffForm"
-                onSubmit={handleCreate}
-              >
+              <form id="addStaffForm" onSubmit={handleCreate}>
                 <div className="section-title">Identity</div>
                 <div className="row g-3 mb-3">
                   <div className="col-md-6">
@@ -752,10 +838,7 @@ export default function Staff() {
                       disabled={submitting}
                     >
                       {Object.entries(PACKAGE_CONFIG).map(([k, v]) => (
-                        <option
-                          key={k}
-                          value={k}
-                        >
+                        <option key={k} value={k}>
                           {v.label}
                         </option>
                       ))}
@@ -796,7 +879,7 @@ export default function Staff() {
                 {/* Stage name note */}
                 <div
                   className="mt-3 p-3 rounded-3"
-                  style={{ background: '#f8f9fc', border: '1px solid #e8eaf0' }}
+                  style={{ background: "#f8f9fc", border: "1px solid #e8eaf0" }}
                 >
                   <i className="bi bi-magic me-2 text-primary"></i>
                   <span className="small text-muted">
@@ -851,10 +934,7 @@ export default function Staff() {
           className="modal-dialog modal-dialog-centered"
           style={{ maxWidth: 420 }}
         >
-          <div
-            className="modal-content shadow-lg"
-            style={{ borderRadius: 14 }}
-          >
+          <div className="modal-content shadow-lg" style={{ borderRadius: 14 }}>
             <div className="modal-body p-4 text-center">
               <div
                 className="rounded-circle bg-danger bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3"
@@ -863,11 +943,8 @@ export default function Staff() {
                 <i className="bi bi-trash text-danger fs-3"></i>
               </div>
               <h5 className="fw-bold mb-1">Delete Staff Member?</h5>
-              <p
-                className="text-muted mb-0"
-                style={{ fontSize: '.9rem' }}
-              >
-                You are about to permanently delete{' '}
+              <p className="text-muted mb-0" style={{ fontSize: ".9rem" }}>
+                You are about to permanently delete{" "}
                 <strong>{deleteTarget?.name}</strong>. This action cannot be
                 undone.
               </p>
