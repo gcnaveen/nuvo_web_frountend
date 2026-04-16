@@ -1,97 +1,97 @@
 // src/pages/user_management/StaffDetails.jsx
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   getStaff,
   updateStaff,
   deleteStaff,
   uploadStaffImages,
   deleteGalleryImage,
-} from '../../api/staffApi';
+} from "../../api/staffApi";
 
 // ── Constants ──────────────────────────────────────────────────
 const PACKAGE_CONFIG = {
   PLATINUM: {
-    label: 'Platinum',
-    color: '#8E24AA',
-    textColor: '#fff',
-    light: '#f3e5f5',
+    label: "Platinum",
+    color: "#8E24AA",
+    textColor: "#fff",
+    light: "#f3e5f5",
   },
   DIAMOND: {
-    label: 'Diamond',
-    color: '#1E88E5',
-    textColor: '#fff',
-    light: '#e3f2fd',
+    label: "Diamond",
+    color: "#1E88E5",
+    textColor: "#fff",
+    light: "#e3f2fd",
   },
   GOLD: {
-    label: 'Gold',
-    color: '#D4AF37',
-    textColor: '#000',
-    light: '#fffde7',
+    label: "Gold",
+    color: "#D4AF37",
+    textColor: "#000",
+    light: "#fffde7",
   },
   SILVER: {
-    label: 'Silver',
-    color: '#78909C',
-    textColor: '#fff',
-    light: '#eceff1',
+    label: "Silver",
+    color: "#78909C",
+    textColor: "#fff",
+    light: "#eceff1",
   },
   BRONZE: {
-    label: 'Bronze',
-    color: '#A1621A',
-    textColor: '#fff',
-    light: '#fbe9e7',
+    label: "Bronze",
+    color: "#A1621A",
+    textColor: "#fff",
+    light: "#fbe9e7",
   },
 };
 const STATUS_CONFIG = {
-  ACTIVE: { label: 'Active', badge: 'success', icon: 'bi-check-circle-fill' },
+  ACTIVE: { label: "Active", badge: "success", icon: "bi-check-circle-fill" },
   ONEVENT: {
-    label: 'On Event',
-    badge: 'warning',
-    icon: 'bi-calendar-event-fill',
+    label: "On Event",
+    badge: "warning",
+    icon: "bi-calendar-event-fill",
   },
   INACTIVE: {
-    label: 'Inactive',
-    badge: 'secondary',
-    icon: 'bi-dash-circle-fill',
+    label: "Inactive",
+    badge: "secondary",
+    icon: "bi-dash-circle-fill",
   },
-  BLOCKED: { label: 'Blocked', badge: 'danger', icon: 'bi-x-circle-fill' },
+  BLOCKED: { label: "Blocked", badge: "danger", icon: "bi-x-circle-fill" },
 };
-const PACKAGES = ['PLATINUM', 'DIAMOND', 'GOLD', 'SILVER', 'BRONZE'];
-const STATUSES = ['ACTIVE', 'INACTIVE', 'BLOCKED', 'ONEVENT'];
-const GENDERS = ['Male', 'Female', 'Other'];
-const PROFICIENCY_LEVELS = ['Basic', 'Conversational', 'Fluent', 'Native'];
+const PACKAGES = ["PLATINUM", "DIAMOND", "GOLD", "SILVER", "BRONZE"];
+const STATUSES = ["ACTIVE", "INACTIVE", "BLOCKED", "ONEVENT"];
+const GENDERS = ["Male", "Female", "Other"];
+const PROFICIENCY_LEVELS = ["Basic", "Conversational", "Fluent", "Native"];
 const EXPERIENCE_AREAS = [
-  'actor/actress',
-  'barman/barmaid',
-  'group management',
-  'modeling',
-  'sales/marketing',
-  'waiter/waitress',
-  'other',
+  "actor/actress",
+  "barman/barmaid",
+  "group management",
+  "modeling",
+  "sales/marketing",
+  "waiter/waitress",
+  "other",
 ];
 
 const initials = (name) =>
-  (name || '?')
-    .split(' ')
+  (name || "?")
+    .split(" ")
     .slice(0, 2)
     .map((w) => w[0])
-    .join('')
+    .join("")
     .toUpperCase();
 
 const fmtDate = (d) =>
   d
-    ? new Date(d).toLocaleDateString('en-IN', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
+    ? new Date(d).toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
       })
-    : '—';
+    : "—";
 
 // ── Small reusable components ───────────────────────────────────
 const Field = ({ label, value }) => (
   <div>
     <label className="sd-label">{label}</label>
-    <div className="sd-value">{value || '—'}</div>
+    <div className="sd-value">{value || "—"}</div>
   </div>
 );
 const EditInput = ({
@@ -99,8 +99,8 @@ const EditInput = ({
   name,
   value,
   onChange,
-  type = 'text',
-  placeholder = '',
+  type = "text",
+  placeholder = "",
   readOnly = false,
 }) => (
   <div>
@@ -109,11 +109,11 @@ const EditInput = ({
       type={type}
       name={name}
       className="sd-input"
-      value={value ?? ''}
+      value={value ?? ""}
       onChange={onChange}
       placeholder={placeholder}
       readOnly={readOnly}
-      style={readOnly ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
+      style={readOnly ? { opacity: 0.6, cursor: "not-allowed" } : {}}
     />
   </div>
 );
@@ -123,14 +123,11 @@ const EditSelect = ({ label, name, value, onChange, options }) => (
     <select
       name={name}
       className="sd-select"
-      value={value ?? ''}
+      value={value ?? ""}
       onChange={onChange}
     >
       {options.map((o) => (
-        <option
-          key={o.value}
-          value={o.value}
-        >
+        <option key={o.value} value={o.value}>
           {o.label}
         </option>
       ))}
@@ -145,15 +142,15 @@ export default function StaffDetails() {
 
   const [staff, setStaff] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState({});
   const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState('');
+  const [saveError, setSaveError] = useState("");
 
   const [deleting, setDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState('');
+  const [deleteError, setDeleteError] = useState("");
 
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [avatarFile, setAvatarFile] = useState(null);
@@ -166,21 +163,21 @@ export default function StaffDetails() {
   const [deletingImg, setDeletingImg] = useState(null);
   const galleryInputRef = useRef(null);
 
-  const [toast, setToast] = useState({ msg: '', type: 'success' });
-  const showToast = (msg, type = 'success') => {
+  const [toast, setToast] = useState({ msg: "", type: "success" });
+  const showToast = (msg, type = "success") => {
     setToast({ msg, type });
-    setTimeout(() => setToast({ msg: '', type: 'success' }), 3000);
+    setTimeout(() => setToast({ msg: "", type: "success" }), 3000);
   };
 
   // ── Fetch ──────────────────────────────────────────────────────
   const fetchStaff = useCallback(async () => {
     setLoading(true);
-    setError('');
+    setError("");
     try {
       const res = await getStaff(id);
       setStaff(res.data.data);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load staff member.');
+      setError(err.response?.data?.message || "Failed to load staff member.");
     } finally {
       setLoading(false);
     }
@@ -193,52 +190,52 @@ export default function StaffDetails() {
   // ── Edit ────────────────────────────────────────────────────────
   const startEdit = () => {
     setDraft({
-      full_name: staff.full_name || '',
-      stage_name: staff.stage_name || '',
-      gender: staff.gender || '',
-      city: staff.city || '',
-      state: staff.state || '',
-      country: staff.country || '',
-      address: staff.address || '',
-      place_of_birth: staff.place_of_birth || '',
-      marital_status: staff.marital_status || '',
-      telephone: staff.telephone || '',
-      cell_phone: staff.cell_phone || '',
-      height: staff.height ?? '',
-      weight: staff.weight ?? '',
-      shoe_size: staff.shoe_size || '',
-      blazer_size: staff.blazer_size || '',
-      trouser_size: staff.trouser_size || '',
+      full_name: staff.full_name || "",
+      stage_name: staff.stage_name || "",
+      gender: staff.gender || "",
+      city: staff.city || "",
+      state: staff.state || "",
+      country: staff.country || "",
+      address: staff.address || "",
+      place_of_birth: staff.place_of_birth || "",
+      marital_status: staff.marital_status || "",
+      telephone: staff.telephone || "",
+      cell_phone: staff.cell_phone || "",
+      height: staff.height ?? "",
+      weight: staff.weight ?? "",
+      shoe_size: staff.shoe_size || "",
+      blazer_size: staff.blazer_size || "",
+      trouser_size: staff.trouser_size || "",
       is_student: staff.is_student ?? false,
-      school: staff.school || '',
-      degree: staff.degree || '',
-      languages: staff.languages || [{ language: '', proficiency: '' }],
+      school: staff.school || "",
+      degree: staff.degree || "",
+      languages: staff.languages || [{ language: "", proficiency: "" }],
       hostess_experience: staff.hostess_experience ?? false,
       group_responsible: staff.group_responsible ?? false,
-      agency: staff.agency || '',
+      agency: staff.agency || "",
       experience_areas: staff.experience_areas || [],
-      work_type: staff.work_type || '',
+      work_type: staff.work_type || "",
       holiday_work: staff.holiday_work ?? false,
-      package: staff.package?.toUpperCase() || 'SILVER',
-      experience_in_years: staff.experience_in_years ?? '',
-      price_of_staff: staff.price_of_staff ?? '',
-      status: staff.status?.toUpperCase() || 'ACTIVE',
+      package: staff.package?.toUpperCase() || "SILVER",
+      experience_in_years: staff.experience_in_years ?? "",
+      price_of_staff: staff.price_of_staff ?? "",
+      status: staff.status?.toUpperCase() || "ACTIVE",
     });
-    setSaveError('');
+    setSaveError("");
     setIsEditing(true);
   };
 
   const cancelEdit = () => {
     setIsEditing(false);
     setDraft({});
-    setSaveError('');
+    setSaveError("");
   };
 
   const handleDraftChange = (e) => {
     const { name, value, type, checked } = e.target;
     setDraft((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value,
+      [name]: type === "checkbox" ? checked : value,
     }));
   };
 
@@ -254,7 +251,7 @@ export default function StaffDetails() {
     if ((draft.languages || []).length >= 4) return;
     setDraft((prev) => ({
       ...prev,
-      languages: [...(prev.languages || []), { language: '', proficiency: '' }],
+      languages: [...(prev.languages || []), { language: "", proficiency: "" }],
     }));
   };
 
@@ -279,11 +276,11 @@ export default function StaffDetails() {
 
   const handleSave = async () => {
     if (!draft.full_name?.trim()) {
-      setSaveError('Full name is required.');
+      setSaveError("Full name is required.");
       return;
     }
     setSaving(true);
-    setSaveError('');
+    setSaveError("");
     try {
       const payload = {
         full_name: draft.full_name.trim(),
@@ -297,8 +294,8 @@ export default function StaffDetails() {
         marital_status: draft.marital_status,
         telephone: draft.telephone.trim(),
         cell_phone: draft.cell_phone.trim(),
-        height: draft.height !== '' ? Number(draft.height) : null,
-        weight: draft.weight !== '' ? Number(draft.weight) : null,
+        height: draft.height !== "" ? Number(draft.height) : null,
+        weight: draft.weight !== "" ? Number(draft.weight) : null,
         shoe_size: draft.shoe_size,
         blazer_size: draft.blazer_size,
         trouser_size: draft.trouser_size,
@@ -314,19 +311,19 @@ export default function StaffDetails() {
         holiday_work: draft.holiday_work,
         package: draft.package,
         experience_in_years:
-          draft.experience_in_years !== ''
+          draft.experience_in_years !== ""
             ? Number(draft.experience_in_years)
             : null,
         price_of_staff:
-          draft.price_of_staff !== '' ? Number(draft.price_of_staff) : null,
+          draft.price_of_staff !== "" ? Number(draft.price_of_staff) : null,
         status: draft.status,
       };
       const res = await updateStaff(staff.id, payload);
       setStaff((prev) => ({ ...prev, ...res.data.data }));
       setIsEditing(false);
-      showToast('Staff profile updated successfully!');
+      showToast("Staff profile updated successfully!");
     } catch (err) {
-      setSaveError(err.response?.data?.message || 'Failed to save changes.');
+      setSaveError(err.response?.data?.message || "Failed to save changes.");
     } finally {
       setSaving(false);
     }
@@ -335,12 +332,12 @@ export default function StaffDetails() {
   // ── Delete ──────────────────────────────────────────────────────
   const handleDelete = async () => {
     setDeleting(true);
-    setDeleteError('');
+    setDeleteError("");
     try {
       await deleteStaff(staff.id);
-      navigate('/staff', { replace: true });
+      navigate("/staff", { replace: true });
     } catch (err) {
-      setDeleteError(err.response?.data?.message || 'Failed to delete.');
+      setDeleteError(err.response?.data?.message || "Failed to delete.");
       setDeleting(false);
     }
   };
@@ -357,7 +354,7 @@ export default function StaffDetails() {
     setUploadingAvatar(true);
     try {
       const fd = new FormData();
-      fd.append('profile_picture', avatarFile);
+      fd.append("profile_picture", avatarFile);
       const res = await uploadStaffImages(staff.id, fd);
       setStaff((prev) => ({
         ...prev,
@@ -365,10 +362,10 @@ export default function StaffDetails() {
       }));
       setAvatarFile(null);
       setAvatarPreview(null);
-      if (avatarInputRef.current) avatarInputRef.current.value = '';
-      showToast('Profile picture updated!');
+      if (avatarInputRef.current) avatarInputRef.current.value = "";
+      showToast("Profile picture updated!");
     } catch (err) {
-      showToast(err.response?.data?.message || 'Upload failed.', 'danger');
+      showToast(err.response?.data?.message || "Upload failed.", "danger");
     } finally {
       setUploadingAvatar(false);
     }
@@ -376,7 +373,7 @@ export default function StaffDetails() {
   const cancelAvatarPreview = () => {
     setAvatarFile(null);
     setAvatarPreview(null);
-    if (avatarInputRef.current) avatarInputRef.current.value = '';
+    if (avatarInputRef.current) avatarInputRef.current.value = "";
   };
 
   // ── Gallery ─────────────────────────────────────────────────────
@@ -391,7 +388,7 @@ export default function StaffDetails() {
     setUploadingGallery(true);
     try {
       const fd = new FormData();
-      galleryFiles.forEach((f) => fd.append('gallery_images', f));
+      galleryFiles.forEach((f) => fd.append("gallery_images", f));
       const res = await uploadStaffImages(staff.id, fd);
       setStaff((prev) => ({
         ...prev,
@@ -399,14 +396,14 @@ export default function StaffDetails() {
       }));
       setGalleryFiles([]);
       setGalleryPreviews([]);
-      if (galleryInputRef.current) galleryInputRef.current.value = '';
+      if (galleryInputRef.current) galleryInputRef.current.value = "";
       showToast(
-        `${galleryFiles.length} image${galleryFiles.length > 1 ? 's' : ''} added!`,
+        `${galleryFiles.length} image${galleryFiles.length > 1 ? "s" : ""} added!`,
       );
     } catch (err) {
       showToast(
-        err.response?.data?.message || 'Gallery upload failed.',
-        'danger',
+        err.response?.data?.message || "Gallery upload failed.",
+        "danger",
       );
     } finally {
       setUploadingGallery(false);
@@ -415,7 +412,7 @@ export default function StaffDetails() {
   const cancelGalleryPreview = () => {
     setGalleryFiles([]);
     setGalleryPreviews([]);
-    if (galleryInputRef.current) galleryInputRef.current.value = '';
+    if (galleryInputRef.current) galleryInputRef.current.value = "";
   };
   const handleDeleteGalleryImage = async (imageUrl) => {
     setDeletingImg(imageUrl);
@@ -425,11 +422,11 @@ export default function StaffDetails() {
         ...prev,
         gallery_images: res.data.data.gallery_images,
       }));
-      showToast('Image removed from gallery.');
+      showToast("Image removed from gallery.");
     } catch (err) {
       showToast(
-        err.response?.data?.message || 'Failed to delete image.',
-        'danger',
+        err.response?.data?.message || "Failed to delete image.",
+        "danger",
       );
     } finally {
       setDeletingImg(null);
@@ -457,7 +454,7 @@ export default function StaffDetails() {
       <div className="page-content">
         <button
           className="btn btn-light shadow-sm mb-4"
-          onClick={() => navigate('/staff')}
+          onClick={() => navigate("/staff")}
         >
           <i className="bi bi-arrow-left me-1"></i> Back
         </button>
@@ -469,10 +466,10 @@ export default function StaffDetails() {
   const pkgKey = (isEditing ? draft.package : staff.package)?.toUpperCase();
   const statusKey = (isEditing ? draft.status : staff.status)?.toUpperCase();
   const pkg = PACKAGE_CONFIG[pkgKey] || {
-    label: staff.package || '—',
-    color: '#78909C',
-    textColor: '#fff',
-    light: '#eceff1',
+    label: staff.package || "—",
+    color: "#78909C",
+    textColor: "#fff",
+    light: "#eceff1",
   };
   const statusCfg = STATUS_CONFIG[statusKey] || STATUS_CONFIG.INACTIVE;
   const displayPic = avatarPreview || staff.profile_picture;
@@ -530,7 +527,7 @@ export default function StaffDetails() {
       {toast.msg && (
         <div className={`sd-toast ${toast.type}`}>
           <i
-            className={`bi ${toast.type === 'success' ? 'bi-check-circle-fill text-success' : 'bi-exclamation-circle-fill text-danger'} fs-5`}
+            className={`bi ${toast.type === "success" ? "bi-check-circle-fill text-success" : "bi-exclamation-circle-fill text-danger"} fs-5`}
           ></i>
           {toast.msg}
         </div>
@@ -542,12 +539,12 @@ export default function StaffDetails() {
           <div className="d-flex align-items-center gap-3">
             <button
               className="btn btn-light shadow-sm"
-              onClick={() => navigate('/staff')}
+              onClick={() => navigate("/admin/staff")}
             >
               <i className="bi bi-arrow-left me-1"></i> Staff
             </button>
             <div>
-              <h3 className="mb-0">{staff.full_name || 'Staff Profile'}</h3>
+              <h3 className="mb-0">{staff.full_name || "Staff Profile"}</h3>
               {staff.stage_name && (
                 <span className="stage-pill mt-1 d-inline-flex">
                   <i className="bi bi-stars"></i>
@@ -566,10 +563,7 @@ export default function StaffDetails() {
                 >
                   <i className="bi bi-trash me-1"></i>Delete
                 </button>
-                <button
-                  className="btn btn-primary px-4"
-                  onClick={startEdit}
-                >
+                <button className="btn btn-primary px-4" onClick={startEdit}>
                   <i className="bi bi-pencil-square me-2"></i>Edit Profile
                 </button>
               </>
@@ -631,7 +625,7 @@ export default function StaffDetails() {
                       style={{
                         width: 110,
                         height: 110,
-                        objectFit: 'cover',
+                        objectFit: "cover",
                         borderColor: pkg.color,
                       }}
                     />
@@ -642,7 +636,7 @@ export default function StaffDetails() {
                         width: 110,
                         height: 110,
                         background: pkg.color,
-                        fontSize: '2rem',
+                        fontSize: "2rem",
                         border: `4px solid ${pkg.color}55`,
                       }}
                     >
@@ -654,7 +648,7 @@ export default function StaffDetails() {
                   </div>
                   <span
                     className={`badge bg-${statusCfg.badge} position-absolute bottom-0 end-0`}
-                    style={{ fontSize: '.7rem', padding: '4px 8px' }}
+                    style={{ fontSize: ".7rem", padding: "4px 8px" }}
                   >
                     {statusCfg.label}
                   </span>
@@ -697,7 +691,7 @@ export default function StaffDetails() {
                     </div>
                     <p
                       className="text-muted mb-3"
-                      style={{ fontSize: '.72rem' }}
+                      style={{ fontSize: ".72rem" }}
                     >
                       <i className="bi bi-info-circle me-1 text-primary"></i>
                       Preview — click Save Photo to upload
@@ -706,7 +700,7 @@ export default function StaffDetails() {
                 )}
 
                 <h5 className="fw-bold mb-0">
-                  {isEditing ? draft.full_name || '—' : staff.full_name}
+                  {isEditing ? draft.full_name || "—" : staff.full_name}
                 </h5>
                 {(isEditing ? draft.stage_name : staff.stage_name) && (
                   <div className="stage-pill d-inline-flex mt-1 mb-1">
@@ -715,7 +709,7 @@ export default function StaffDetails() {
                   </div>
                 )}
                 <div className="text-muted small mb-3">
-                  {(isEditing ? draft.gender : staff.gender) || ''}
+                  {(isEditing ? draft.gender : staff.gender) || ""}
                 </div>
 
                 <span
@@ -732,7 +726,7 @@ export default function StaffDetails() {
                       <div className="sd-stat-val">
                         {(isEditing
                           ? draft.experience_in_years
-                          : staff.experience_in_years) ?? '—'}
+                          : staff.experience_in_years) ?? "—"}
                       </div>
                       <div className="sd-stat-lbl">Yrs Exp</div>
                     </div>
@@ -741,9 +735,9 @@ export default function StaffDetails() {
                     <div className="sd-stat">
                       <div
                         className="sd-stat-val"
-                        style={{ fontSize: '.85rem' }}
+                        style={{ fontSize: ".85rem" }}
                       >
-                        {(isEditing ? draft.city : staff.city) || '—'}
+                        {(isEditing ? draft.city : staff.city) || "—"}
                       </div>
                       <div className="sd-stat-lbl">City</div>
                     </div>
@@ -753,7 +747,7 @@ export default function StaffDetails() {
                       <div className="col-6">
                         <div className="sd-stat">
                           <div className="sd-stat-val">
-                            {staff.height ? `${staff.height}cm` : '—'}
+                            {staff.height ? `${staff.height}cm` : "—"}
                           </div>
                           <div className="sd-stat-lbl">Height</div>
                         </div>
@@ -761,7 +755,7 @@ export default function StaffDetails() {
                       <div className="col-6">
                         <div className="sd-stat">
                           <div className="sd-stat-val">
-                            {staff.weight ? `${staff.weight}kg` : '—'}
+                            {staff.weight ? `${staff.weight}kg` : "—"}
                           </div>
                           <div className="sd-stat-lbl">Weight</div>
                         </div>
@@ -781,28 +775,16 @@ export default function StaffDetails() {
               <div className="sd-card-bd">
                 <div className="row g-3">
                   <div className="col-12">
-                    <Field
-                      label="Profile ID"
-                      value={staff.id}
-                    />
+                    <Field label="Profile ID" value={staff.id} />
                   </div>
                   <div className="col-12">
-                    <Field
-                      label="Email"
-                      value={staff.email}
-                    />
+                    <Field label="Email" value={staff.email} />
                   </div>
                   <div className="col-12">
-                    <Field
-                      label="Phone"
-                      value={staff.phone_number}
-                    />
+                    <Field label="Phone" value={staff.phone_number} />
                   </div>
                   <div className="col-12">
-                    <Field
-                      label="Joined"
-                      value={fmtDate(staff.joined_date)}
-                    />
+                    <Field label="Joined" value={fmtDate(staff.joined_date)} />
                   </div>
                   <div className="col-12">
                     <label className="sd-label">Account Status</label>
@@ -820,7 +802,7 @@ export default function StaffDetails() {
                       <div className="sd-value">
                         <span
                           className={`badge bg-${statusCfg.badge} px-3 py-2`}
-                          style={{ fontSize: '.8rem' }}
+                          style={{ fontSize: ".8rem" }}
                         >
                           <i className={`bi ${statusCfg.icon} me-1`}></i>
                           {statusCfg.label}
@@ -869,7 +851,7 @@ export default function StaffDetails() {
                           value={draft.gender}
                           onChange={handleDraftChange}
                           options={[
-                            { value: '', label: '— Select —' },
+                            { value: "", label: "— Select —" },
                             ...GENDERS.map((g) => ({ value: g, label: g })),
                           ]}
                         />
@@ -881,9 +863,9 @@ export default function StaffDetails() {
                           value={draft.marital_status}
                           onChange={handleDraftChange}
                           options={[
-                            { value: '', label: '— Select —' },
-                            { value: 'single', label: 'Single' },
-                            { value: 'married', label: 'Married' },
+                            { value: "", label: "— Select —" },
+                            { value: "single", label: "Single" },
+                            { value: "married", label: "Married" },
                           ]}
                         />
                       </div>
@@ -929,22 +911,13 @@ export default function StaffDetails() {
                   ) : (
                     <>
                       <div className="col-md-6">
-                        <Field
-                          label="Full Name"
-                          value={staff.full_name}
-                        />
+                        <Field label="Full Name" value={staff.full_name} />
                       </div>
                       <div className="col-md-6">
-                        <Field
-                          label="Stage Name"
-                          value={staff.stage_name}
-                        />
+                        <Field label="Stage Name" value={staff.stage_name} />
                       </div>
                       <div className="col-md-4">
-                        <Field
-                          label="Gender"
-                          value={staff.gender}
-                        />
+                        <Field label="Gender" value={staff.gender} />
                       </div>
                       <div className="col-md-4">
                         <Field
@@ -979,10 +952,7 @@ export default function StaffDetails() {
                         />
                       </div>
                       <div className="col-md-4">
-                        <Field
-                          label="Package Tier"
-                          value={pkg.label}
-                        />
+                        <Field label="Package Tier" value={pkg.label} />
                       </div>
                     </>
                   )}
@@ -999,8 +969,8 @@ export default function StaffDetails() {
                           style={{
                             background: active ? cfg.color : cfg.light,
                             color: active ? cfg.textColor : cfg.color,
-                            borderColor: cfg.color + '55',
-                            transform: active ? 'scale(1.07)' : 'scale(1)',
+                            borderColor: cfg.color + "55",
+                            transform: active ? "scale(1.07)" : "scale(1)",
                           }}
                         >
                           {active && <i className="bi bi-check-lg me-1"></i>}
@@ -1075,40 +1045,22 @@ export default function StaffDetails() {
                   ) : (
                     <>
                       <div className="col-md-6">
-                        <Field
-                          label="Telephone"
-                          value={staff.telephone}
-                        />
+                        <Field label="Telephone" value={staff.telephone} />
                       </div>
                       <div className="col-md-6">
-                        <Field
-                          label="Cell Phone"
-                          value={staff.cell_phone}
-                        />
+                        <Field label="Cell Phone" value={staff.cell_phone} />
                       </div>
                       <div className="col-12">
-                        <Field
-                          label="Address"
-                          value={staff.address}
-                        />
+                        <Field label="Address" value={staff.address} />
                       </div>
                       <div className="col-md-4">
-                        <Field
-                          label="City"
-                          value={staff.city}
-                        />
+                        <Field label="City" value={staff.city} />
                       </div>
                       <div className="col-md-4">
-                        <Field
-                          label="State"
-                          value={staff.state}
-                        />
+                        <Field label="State" value={staff.state} />
                       </div>
                       <div className="col-md-4">
-                        <Field
-                          label="Country"
-                          value={staff.country}
-                        />
+                        <Field label="Country" value={staff.country} />
                       </div>
                     </>
                   )}
@@ -1149,7 +1101,7 @@ export default function StaffDetails() {
                         <input
                           name="shoe_size"
                           className="sd-input"
-                          value={draft.shoe_size || ''}
+                          value={draft.shoe_size || ""}
                           onChange={handleDraftChange}
                           placeholder="e.g. 9"
                         />
@@ -1159,7 +1111,7 @@ export default function StaffDetails() {
                         <input
                           name="blazer_size"
                           className="sd-input"
-                          value={draft.blazer_size || ''}
+                          value={draft.blazer_size || ""}
                           onChange={handleDraftChange}
                           placeholder="e.g. 40R"
                         />
@@ -1169,7 +1121,7 @@ export default function StaffDetails() {
                         <input
                           name="trouser_size"
                           className="sd-input"
-                          value={draft.trouser_size || ''}
+                          value={draft.trouser_size || ""}
                           onChange={handleDraftChange}
                           placeholder="e.g. 32"
                         />
@@ -1190,16 +1142,10 @@ export default function StaffDetails() {
                         />
                       </div>
                       <div className="col-md-2">
-                        <Field
-                          label="Shoe Size (UK)"
-                          value={staff.shoe_size}
-                        />
+                        <Field label="Shoe Size (UK)" value={staff.shoe_size} />
                       </div>
                       <div className="col-md-2">
-                        <Field
-                          label="Blazer Size"
-                          value={staff.blazer_size}
-                        />
+                        <Field label="Blazer Size" value={staff.blazer_size} />
                       </div>
                       <div className="col-md-2">
                         <Field
@@ -1231,9 +1177,9 @@ export default function StaffDetails() {
                               key={String(v)}
                               className="d-flex align-items-center gap-2"
                               style={{
-                                cursor: 'pointer',
+                                cursor: "pointer",
                                 fontWeight: 600,
-                                fontSize: '.88rem',
+                                fontSize: ".88rem",
                               }}
                             >
                               <input
@@ -1244,7 +1190,7 @@ export default function StaffDetails() {
                                   setDraft((p) => ({ ...p, is_student: v }))
                                 }
                               />
-                              {v ? 'Yes' : 'No'}
+                              {v ? "Yes" : "No"}
                             </label>
                           ))}
                         </div>
@@ -1281,10 +1227,7 @@ export default function StaffDetails() {
                         />
                       </div>
                       <div className="col-md-4">
-                        <Field
-                          label="Highest Degree"
-                          value={staff.degree}
-                        />
+                        <Field label="Highest Degree" value={staff.degree} />
                       </div>
                     </>
                   )}
@@ -1302,20 +1245,17 @@ export default function StaffDetails() {
                 {isEditing ? (
                   <>
                     {(draft.languages || []).map((lang, idx) => (
-                      <div
-                        key={idx}
-                        className="lang-row"
-                      >
+                      <div key={idx} className="lang-row">
                         <div>
                           <label className="sd-label">Language {idx + 1}</label>
                           <input
                             className="sd-input"
                             placeholder="e.g. English"
-                            value={lang.language || ''}
+                            value={lang.language || ""}
                             onChange={(e) =>
                               handleLanguageChange(
                                 idx,
-                                'language',
+                                "language",
                                 e.target.value,
                               )
                             }
@@ -1325,21 +1265,18 @@ export default function StaffDetails() {
                           <label className="sd-label">Proficiency</label>
                           <select
                             className="sd-select"
-                            value={lang.proficiency || ''}
+                            value={lang.proficiency || ""}
                             onChange={(e) =>
                               handleLanguageChange(
                                 idx,
-                                'proficiency',
+                                "proficiency",
                                 e.target.value,
                               )
                             }
                           >
                             <option value="">Select level</option>
                             {PROFICIENCY_LEVELS.map((l) => (
-                              <option
-                                key={l}
-                                value={l}
-                              >
+                              <option key={l} value={l}>
                                 {l}
                               </option>
                             ))}
@@ -1369,11 +1306,11 @@ export default function StaffDetails() {
                       <span
                         key={i}
                         className="badge bg-light text-dark border px-3 py-2"
-                        style={{ fontSize: '.82rem' }}
+                        style={{ fontSize: ".82rem" }}
                       >
                         <i className="bi bi-chat-text me-1 text-primary"></i>
                         {l.language}
-                        {l.proficiency ? ` — ${l.proficiency}` : ''}
+                        {l.proficiency ? ` — ${l.proficiency}` : ""}
                       </span>
                     ))}
                   </div>
@@ -1403,9 +1340,9 @@ export default function StaffDetails() {
                               key={String(v)}
                               className="d-flex align-items-center gap-2"
                               style={{
-                                cursor: 'pointer',
+                                cursor: "pointer",
                                 fontWeight: 600,
-                                fontSize: '.88rem',
+                                fontSize: ".88rem",
                               }}
                             >
                               <input
@@ -1419,7 +1356,7 @@ export default function StaffDetails() {
                                   }))
                                 }
                               />
-                              {v ? 'Yes' : 'No'}
+                              {v ? "Yes" : "No"}
                             </label>
                           ))}
                         </div>
@@ -1432,9 +1369,9 @@ export default function StaffDetails() {
                               key={String(v)}
                               className="d-flex align-items-center gap-2"
                               style={{
-                                cursor: 'pointer',
+                                cursor: "pointer",
                                 fontWeight: 600,
-                                fontSize: '.88rem',
+                                fontSize: ".88rem",
                               }}
                             >
                               <input
@@ -1448,7 +1385,7 @@ export default function StaffDetails() {
                                   }))
                                 }
                               />
-                              {v ? 'Yes' : 'No'}
+                              {v ? "Yes" : "No"}
                             </label>
                           ))}
                         </div>
@@ -1467,7 +1404,7 @@ export default function StaffDetails() {
                           {EXPERIENCE_AREAS.map((area) => (
                             <span
                               key={area}
-                              className={`exp-area-chip ${(draft.experience_areas || []).includes(area) ? 'active' : ''}`}
+                              className={`exp-area-chip ${(draft.experience_areas || []).includes(area) ? "active" : ""}`}
                               onClick={() => toggleExperienceArea(area)}
                             >
                               {(draft.experience_areas || []).includes(
@@ -1481,14 +1418,14 @@ export default function StaffDetails() {
                       <div className="col-md-6">
                         <label className="sd-label">Preferred Work Type</label>
                         <div className="d-flex gap-3 mt-1 flex-wrap">
-                          {['full-time', 'part-time', 'both'].map((wt) => (
+                          {["full-time", "part-time", "both"].map((wt) => (
                             <label
                               key={wt}
                               className="d-flex align-items-center gap-2"
                               style={{
-                                cursor: 'pointer',
+                                cursor: "pointer",
                                 fontWeight: 600,
-                                fontSize: '.88rem',
+                                fontSize: ".88rem",
                               }}
                             >
                               <input
@@ -1514,9 +1451,9 @@ export default function StaffDetails() {
                               key={String(v)}
                               className="d-flex align-items-center gap-2"
                               style={{
-                                cursor: 'pointer',
+                                cursor: "pointer",
                                 fontWeight: 600,
-                                fontSize: '.88rem',
+                                fontSize: ".88rem",
                               }}
                             >
                               <input
@@ -1527,7 +1464,7 @@ export default function StaffDetails() {
                                   setDraft((p) => ({ ...p, holiday_work: v }))
                                 }
                               />
-                              {v ? 'Yes' : 'No'}
+                              {v ? "Yes" : "No"}
                             </label>
                           ))}
                         </div>
@@ -1554,10 +1491,7 @@ export default function StaffDetails() {
                         </div>
                       </div>
                       <div className="col-md-6">
-                        <Field
-                          label="Agency"
-                          value={staff.agency}
-                        />
+                        <Field label="Agency" value={staff.agency} />
                       </div>
                       <div className="col-md-6">
                         <Field
@@ -1573,7 +1507,7 @@ export default function StaffDetails() {
                               <span
                                 key={a}
                                 className="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-3 py-2"
-                                style={{ fontSize: '.78rem' }}
+                                style={{ fontSize: ".78rem" }}
                               >
                                 {a.charAt(0).toUpperCase() + a.slice(1)}
                               </span>
@@ -1594,7 +1528,7 @@ export default function StaffDetails() {
                 <h6>Portfolio Gallery</h6>
                 <span
                   className="ms-auto badge bg-light text-muted border"
-                  style={{ fontSize: '.72rem' }}
+                  style={{ fontSize: ".72rem" }}
                 >
                   {staff.gallery_images?.length || 0} images
                 </span>
@@ -1604,15 +1538,15 @@ export default function StaffDetails() {
                   <div
                     className="mb-3 p-3 rounded-3"
                     style={{
-                      background: '#f0f4ff',
-                      border: '1.5px dashed #435ebe',
+                      background: "#f0f4ff",
+                      border: "1.5px dashed #435ebe",
                     }}
                   >
                     <div className="d-flex justify-content-between align-items-center mb-2">
                       <span className="small fw-bold text-primary">
                         <i className="bi bi-cloud-upload me-1"></i>
                         {galleryPreviews.length} image
-                        {galleryPreviews.length > 1 ? 's' : ''} ready
+                        {galleryPreviews.length > 1 ? "s" : ""} ready
                       </span>
                       <div className="d-flex gap-2">
                         <button
@@ -1643,15 +1577,9 @@ export default function StaffDetails() {
                     </div>
                     <div className="row g-2">
                       {galleryPreviews.map((src, i) => (
-                        <div
-                          className="col-md-4 col-6"
-                          key={i}
-                        >
+                        <div className="col-md-4 col-6" key={i}>
                           <div className="sd-gallery-preview">
-                            <img
-                              src={src}
-                              alt=""
-                            />
+                            <img src={src} alt="" />
                             <span className="sd-gallery-preview-lbl">New</span>
                           </div>
                         </div>
@@ -1663,10 +1591,7 @@ export default function StaffDetails() {
                 {staff.gallery_images?.length > 0 ? (
                   <div className="row g-2">
                     {staff.gallery_images.map((img, idx) => (
-                      <div
-                        className="col-md-4 col-6"
-                        key={idx}
-                      >
+                      <div className="col-md-4 col-6" key={idx}>
                         <div className="sd-gallery-item">
                           <img
                             src={img}
@@ -1674,8 +1599,8 @@ export default function StaffDetails() {
                             className="sd-gallery-img"
                             onError={(e) => {
                               e.target.closest(
-                                '.sd-gallery-item',
-                              ).style.display = 'none';
+                                ".sd-gallery-item",
+                              ).style.display = "none";
                             }}
                           />
                           <button
@@ -1693,7 +1618,7 @@ export default function StaffDetails() {
                             ) : (
                               <i
                                 className="bi bi-trash-fill"
-                                style={{ fontSize: '.7rem' }}
+                                style={{ fontSize: ".7rem" }}
                               ></i>
                             )}
                           </button>
@@ -1743,10 +1668,7 @@ export default function StaffDetails() {
           className="modal-dialog modal-dialog-centered"
           style={{ maxWidth: 420 }}
         >
-          <div
-            className="modal-content shadow-lg"
-            style={{ borderRadius: 14 }}
-          >
+          <div className="modal-content shadow-lg" style={{ borderRadius: 14 }}>
             <div className="modal-body p-4 text-center">
               <div
                 className="rounded-circle bg-danger bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3"
@@ -1755,10 +1677,7 @@ export default function StaffDetails() {
                 <i className="bi bi-trash text-danger fs-3"></i>
               </div>
               <h5 className="fw-bold mb-1">Delete Staff Member?</h5>
-              <p
-                className="text-muted mb-0"
-                style={{ fontSize: '.9rem' }}
-              >
+              <p className="text-muted mb-0" style={{ fontSize: ".9rem" }}>
                 Permanently delete <strong>{staff?.full_name}</strong>. This
                 removes their profile, account, and all data. Cannot be undone.
               </p>
