@@ -1,375 +1,639 @@
-import React, { useMemo } from 'react';
-import { Link } from 'react-router-dom';
-import eventsData from '../data/events.json';
+// src/pages/Dashboard.jsx - Live admin dashboard
+// Fetches all data from GET /api/events/dashboard/stats/
+// Auto-refreshes every 60 seconds.
 
+import React, { useState, useEffect, useCallback } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { getDashboardStats } from "../api/dashboardApi";
+
+// -- Helpers ----------------------------------------------------
+const fmt = (n) =>
+  n >= 1_00_000
+    ? `₹${(n / 1_00_000).toFixed(1)}L`
+    : n >= 1000
+      ? `₹${(n / 1000).toFixed(1)}k`
+      : `₹${n}`;
+
+const fmtDate = (d) =>
+  d
+    ? new Date(d).toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      })
+    : "-";
+
+const STATUS_CFG = {
+  created: { label: "Created", color: "#435ebe", bg: "#eef1fb" },
+  planning_started: { label: "Planning", color: "#0dcaf0", bg: "#e0f8fd" },
+  staff_allocated: {
+    label: "Staff Allocated",
+    color: "#f59f00",
+    bg: "#fff8e1",
+  },
+  completed: { label: "Completed", color: "#198754", bg: "#e8f5e9" },
+  cancelled: { label: "Cancelled", color: "#dc3545", bg: "#fdecea" },
+};
+const sCfg = (s) =>
+  STATUS_CFG[s] || { label: s, color: "#6c757d", bg: "#f0f2f5" };
+
+const PAY_CFG = {
+  paid_fully: { label: "Paid", icon: "bi-check-circle-fill", color: "#198754" },
+  advance: { label: "Advance", icon: "bi-clock-fill", color: "#f59f00" },
+  unpaid: { label: "Unpaid", icon: "bi-x-circle-fill", color: "#dc3545" },
+};
+const pCfg = (s) =>
+  PAY_CFG[s] || { label: s, icon: "bi-dash", color: "#6c757d" };
+
+// -- Mini bar chart (CSS only, no external lib) -----------------
+function BarChart({ data }) {
+  const max = Math.max(...data.map((d) => d.count), 1);
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "flex-end",
+        gap: 8,
+        height: 160,
+        paddingBottom: 4,
+      }}
+    >
+      {data.map((d, i) => {
+        const isLast = i === data.length - 1;
+        const pct = Math.round((d.count / max) * 100);
+        return (
+          <div
+            key={i}
+            style={{
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 4,
+            }}
+          >
+            <span
+              style={{
+                fontSize: ".72rem",
+                fontWeight: 700,
+                color: isLast ? "#435ebe" : "#9aa3af",
+              }}
+            >
+              {d.count}
+            </span>
+            <div
+              style={{
+                width: "100%",
+                borderRadius: "4px 4px 0 0",
+                background: isLast ? "#435ebe" : "#d0d8f8",
+                height: `${Math.max(pct, 4)}%`,
+                transition: "height .4s ease",
+              }}
+            />
+            <span
+              style={{
+                fontSize: ".72rem",
+                fontWeight: 600,
+                color: isLast ? "#435ebe" : "#9aa3af",
+              }}
+            >
+              {d.month}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// -- Donut-style status breakdown -------------------------------
+function StatusBreakdown({ counts }) {
+  const order = [
+    "created",
+    "planning_started",
+    "staff_allocated",
+    "completed",
+    "cancelled",
+  ];
+  const total = Object.values(counts).reduce((a, b) => a + b, 0) || 1;
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      {order.map((k) => {
+        const cfg = sCfg(k);
+        const pct = Math.round(((counts[k] || 0) / total) * 100);
+        return (
+          <div key={k}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                marginBottom: 3,
+              }}
+            >
+              <span
+                style={{
+                  fontSize: ".78rem",
+                  fontWeight: 600,
+                  color: "#4a5568",
+                }}
+              >
+                {cfg.label}
+              </span>
+              <span
+                style={{
+                  fontSize: ".78rem",
+                  fontWeight: 700,
+                  color: cfg.color,
+                }}
+              >
+                {counts[k] || 0}
+              </span>
+            </div>
+            <div
+              style={{
+                height: 6,
+                borderRadius: 10,
+                background: "#f0f2f5",
+                overflow: "hidden",
+              }}
+            >
+              <div
+                style={{
+                  width: `${pct}%`,
+                  height: "100%",
+                  borderRadius: 10,
+                  background: cfg.color,
+                  transition: "width .5s ease",
+                }}
+              />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ==============================================================
 export default function Dashboard() {
-  // --- METRICS CALCULATION ---
-  const metrics = useMemo(() => {
-    const now = new Date();
+  const navigate = useNavigate();
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [lastRefresh, setLastRefresh] = useState(null);
 
-    let upcoming = 0;
-    let pendingRevenue = 0;
-    let totalRevenue = 0;
-
-    eventsData.forEach((event) => {
-      const eventDate = new Date(event.start);
-      if (eventDate >= now && event.workflowStage !== 'cancelled') {
-        upcoming++;
-      }
-
-      const total = event.payment?.totalAmount || 0;
-      const paid = event.payment?.paidAmount || 0;
-
-      totalRevenue += paid;
-      if (
-        event.payment?.paymentStatus !== 'paid' &&
-        event.workflowStage !== 'cancelled'
-      ) {
-        pendingRevenue += total - paid;
-      }
-    });
-
-    return {
-      totalBookings: eventsData.length,
-      upcomingEvents: upcoming,
-      pendingRevenue,
-      totalRevenue,
-    };
+  const fetchStats = useCallback(async () => {
+    try {
+      const res = await getDashboardStats();
+      setStats(res.data.data);
+      setLastRefresh(new Date());
+      setError("");
+    } catch (e) {
+      setError(e.response?.data?.message || "Failed to load dashboard data.");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  // Get Top 5 Recent/Upcoming Events for the table
-  const recentEvents = [...eventsData]
-    .sort((a, b) => new Date(b.start) - new Date(a.start))
-    .slice(0, 5);
+  useEffect(() => {
+    fetchStats();
+    const interval = setInterval(fetchStats, 60_000); // auto-refresh every 60s
+    return () => clearInterval(interval);
+  }, [fetchStats]);
 
-  // Helper for Workflow Badges
-  const getBadgeColor = (stage) => {
-    const map = {
-      created: 'primary',
-      planning: 'info',
-      staffs_assigned: 'warning',
-      event_completed: 'success',
-      cancelled: 'danger',
-    };
-    return map[stage] || 'secondary';
-  };
+  if (loading)
+    return (
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: 400,
+        }}
+      >
+        <div className="text-center">
+          <div
+            className="spinner-border text-primary mb-3"
+            style={{ width: 44, height: 44 }}
+          />
+          <p className="text-muted small">Loading dashboard…</p>
+        </div>
+      </div>
+    );
+
+  if (error)
+    return (
+      <div className="page-content">
+        <div className="alert alert-danger d-flex align-items-center gap-2">
+          <i className="bi bi-exclamation-triangle-fill"></i>
+          {error}
+          <button
+            className="btn btn-sm btn-outline-danger ms-auto"
+            onClick={fetchStats}
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+
+  const s = stats || {};
+  const trend = Array.isArray(s.monthly_trend) ? s.monthly_trend : [];
+  const recent = Array.isArray(s.recent_bookings) ? s.recent_bookings : [];
+  const liveEvents = Array.isArray(s.live_events) ? s.live_events : [];
+  const statusCounts = s.status_counts || {};
 
   return (
     <>
-      <style>
-        {`
-          .stats-icon { width: 3rem; height: 3rem; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
-          .stats-icon.purple { background-color: rgba(142, 36, 170, 0.15); color: #8E24AA; }
-          .stats-icon.blue { background-color: rgba(30, 136, 229, 0.15); color: #1E88E5; }
-          .stats-icon.green { background-color: rgba(40, 167, 69, 0.15); color: #28a745; }
-          .stats-icon.orange { background-color: rgba(255, 152, 0, 0.15); color: #ff9800; }
-          .card-hover { transition: transform 0.2s ease, box-shadow 0.2s ease; }
-          .card-hover:hover { transform: translateY(-3px); box-shadow: 0 .5rem 1rem rgba(0,0,0,.08)!important; }
-          .mock-chart-bar { background: #8E24AA; border-radius: 4px 4px 0 0; width: 12%; margin: 0 2%; transition: height 0.3s ease; }
-          .map-placeholder { background: url('https://images.unsplash.com/photo-1524661135-423995f22d0b?q=80&w=600&auto=format&fit=crop') center/cover; position: relative; border-radius: 10px; overflow: hidden; }
-          .map-overlay { background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); position: absolute; bottom: 0; width: 100%; padding: 15px; }
-        `}
-      </style>
+      <style>{`
+        .db-card { background:#fff; border-radius:14px; border:1px solid #eef0f4; box-shadow:0 2px 12px rgba(44,50,73,.06); overflow:hidden; }
+        .db-card-hover { transition:transform .18s,box-shadow .18s; }
+        .db-card-hover:hover { transform:translateY(-3px); box-shadow:0 6px 24px rgba(44,50,73,.11)!important; }
+        .db-metric-icon { width:48px; height:48px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1.3rem; flex-shrink:0; }
+        .db-section-title { font-size:.72rem; text-transform:uppercase; letter-spacing:1px; font-weight:700; color:#9aa3af; margin-bottom:14px; }
+        .live-pulse { display:inline-block; width:8px; height:8px; border-radius:50%; background:#dc3545; animation:livePulse 1.2s infinite; margin-right:6px; }
+        @keyframes livePulse { 0%,100%{box-shadow:0 0 0 0 rgba(220,53,69,.6)} 50%{box-shadow:0 0 0 6px rgba(220,53,69,0)} }
+        .db-table th { font-size:.72rem; text-transform:uppercase; letter-spacing:.8px; color:#9aa3af; font-weight:700; background:#fafbff; }
+        .db-table td { font-size:.86rem; vertical-align:middle; }
+        .db-badge { display:inline-block; border-radius:6px; padding:2px 10px; font-size:.73rem; font-weight:700; }
+        .on-duty-chip { display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:10px; background:#f8f9fc; border:1px solid #eef0f4; }
+      `}</style>
 
-      <div className="page-heading mb-4 d-flex justify-content-between align-items-center">
-        <div>
-          <h3 className="fw-bold mb-0">Admin Overview</h3>
-          <p className="text-muted mb-0">
-            Welcome back! Here's what's happening today.
-          </p>
-        </div>
-        <div className="text-end d-none d-md-block">
-          <p className="text-muted small mb-0">
-            {new Date().toLocaleDateString('en-US', {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-            })}
-          </p>
+      {/* -- HEADING -------------------------------------------- */}
+      <div className="page-heading">
+        <div className="d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div>
+            <h3 className="fw-bold mb-0">Admin Overview</h3>
+            <p className="text-muted mb-0 small">
+              {new Date().toLocaleDateString("en-IN", {
+                weekday: "long",
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+              })}
+              {lastRefresh && (
+                <span
+                  className="ms-2 text-muted"
+                  style={{ fontSize: ".75rem" }}
+                >
+                  · Updated{" "}
+                  {lastRefresh.toLocaleTimeString("en-IN", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </span>
+              )}
+            </p>
+          </div>
+          <button
+            className="btn btn-light btn-sm shadow-sm"
+            onClick={fetchStats}
+          >
+            <i className="bi bi-arrow-clockwise me-1"></i>Refresh
+          </button>
         </div>
       </div>
 
       <div className="page-content">
-        {/* ================= TOP METRIC CARDS ================= */}
-        <section className="row g-3 mb-4">
-          <div className="col-6 col-lg-3">
-            <div className="card shadow-sm border-0 h-100 card-hover">
-              <div className="card-body p-4 d-flex align-items-center gap-3">
-                <div className="stats-icon blue">
-                  <i className="bi bi-calendar-check-fill"></i>
+        {/* -- METRIC CARDS ----------------------------------- */}
+        <div className="row g-3 mb-4">
+          {[
+            {
+              label: "Total Bookings",
+              value: s.total_bookings ?? "-",
+              icon: "bi-calendar-check-fill",
+              bg: "#eef1fb",
+              color: "#435ebe",
+              sub: `${s.upcoming_events ?? 0} upcoming`,
+            },
+            {
+              label: "Revenue Collected",
+              value: s.total_revenue != null ? fmt(s.total_revenue) : "-",
+              icon: "bi-wallet2",
+              bg: "#e8f5e9",
+              color: "#198754",
+              sub: `${fmt(s.pending_revenue ?? 0)} pending`,
+              subColor: "#dc3545",
+            },
+            {
+              label: "Staff On Duty",
+              value: s.on_duty_staff ?? "-",
+              icon: "bi-person-badge-fill",
+              bg: "#fff8e1",
+              color: "#f59f00",
+              sub: `${s.total_staff ?? 0} total staff`,
+            },
+            {
+              label: "Active Clients",
+              value: s.total_clients ?? "-",
+              icon: "bi-people-fill",
+              bg: "#fce4ec",
+              color: "#e91e63",
+              sub: `${s.live_events_count ?? 0} live event${(s.live_events_count ?? 0) !== 1 ? "s" : ""} now`,
+            },
+          ].map((m, i) => (
+            <div className="col-6 col-lg-3" key={i}>
+              <div className="db-card db-card-hover p-4 h-100">
+                <div className="d-flex align-items-center gap-3 mb-2">
+                  <div
+                    className="db-metric-icon"
+                    style={{ background: m.bg, color: m.color }}
+                  >
+                    <i className={`bi ${m.icon}`}></i>
+                  </div>
+                  <div>
+                    <div
+                      className="text-muted fw-bold"
+                      style={{
+                        fontSize: ".72rem",
+                        textTransform: "uppercase",
+                        letterSpacing: ".8px",
+                      }}
+                    >
+                      {m.label}
+                    </div>
+                    <div
+                      className="fw-bold"
+                      style={{
+                        fontSize: "1.6rem",
+                        lineHeight: 1.1,
+                        color: "#2c3249",
+                      }}
+                    >
+                      {m.value}
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <h6 className="text-muted fw-bold mb-1 small text-uppercase">
-                    Total Bookings
-                  </h6>
-                  <h4 className="fw-bold mb-0">{metrics.totalBookings}</h4>
+                <div
+                  style={{
+                    fontSize: ".78rem",
+                    fontWeight: 600,
+                    color: m.subColor || "#9aa3af",
+                  }}
+                >
+                  {m.sub}
                 </div>
               </div>
             </div>
-          </div>
-          <div className="col-6 col-lg-3">
-            <div className="card shadow-sm border-0 h-100 card-hover">
-              <div className="card-body p-4 d-flex align-items-center gap-3">
-                <div className="stats-icon purple">
-                  <i className="bi bi-hourglass-split"></i>
-                </div>
-                <div>
-                  <h6 className="text-muted fw-bold mb-1 small text-uppercase">
-                    Upcoming Events
-                  </h6>
-                  <h4 className="fw-bold mb-0">{metrics.upcomingEvents}</h4>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="col-6 col-lg-3">
-            <div className="card shadow-sm border-0 h-100 card-hover">
-              <div className="card-body p-4 d-flex align-items-center gap-3">
-                <div className="stats-icon green">
-                  <i className="bi bi-wallet2"></i>
-                </div>
-                <div>
-                  <h6 className="text-muted fw-bold mb-1 small text-uppercase">
-                    Revenue Collected
-                  </h6>
-                  <h4 className="fw-bold mb-0">
-                    ₹{(metrics.totalRevenue / 1000).toFixed(1)}k
-                  </h4>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="col-6 col-lg-3">
-            <div className="card shadow-sm border-0 h-100 card-hover">
-              <div className="card-body p-4 d-flex align-items-center gap-3">
-                <div className="stats-icon orange">
-                  <i className="bi bi-exclamation-circle-fill"></i>
-                </div>
-                <div>
-                  <h6 className="text-muted fw-bold mb-1 small text-uppercase">
-                    Pending Payments
-                  </h6>
-                  <h4 className="fw-bold mb-0 text-danger">
-                    ₹{(metrics.pendingRevenue / 1000).toFixed(1)}k
-                  </h4>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
+          ))}
+        </div>
 
-        <section className="row g-4">
-          {/* ================= LEFT MAIN COLUMN ================= */}
+        <div className="row g-4">
+          {/* -- LEFT COLUMN ---------------------------------- */}
           <div className="col-12 col-lg-8">
-            {/* MOCK CHART */}
-            <div className="card shadow-sm border-0 mb-4">
-              <div className="card-header bg-white pt-4 pb-0 border-0 d-flex justify-content-between align-items-center">
-                <h5 className="fw-bold mb-0">Booking Trends (Last 6 Months)</h5>
-                <select className="form-select form-select-sm w-auto border-0 bg-light fw-bold">
-                  <option>2026</option>
-                  <option>2025</option>
-                </select>
-              </div>
-              <div
-                className="card-body d-flex align-items-end justify-content-center"
-                style={{ height: '250px', paddingBottom: '0' }}
-              >
-                {/* Visual CSS Chart Placeholder */}
-                <div className="w-100 d-flex align-items-end justify-content-between border-bottom pb-2 h-100 px-4">
+            {/* Booking trend chart */}
+            <div className="db-card mb-4 p-4">
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                  <div className="db-section-title mb-0">Booking Trend</div>
                   <div
-                    className="mock-chart-bar"
-                    style={{ height: '40%' }}
-                    title="Sep"
-                  ></div>
-                  <div
-                    className="mock-chart-bar"
-                    style={{ height: '65%' }}
-                    title="Oct"
-                  ></div>
-                  <div
-                    className="mock-chart-bar"
-                    style={{ height: '45%' }}
-                    title="Nov"
-                  ></div>
-                  <div
-                    className="mock-chart-bar"
-                    style={{ height: '85%' }}
-                    title="Dec"
-                  ></div>
-                  <div
-                    className="mock-chart-bar"
-                    style={{ height: '55%' }}
-                    title="Jan"
-                  ></div>
-                  <div
-                    className="mock-chart-bar"
-                    style={{ height: '95%', backgroundColor: '#1E88E5' }}
-                    title="Feb"
-                  ></div>
+                    className="fw-bold"
+                    style={{ fontSize: ".95rem", color: "#2c3249" }}
+                  >
+                    Last 6 Months
+                  </div>
                 </div>
+                <span
+                  className="badge"
+                  style={{
+                    background: "#eef1fb",
+                    color: "#435ebe",
+                    fontWeight: 700,
+                  }}
+                >
+                  {trend.reduce((a, d) => a + d.count, 0)} total
+                </span>
               </div>
-              <div className="d-flex justify-content-between px-5 pb-3 text-muted small fw-bold">
-                <span>Sep</span>
-                <span>Oct</span>
-                <span>Nov</span>
-                <span>Dec</span>
-                <span>Jan</span>
-                <span className="text-primary">Feb</span>
-              </div>
+              {trend.length > 0 ? (
+                <BarChart data={trend} />
+              ) : (
+                <div className="text-center text-muted py-4 small">
+                  No booking data yet
+                </div>
+              )}
             </div>
 
-            {/* RECENT BOOKINGS TABLE */}
-            <div className="card shadow-sm border-0">
-              <div className="card-header bg-white pt-4 pb-3 border-bottom d-flex justify-content-between align-items-center">
-                <h5 className="fw-bold mb-0">Recent Bookings</h5>
+            {/* Recent bookings table */}
+            <div className="db-card">
+              <div className="d-flex justify-content-between align-items-center px-4 pt-4 pb-3 border-bottom">
+                <div
+                  className="fw-bold"
+                  style={{ fontSize: ".95rem", color: "#2c3249" }}
+                >
+                  Recent Bookings
+                </div>
                 <Link
                   to="/admin/events"
-                  className="btn btn-sm btn-light text-primary fw-bold"
+                  className="btn btn-sm btn-light fw-bold"
+                  style={{ color: "#435ebe" }}
                 >
-                  View All <i className="bi bi-arrow-right"></i>
+                  View All <i className="bi bi-arrow-right ms-1"></i>
                 </Link>
               </div>
-              <div className="card-body p-0">
+              {recent.length === 0 ? (
+                <div className="text-center py-5 text-muted">
+                  <i className="bi bi-calendar-x fs-2 d-block mb-2"></i>No
+                  bookings yet.
+                </div>
+              ) : (
                 <div className="table-responsive">
-                  <table className="table table-hover align-middle mb-0">
-                    <thead className="table-light text-muted small text-uppercase">
+                  <table className="table db-table align-middle mb-0">
+                    <thead>
                       <tr>
-                        <th className="ps-4">Client / Event</th>
+                        <th className="ps-4 py-3">Client / Event</th>
                         <th>Date</th>
-                        <th>Stage</th>
+                        <th>Status</th>
                         <th className="text-end pe-4">Payment</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {recentEvents.map((event) => (
-                        <tr key={event.bookingId}>
-                          <td className="ps-4">
-                            <div className="fw-bold text-dark">
-                              {event.client.name}
-                            </div>
-                            <small className="text-muted">
-                              {event.eventType} • {event.location.city}
-                            </small>
-                          </td>
-                          <td>
-                            <div className="fw-semibold">
-                              {new Date(event.start).toLocaleDateString(
-                                'en-GB',
-                                { day: 'numeric', month: 'short' },
+                      {recent.map((ev) => {
+                        const sc = sCfg(ev.status);
+                        const pc = pCfg(ev.payment_status);
+                        return (
+                          <tr
+                            key={ev.id}
+                            style={{ cursor: "pointer" }}
+                            onClick={() => navigate(`/admin/events/${ev.id}`)}
+                          >
+                            <td className="ps-4 py-3">
+                              <div
+                                className="fw-bold"
+                                style={{ color: "#2c3249" }}
+                              >
+                                {ev.client_name || "-"}
+                              </div>
+                              <small className="text-muted">
+                                {ev.event_name} · {ev.city}
+                              </small>
+                            </td>
+                            <td>
+                              <div style={{ fontSize: ".84rem" }}>
+                                {fmtDate(ev.event_start_datetime)}
+                              </div>
+                              <small className="text-muted">
+                                {ev.event_type || ""}
+                              </small>
+                            </td>
+                            <td>
+                              <span
+                                className="db-badge"
+                                style={{ background: sc.bg, color: sc.color }}
+                              >
+                                {sc.label}
+                              </span>
+                            </td>
+                            <td className="text-end pe-4">
+                              <span
+                                style={{
+                                  color: pc.color,
+                                  fontWeight: 700,
+                                  fontSize: ".84rem",
+                                }}
+                              >
+                                <i className={`bi ${pc.icon} me-1`}></i>
+                                {pc.label}
+                              </span>
+                              {ev.total_amount > 0 && (
+                                <div
+                                  className="text-muted"
+                                  style={{ fontSize: ".72rem" }}
+                                >
+                                  {fmt(ev.paid_amount)} / {fmt(ev.total_amount)}
+                                </div>
                               )}
-                            </div>
-                          </td>
-                          <td>
-                            <span
-                              className={`badge bg-light-${getBadgeColor(event.workflowStage)} text-${getBadgeColor(event.workflowStage)} text-uppercase`}
-                            >
-                              {event.workflowStage.replace('_', ' ')}
-                            </span>
-                          </td>
-                          <td className="text-end pe-4">
-                            {event.payment.paymentStatus === 'paid' ? (
-                              <span className="text-success fw-bold">
-                                <i className="bi bi-check-circle-fill me-1"></i>{' '}
-                                Paid
-                              </span>
-                            ) : event.payment.paymentStatus === 'partial' ? (
-                              <span className="text-warning fw-bold">
-                                <i className="bi bi-clock-fill me-1"></i>{' '}
-                                Advance
-                              </span>
-                            ) : (
-                              <span className="text-danger fw-bold">
-                                <i className="bi bi-x-circle-fill me-1"></i>{' '}
-                                Unpaid
-                              </span>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
-              </div>
+              )}
             </div>
           </div>
 
-          {/* ================= RIGHT SIDEBAR ================= */}
+          {/* -- RIGHT COLUMN --------------------------------- */}
           <div className="col-12 col-lg-4">
-            {/* LIVE EVENT TRACKING */}
-            <div
-              className="card shadow-sm border-0 mb-4 map-placeholder"
-              style={{ height: '280px' }}
-            >
-              <div className="map-overlay">
-                <span className="badge bg-danger mb-2 pulse-animation">
-                  <i className="bi bi-record-circle"></i> 1 LIVE EVENT
-                </span>
-                <h5 className="text-white fw-bold mb-1">Mumbai Fashion Show</h5>
-                <p className="text-light small mb-3">
-                  <i className="bi bi-geo-alt-fill text-primary"></i> NSCI Dome,
-                  Worli
-                </p>
+            {/* Live events now */}
+            <div className="db-card mb-4 p-4">
+              <div className="db-section-title">
+                <span className="live-pulse"></span>Live Now
+              </div>
+              {liveEvents.length === 0 ? (
+                <div className="text-center py-3 text-muted small">
+                  No events happening right now
+                </div>
+              ) : (
+                liveEvents.map((ev) => (
+                  <div
+                    key={ev.id}
+                    className="mb-3 p-3 rounded-3"
+                    style={{
+                      background: "#f8f9fc",
+                      border: "1px solid #eef0f4",
+                    }}
+                  >
+                    <div
+                      className="fw-bold"
+                      style={{ fontSize: ".9rem", color: "#2c3249" }}
+                    >
+                      {ev.event_name}
+                    </div>
+                    <div className="text-muted" style={{ fontSize: ".78rem" }}>
+                      <i className="bi bi-geo-alt me-1"></i>
+                      {ev.venue_name} · {ev.city}
+                    </div>
+                    <div className="d-flex justify-content-between align-items-center mt-2">
+                      <small className="text-muted">
+                        <i className="bi bi-people me-1"></i>
+                        {ev.crew_count} crew
+                      </small>
+                      <Link
+                        to={`/admin/events/${ev.id}/track`}
+                        className="btn btn-primary btn-sm px-3"
+                        style={{ fontSize: ".75rem" }}
+                      >
+                        Track <i className="bi bi-geo-alt-fill ms-1"></i>
+                      </Link>
+                    </div>
+                  </div>
+                ))
+              )}
+              {liveEvents.length === 0 && (
                 <Link
-                  to="/events/track"
-                  className="btn btn-primary btn-sm w-100 fw-bold shadow"
+                  to="/admin/events"
+                  className="btn btn-outline-primary btn-sm w-100"
                 >
-                  Open Live Tracker{' '}
-                  <i className="bi bi-box-arrow-up-right ms-1"></i>
+                  View All Events
+                </Link>
+              )}
+            </div>
+
+            {/* Event status breakdown */}
+            <div className="db-card mb-4 p-4">
+              <div className="db-section-title">Event Status Breakdown</div>
+              <StatusBreakdown counts={statusCounts} />
+              <div className="text-center mt-3">
+                <Link
+                  to="/admin/events"
+                  className="btn btn-light btn-sm fw-bold"
+                  style={{ color: "#435ebe", fontSize: ".78rem" }}
+                >
+                  Manage Events <i className="bi bi-arrow-right ms-1"></i>
                 </Link>
               </div>
             </div>
 
-            {/* INVENTORY ALERTS */}
-            <div className="card shadow-sm border-0">
-              <div className="card-header bg-white pt-4 pb-2 border-0">
-                <h5 className="fw-bold mb-0">Inventory Alerts</h5>
+            {/* On-duty staff */}
+            <div className="db-card p-4">
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <div className="db-section-title mb-0">Staff On Duty</div>
+                <span
+                  className="badge"
+                  style={{
+                    background: s.on_duty_staff > 0 ? "#e8f5e9" : "#f0f2f5",
+                    color: s.on_duty_staff > 0 ? "#198754" : "#9aa3af",
+                    fontWeight: 700,
+                  }}
+                >
+                  {s.on_duty_staff ?? 0} online
+                </span>
               </div>
-              <div className="card-body">
-                <div className="d-flex align-items-center justify-content-between p-3 bg-light-danger rounded mb-3 border border-danger border-opacity-25">
-                  <div className="d-flex align-items-center gap-3">
-                    <div className="bg-white p-2 rounded shadow-sm text-danger">
-                      <i className="bi bi-exclamation-triangle-fill fs-5"></i>
-                    </div>
-                    <div>
-                      <h6 className="mb-0 fw-bold text-dark">
-                        Classic Black Tuxedo
-                      </h6>
-                      <small className="text-danger fw-bold">
-                        Size XL Out of Stock
-                      </small>
-                    </div>
-                  </div>
-                  <button className="btn btn-sm btn-outline-danger px-2 py-1">
-                    Restock
-                  </button>
+              {(s.on_duty_staff ?? 0) === 0 ? (
+                <div className="text-center py-3 text-muted small">
+                  <i className="bi bi-person-slash fs-3 d-block mb-1"></i>No
+                  staff on duty right now
                 </div>
-
-                <div className="d-flex align-items-center justify-content-between p-3 bg-light-warning rounded border border-warning border-opacity-25">
-                  <div className="d-flex align-items-center gap-3">
-                    <div className="bg-white p-2 rounded shadow-sm text-warning">
-                      <i className="bi bi-box-seam-fill fs-5"></i>
-                    </div>
-                    <div>
-                      <h6 className="mb-0 fw-bold text-dark">
-                        White Banquet Shirt
-                      </h6>
-                      <small className="text-warning fw-bold text-dark">
-                        Size S Running Low (5 left)
-                      </small>
-                    </div>
-                  </div>
-                  <Link
-                    to="/admin/uniforms"
-                    className="btn btn-sm btn-outline-warning text-dark px-2 py-1"
+              ) : (
+                <div className="text-center py-3">
+                  <div
+                    style={{
+                      fontSize: "2.5rem",
+                      fontWeight: 800,
+                      color: "#198754",
+                    }}
                   >
-                    View
-                  </Link>
+                    {s.on_duty_staff}
+                  </div>
+                  <div className="text-muted small">
+                    staff member{s.on_duty_staff !== 1 ? "s" : ""} currently on
+                    duty
+                  </div>
                 </div>
+              )}
+              <div className="d-flex gap-2 mt-3">
+                <Link
+                  to="/admin/staff"
+                  className="btn btn-light btn-sm flex-fill fw-bold"
+                  style={{ color: "#435ebe", fontSize: ".78rem" }}
+                >
+                  <i className="bi bi-people me-1"></i>All Staff
+                </Link>
               </div>
             </div>
           </div>
-        </section>
+        </div>
       </div>
     </>
   );
