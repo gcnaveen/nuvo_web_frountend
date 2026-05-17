@@ -13,6 +13,14 @@ import {
   updatePlan,
   getPaymentTerms,
   updatePaymentTerms,
+  listCoupons,
+  createCoupon,
+  updateCoupon,
+  deleteCoupon,
+  listCrewMembers,
+  createCrewMember,
+  updateCrewMember,
+  deleteCrewMember,
 } from "../api/masterApi";
 
 // ── helpers ────────────────────────────────────────────────────
@@ -130,8 +138,10 @@ export default function MasterData() {
           {[
             { key: 'themes', label: 'Event Themes', icon: 'bi-palette' },
             { key: 'uniforms', label: 'Uniforms', icon: 'bi-bag' },
+            { key: 'crew', label: 'Crew Gallery', icon: 'bi-people' },
             { key: 'subscription', label: 'Subscription', icon: 'bi-gem' },
             { key: 'payment', label: 'Payment Terms', icon: 'bi-credit-card' },
+            { key: 'coupons', label: 'Coupons', icon: 'bi-ticket-perforated' },
           ].map((t) => (
             <button
               key={t.key}
@@ -147,10 +157,12 @@ export default function MasterData() {
         {/* ── PANELS ─────────────────────────────────────────── */}
         {activeTab === 'themes' && <ThemesPanel showToast={showToast} />}
         {activeTab === 'uniforms' && <UniformsPanel showToast={showToast} />}
+        {activeTab === 'crew' && <CrewPanel showToast={showToast} />}
         {activeTab === 'subscription' && (
           <SubscriptionPanel showToast={showToast} />
         )}
         {activeTab === 'payment' && <PaymentPanel showToast={showToast} />}
+        {activeTab === 'coupons' && <CouponsPanel showToast={showToast} />}
       </div>
     </>
   );
@@ -1382,6 +1394,315 @@ function UniformViewModal({ item, onClose, onEdit }) {
 }
 
 // ══════════════════════════════════════════════════════════════
+// CREW PANEL
+// ══════════════════════════════════════════════════════════════
+
+
+function CrewPanel({ showToast }) {
+  const [members, setMembers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError]     = useState('');
+  const [modal, setModal]     = useState(null); // null | {mode:'add'} | {mode:'edit'|'view', item}
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting]         = useState(false);
+
+  const fetchMembers = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await listCrewMembers();
+      setMembers(Array.isArray(res.data.data) ? res.data.data : []);
+    } catch {
+      setError('Failed to load crew members.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchMembers(); }, [fetchMembers]);
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      await deleteCrewMember(deleteTarget.id);
+      setMembers((prev) => prev.filter((m) => m.id !== deleteTarget.id));
+      setDeleteTarget(null);
+      showToast('Crew member deleted.');
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Delete failed.', 'danger');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <>
+      <style>{`
+        .crew-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:18px; }
+        .crew-card { border-radius:14px; overflow:hidden; background:#fff; border:1px solid #eef0f4; box-shadow:0 2px 10px rgba(44,50,73,.06); transition:box-shadow .2s,transform .2s; position:relative; }
+        .crew-card:hover { box-shadow:0 8px 28px rgba(44,50,73,.14); transform:translateY(-3px); }
+        .crew-img-wrap { position:relative; width:100%; padding-top:120%; overflow:hidden; background:#f0f2f8; }
+        .crew-img-wrap img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; transition:transform .35s ease; }
+        .crew-card:hover .crew-img-wrap img { transform:scale(1.05); }
+        .crew-img-placeholder { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#c5cadb; font-size:3rem; }
+        .crew-overlay { position:absolute; inset:0; background:linear-gradient(to top,rgba(20,20,40,.72) 0%,rgba(20,20,40,.1) 55%,transparent 100%); opacity:0; transition:opacity .25s; display:flex; align-items:flex-end; justify-content:center; padding-bottom:12px; gap:8px; }
+        .crew-card:hover .crew-overlay { opacity:1; }
+        .crew-action-btn { width:34px; height:34px; border-radius:50%; border:none; display:flex; align-items:center; justify-content:center; font-size:.8rem; cursor:pointer; transition:transform .15s,background .15s; }
+        .crew-action-btn:hover { transform:scale(1.12); }
+        .crew-inactive-badge { position:absolute; top:10px; right:10px; background:rgba(220,53,69,.85); color:#fff; font-size:.65rem; font-weight:700; padding:2px 8px; border-radius:20px; letter-spacing:.5px; }
+        .crew-name { padding:10px 12px; font-size:.85rem; font-weight:700; color:#2c3249; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+      `}</style>
+      <div className="ms-card">
+        <div className="ms-card-hd">
+          <h5>
+            <i className="bi bi-people me-2 text-primary"></i>Crew Gallery
+            {members.length > 0 && (
+              <span className="ms-badge-active ms-2" style={{ fontSize: '.72rem' }}>{members.length} members</span>
+            )}
+          </h5>
+          <button
+            className="btn btn-primary btn-sm px-3"
+            onClick={() => setModal({ mode: 'add' })}
+          >
+            <i className="bi bi-plus-lg me-1"></i>Add Member
+          </button>
+        </div>
+        <div className="ms-card-bd">
+          {loading ? (
+            <div className="text-center py-5"><div className="spinner-border text-primary" /></div>
+          ) : error ? (
+            <div className="alert alert-danger">{error}</div>
+          ) : members.length === 0 ? (
+            <div className="text-center py-5 text-muted">
+              <i className="bi bi-people fs-1 d-block mb-3 opacity-25"></i>
+              <p className="mb-1 fw-semibold">No crew members yet</p>
+              <small>Click "Add Member" to upload the first photo.</small>
+            </div>
+          ) : (
+            <div className="crew-grid">
+              {members.map((m) => (
+                <div className="crew-card" key={m.id}>
+                  <div className="crew-img-wrap">
+                    {m.image ? (
+                      <>
+                        <img
+                          src={m.image}
+                          alt={m.name}
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.nextSibling.style.display = 'flex';
+                          }}
+                        />
+                        <div className="crew-img-placeholder" style={{ display: 'none' }}>
+                          <i className="bi bi-person"></i>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="crew-img-placeholder">
+                        <i className="bi bi-person"></i>
+                      </div>
+                    )}
+                    {!m.is_active && <span className="crew-inactive-badge">Inactive</span>}
+                    <div className="crew-overlay">
+                      <button
+                        className="crew-action-btn"
+                        style={{ background: '#fff', color: '#435ebe' }}
+                        onClick={() => setModal({ mode: 'edit', item: m })}
+                        title="Edit"
+                      >
+                        <i className="bi bi-pencil-fill"></i>
+                      </button>
+                      <button
+                        className="crew-action-btn"
+                        style={{ background: '#dc3545', color: '#fff' }}
+                        onClick={() => setDeleteTarget(m)}
+                        title="Delete"
+                      >
+                        <i className="bi bi-trash-fill"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div className="crew-name" title={m.name}>{m.name}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {modal && (
+        <CrewFormModal
+          mode={modal.mode}
+          initial={modal.item}
+          onClose={() => setModal(null)}
+          onSaved={(saved) => {
+            if (modal.mode === 'add') setMembers((prev) => [saved, ...prev]);
+            else setMembers((prev) => prev.map((m) => (m.id === saved.id ? saved : m)));
+            setModal(null);
+            showToast(modal.mode === 'add' ? 'Crew member added!' : 'Crew member updated!');
+          }}
+        />
+      )}
+
+      {deleteTarget && (
+        <ConfirmDeleteModal
+          title="Delete Crew Member?"
+          message={<>Permanently delete <strong>{deleteTarget.name}</strong>? The image will also be removed.</>}
+          onConfirm={handleDelete}
+          onClose={() => setDeleteTarget(null)}
+          loading={deleting}
+        />
+      )}
+    </>
+  );
+}
+
+// ── Crew Form Modal ────────────────────────────────────────────
+function CrewFormModal({ mode, initial, onClose, onSaved }) {
+  const [form, setForm] = useState({
+    name:      initial?.name      || '',
+    is_active: initial?.is_active !== false,
+  });
+  const [imageFile, setImageFile]       = useState(null);
+  const [imagePreview, setImagePreview] = useState(initial?.image || '');
+  const [saving, setSaving] = useState(false);
+  const [err, setErr]       = useState('');
+  const imgRef = useRef(null);
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setForm((p) => ({ ...p, [name]: type === 'checkbox' ? checked : value }));
+  };
+
+  const handleImage = (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    setImageFile(f);
+    setImagePreview(URL.createObjectURL(f));
+  };
+
+  const handleSubmit = async () => {
+    if (!form.name.trim()) { setErr('Name is required.'); return; }
+    if (mode === 'add' && !imageFile) { setErr('Image is required.'); return; }
+
+    setSaving(true);
+    setErr('');
+    try {
+      const fd = new FormData();
+      fd.append('name', form.name.trim());
+      fd.append('is_active', form.is_active ? 'true' : 'false');
+      if (imageFile) fd.append('image', imageFile);
+
+      const res =
+        mode === 'add'
+          ? await createCrewMember(fd)
+          : await updateCrewMember(initial.id, fd);
+      onSaved(res.data.data);
+    } catch (e) {
+      setErr(e.response?.data?.message || 'Save failed.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="modal d-block" style={{ background: 'rgba(0,0,0,.5)', zIndex: 1055 }}>
+      <div className="modal-dialog modal-dialog-centered modal-dialog-scrollable" style={{ maxWidth: 500 }}>
+        <div className="modal-content border-0 shadow-lg" style={{ borderRadius: 16 }}>
+          <div className="modal-header border-0 px-4 pt-4 pb-2">
+            <div>
+              <h5 className="fw-bold mb-0">
+                {mode === 'add' ? 'Add Crew Member' : 'Edit Crew Member'}
+              </h5>
+              <p className="text-muted small mb-0">
+                {mode === 'add' ? 'Upload a photo and set details.' : `Editing: ${initial.name}`}
+              </p>
+            </div>
+            <button className="btn-close" onClick={onClose}></button>
+          </div>
+          <div className="modal-body px-4 py-3">
+            {err && (
+              <div className="alert alert-danger py-2 mb-3">
+                <i className="bi bi-exclamation-circle me-2"></i>{err}
+              </div>
+            )}
+
+            <div className="row g-3">
+              {/* Image upload */}
+              <div className="col-12">
+                <label className="ms-label">Photo {mode === 'add' ? '*' : ''}</label>
+                <div className="d-flex align-items-center gap-3">
+                  {imagePreview ? (
+                    <img
+                      src={imagePreview}
+                      alt=""
+                      style={{ width: 80, height: 80, borderRadius: 10, objectFit: 'cover', border: '2px solid #e0e3ea' }}
+                    />
+                  ) : (
+                    <div
+                      style={{ width: 80, height: 80, borderRadius: 10, background: '#f0f2f8', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9aa3af', fontSize: '1.5rem', border: '2px dashed #e0e3ea' }}
+                    >
+                      <i className="bi bi-person"></i>
+                    </div>
+                  )}
+                  <button
+                    className="btn btn-outline-secondary btn-sm px-3"
+                    onClick={() => imgRef.current?.click()}
+                  >
+                    <i className="bi bi-image me-1"></i>
+                    {imagePreview ? 'Change Photo' : 'Upload Photo'}
+                  </button>
+                </div>
+                <input type="file" ref={imgRef} className="d-none" accept="image/*" onChange={handleImage} />
+              </div>
+
+              {/* Name */}
+              <div className="col-12">
+                <label className="ms-label">Name *</label>
+                <input
+                  name="name"
+                  className="ms-input"
+                  value={form.name}
+                  onChange={handleChange}
+                  placeholder="e.g. Priya Sharma"
+                />
+              </div>
+
+              {/* Active toggle */}
+              <div className="col-12">
+                <div className="form-check form-switch">
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    name="is_active"
+                    checked={form.is_active}
+                    onChange={handleChange}
+                    id="crewActiveSwitch"
+                  />
+                  <label className="form-check-label fw-semibold small" htmlFor="crewActiveSwitch">
+                    {form.is_active ? 'Active (visible in app)' : 'Inactive (hidden)'}
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="modal-footer border-0 px-4 pb-4 pt-2 d-flex gap-2">
+            <button className="btn btn-light flex-fill" onClick={onClose} disabled={saving}>Cancel</button>
+            <button className="btn btn-primary flex-fill" onClick={handleSubmit} disabled={saving}>
+              {saving ? (
+                <><span className="spinner-border spinner-border-sm me-2" />Saving…</>
+              ) : (
+                <><i className="bi bi-check-lg me-2"></i>{mode === 'add' ? 'Add Member' : 'Save Changes'}</>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════
 // SUBSCRIPTION PANEL
 // ══════════════════════════════════════════════════════════════
 function SubscriptionPanel({ showToast }) {
@@ -1653,22 +1974,34 @@ function SubscriptionPanel({ showToast }) {
 // ══════════════════════════════════════════════════════════════
 // PAYMENT PANEL
 // ══════════════════════════════════════════════════════════════
+const STAFF_TIER_META = [
+  { key: 'BRONZE',   label: 'Bronze',   color: '#bf360c', bg: '#fbe9e7' },
+  { key: 'SILVER',   label: 'Silver',   color: '#455a64', bg: '#eceff1' },
+  { key: 'GOLD',     label: 'Gold',     color: '#f57f17', bg: '#fffde7' },
+  { key: 'PLATINUM', label: 'Platinum', color: '#7b1fa2', bg: '#f3e5f5' },
+];
+
 function PaymentPanel({ showToast }) {
-  const [pct, setPct] = useState('');
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [saving, setSaving]   = useState(false);
+  const [error, setError]     = useState('');
   const [lastUpd, setLastUpd] = useState(null);
-  const [error, setError] = useState('');
+
+  const [pct, setPct]               = useState('');
+  const [staffPricing, setStaffPricing] = useState({ BRONZE: 15000, SILVER: 30000, GOLD: 45000, PLATINUM: 65000 });
+  const [hoursPerDay, setHoursPerDay]   = useState('5');
+  const [overtimeRate, setOvertimeRate] = useState('3000');
 
   useEffect(() => {
     (async () => {
       try {
         const res = await getPaymentTerms();
         const d = res.data.data;
-        if (d.advancePercentage !== null && d.advancePercentage !== undefined) {
-          setPct(String(d.advancePercentage));
-          setLastUpd(d.lastUpdatedAt);
-        }
+        if (d.advancePercentage != null) setPct(String(d.advancePercentage));
+        if (d.staff_pricing)          setStaffPricing(d.staff_pricing);
+        if (d.default_hours_per_day)  setHoursPerDay(String(d.default_hours_per_day));
+        if (d.overtime_rate_per_hour) setOvertimeRate(String(d.overtime_rate_per_hour));
+        setLastUpd(d.lastUpdatedAt);
       } catch {
       } finally {
         setLoading(false);
@@ -1679,13 +2012,18 @@ function PaymentPanel({ showToast }) {
   const handleSave = async () => {
     const val = parseFloat(pct);
     if (isNaN(val) || val < 0 || val > 100) {
-      setError('Please enter a valid percentage between 0 and 100.');
+      setError('Advance percentage must be between 0 and 100.');
       return;
     }
     setSaving(true);
     setError('');
     try {
-      const res = await updatePaymentTerms({ advancePercentage: val });
+      const res = await updatePaymentTerms({
+        advancePercentage: val,
+        staff_pricing: staffPricing,
+        default_hours_per_day: parseFloat(hoursPerDay) || 5,
+        overtime_rate_per_hour: parseFloat(overtimeRate) || 3000,
+      });
       setLastUpd(res.data.data.lastUpdatedAt);
       showToast('Payment terms updated!');
     } catch (err) {
@@ -1696,147 +2034,389 @@ function PaymentPanel({ showToast }) {
   };
 
   if (loading)
-    return (
-      <div className="text-center py-5">
-        <div className="spinner-border text-primary" />
-      </div>
-    );
+    return <div className="text-center py-5"><div className="spinner-border text-primary" /></div>;
 
   const numPct = parseFloat(pct) || 0;
 
   return (
-    <div
-      className="ms-card"
-      style={{ maxWidth: 560 }}
-    >
+    <div className="row g-4">
+
+      {/* ── Left column: Advance % ── */}
+      <div className="col-lg-5">
+        <div className="ms-card h-100">
+          <div className="ms-card-hd">
+            <h5><i className="bi bi-credit-card me-2 text-primary"></i>Advance Payment</h5>
+          </div>
+          <div className="ms-card-bd">
+            <p className="text-muted mb-4" style={{ fontSize: '.88rem' }}>
+              Percentage of event total collected upfront from the client.
+            </p>
+            {error && <div className="alert alert-danger py-2 mb-3">{error}</div>}
+            <div className="text-center mb-3">
+              <label className="ms-label d-block mb-2 text-center">Advance Required (%)</label>
+              <div className="d-flex align-items-center justify-content-center gap-2">
+                <input
+                  type="number" className="pay-big-input" min="0" max="100" step="1"
+                  value={pct} onChange={(e) => setPct(e.target.value)} placeholder="0"
+                />
+                <span style={{ fontSize: '2rem', fontWeight: 800, color: '#9aa3af' }}>%</span>
+              </div>
+            </div>
+            {/* Bar */}
+            <div className="mb-4">
+              <div className="d-flex justify-content-between mb-1">
+                <small className="text-muted">Advance</small>
+                <small className="text-muted">On Completion</small>
+              </div>
+              <div style={{ background: '#f0f2f5', borderRadius: 20, height: 12, overflow: 'hidden', border: '1px solid #e0e3ea' }}>
+                <div style={{ width: `${Math.min(numPct, 100)}%`, background: 'linear-gradient(90deg,#435ebe,#6979f8)', height: '100%', borderRadius: 20, transition: 'width .4s' }} />
+              </div>
+              <div className="d-flex justify-content-between mt-1">
+                <small className="fw-bold text-primary">{numPct}%</small>
+                <small className="fw-bold text-muted">{Math.max(0, 100 - numPct)}%</small>
+              </div>
+            </div>
+
+            {/* Hours & Overtime */}
+            <div className="ms-section-rule">Billing Hours</div>
+            <div className="row g-3 mb-3">
+              <div className="col-6">
+                <label className="ms-label">Default Hours / Day</label>
+                <div className="input-group input-group-sm">
+                  <input
+                    type="number" className="form-control ms-input" min="1" step="0.5"
+                    value={hoursPerDay} onChange={(e) => setHoursPerDay(e.target.value)}
+                  />
+                  <span className="input-group-text" style={{ fontSize: '.8rem', background: '#f0f2f8', border: '1.5px solid #e0e3ea' }}>hrs</span>
+                </div>
+              </div>
+              <div className="col-6">
+                <label className="ms-label">Overtime Rate / hr</label>
+                <div className="input-group input-group-sm">
+                  <span className="input-group-text" style={{ fontSize: '.8rem', background: '#f0f2f8', border: '1.5px solid #e0e3ea' }}>₹</span>
+                  <input
+                    type="number" className="form-control ms-input" min="0" step="100"
+                    value={overtimeRate} onChange={(e) => setOvertimeRate(e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="p-2 rounded-3 mb-3" style={{ background: '#f0f4ff', border: '1px solid #d0d8f5', fontSize: '.8rem', color: '#4a5568' }}>
+              <i className="bi bi-info-circle text-primary me-1"></i>
+              After <strong>{hoursPerDay || 5} hours</strong>, each extra hour is charged at <strong>₹{Number(overtimeRate || 3000).toLocaleString('en-IN')}/hr</strong>.
+            </div>
+
+            <button className="btn btn-primary w-100 py-2 fw-bold" onClick={handleSave} disabled={saving}>
+              {saving ? <><span className="spinner-border spinner-border-sm me-2" />Saving…</> : <><i className="bi bi-check-lg me-2"></i>Save All Payment Terms</>}
+            </button>
+            {lastUpd && (
+              <p className="text-center text-muted mt-3 mb-0" style={{ fontSize: '.75rem' }}>
+                <i className="bi bi-clock me-1"></i>Last updated: {fmtDate(lastUpd)}
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Right column: Staff Pricing ── */}
+      <div className="col-lg-7">
+        <div className="ms-card h-100">
+          <div className="ms-card-hd">
+            <h5><i className="bi bi-people me-2 text-primary"></i>Staff Pricing per Tier</h5>
+            <span className="text-muted" style={{ fontSize: '.78rem' }}>per person / per day</span>
+          </div>
+          <div className="ms-card-bd">
+            <p className="text-muted mb-4" style={{ fontSize: '.88rem' }}>
+              Price charged per staff member per day for each tier. Diamond pricing is negotiated directly and is not set here.
+            </p>
+            <div className="row g-3">
+              {STAFF_TIER_META.map(({ key, label, color, bg }) => (
+                <div className="col-md-6" key={key}>
+                  <div className="p-3 rounded-3" style={{ background: bg, border: `1.5px solid ${color}30` }}>
+                    <label className="ms-label d-block mb-2" style={{ color }}>
+                      {label} — Price per Person / Day
+                    </label>
+                    <div className="input-group">
+                      <span className="input-group-text fw-bold" style={{ background: color, color: '#fff', border: 'none', fontSize: '.85rem' }}>₹</span>
+                      <input
+                        type="number" min="0" step="500"
+                        className="form-control fw-bold"
+                        style={{ borderColor: `${color}50`, fontSize: '1rem' }}
+                        value={staffPricing[key] ?? ''}
+                        onChange={(e) => setStaffPricing((p) => ({ ...p, [key]: e.target.value }))}
+                      />
+                    </div>
+                    <small className="text-muted mt-1 d-block" style={{ fontSize: '.72rem' }}>
+                      5 staff × 1 day = ₹{(Number(staffPricing[key] || 0) * 5).toLocaleString('en-IN')}
+                    </small>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Diamond note */}
+            <div className="mt-3 p-3 rounded-3 d-flex gap-3 align-items-start" style={{ background: '#e3f2fd', border: '1px solid #90caf9' }}>
+              <i className="bi bi-diamond-fill text-primary mt-1"></i>
+              <div style={{ fontSize: '.83rem', color: '#1565c0' }}>
+                <strong>Diamond tier</strong> — pricing is discussed directly with the client and added manually to the event. No fixed rate applies.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════
+// COUPONS PANEL
+// ══════════════════════════════════════════════════════════════
+function CouponsPanel({ showToast }) {
+  const [coupons, setCoupons]       = useState([]);
+  const [loading, setLoading]       = useState(true);
+  const [error, setError]           = useState('');
+  const [modal, setModal]           = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting]     = useState(false);
+
+  const fetchCoupons = useCallback(async () => {
+    setLoading(true); setError('');
+    try {
+      const res = await listCoupons();
+      setCoupons(Array.isArray(res.data.data) ? res.data.data : []);
+    } catch { setError('Failed to load coupons.'); }
+    finally  { setLoading(false); }
+  }, []);
+
+  useEffect(() => { fetchCoupons(); }, [fetchCoupons]);
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      await deleteCoupon(deleteTarget.id);
+      setCoupons((p) => p.filter((c) => c.id !== deleteTarget.id));
+      setDeleteTarget(null);
+      showToast('Coupon deleted.');
+    } catch (err) { showToast(err.response?.data?.message || 'Delete failed.', 'danger'); }
+    finally { setDeleting(false); }
+  };
+
+  const isExpired = (c) => c.expiry_date && new Date(c.expiry_date) < new Date();
+  const isExhausted = (c) => c.usage_limit > 0 && c.used_count >= c.usage_limit;
+
+  return (
+    <div className="ms-card">
       <div className="ms-card-hd">
-        <h5>
-          <i className="bi bi-credit-card me-2 text-primary"></i>Payment Terms
-        </h5>
+        <h5><i className="bi bi-ticket-perforated me-2 text-primary"></i>Coupon Codes</h5>
+        <button className="btn btn-primary btn-sm px-3" onClick={() => setModal({ mode: 'add' })}>
+          <i className="bi bi-plus-lg me-1"></i>Create Coupon
+        </button>
       </div>
       <div className="ms-card-bd">
-        <p
-          className="text-muted mb-4"
-          style={{ fontSize: '.9rem' }}
-        >
-          Set the advance payment percentage required when a client books an
-          event. The remaining balance is due as per agreement.
-        </p>
-
-        {error && <div className="alert alert-danger py-2 mb-4">{error}</div>}
-
-        {/* Big input */}
-        <div className="text-center mb-4">
-          <label
-            className="ms-label d-block mb-3 text-center"
-            style={{ fontSize: '.8rem' }}
-          >
-            Advance Payment Required (%)
-          </label>
-          <div className="d-flex align-items-center justify-content-center gap-3">
-            <input
-              type="number"
-              className="pay-big-input"
-              min="0"
-              max="100"
-              step="1"
-              value={pct}
-              onChange={(e) => setPct(e.target.value)}
-              placeholder="0"
-            />
-            <span
-              style={{ fontSize: '2rem', fontWeight: 800, color: '#9aa3af' }}
-            >
-              %
-            </span>
+        {loading ? (
+          <div className="text-center py-4"><div className="spinner-border text-primary" /></div>
+        ) : error ? (
+          <div className="alert alert-danger">{error}</div>
+        ) : coupons.length === 0 ? (
+          <div className="text-center py-5 text-muted">
+            <i className="bi bi-ticket-perforated fs-1 d-block mb-3 opacity-25"></i>
+            <p className="mb-1 fw-semibold">No coupons yet</p>
+            <small>Create a coupon to share discount codes with clients.</small>
           </div>
-          {/* Visual bar */}
-          <div
-            className="mt-3 mx-auto"
-            style={{ maxWidth: 320 }}
-          >
-            <div className="d-flex justify-content-between mb-1">
-              <small className="text-muted">Advance</small>
-              <small className="text-muted">On Completion</small>
-            </div>
-            <div
-              style={{
-                background: '#f0f2f5',
-                borderRadius: 20,
-                height: 14,
-                overflow: 'hidden',
-                border: '1px solid #e0e3ea',
-              }}
-            >
-              <div
-                style={{
-                  width: `${Math.min(numPct, 100)}%`,
-                  background: 'linear-gradient(90deg,#435ebe,#6979f8)',
-                  height: '100%',
-                  borderRadius: 20,
-                  transition: 'width .4s ease',
-                }}
-              ></div>
-            </div>
-            <div className="d-flex justify-content-between mt-1">
-              <small className="fw-bold text-primary">{numPct}%</small>
-              <small className="fw-bold text-muted">
-                {Math.max(0, 100 - numPct)}%
-              </small>
-            </div>
+        ) : (
+          <div className="row g-3">
+            {coupons.map((c) => {
+              const expired   = isExpired(c);
+              const exhausted = isExhausted(c);
+              const usagePct  = c.usage_limit > 0 ? Math.min((c.used_count / c.usage_limit) * 100, 100) : 0;
+              return (
+                <div className="col-md-6 col-lg-4" key={c.id}>
+                  <div className="ms-item flex-column align-items-start gap-2" style={{ padding: '16px 18px' }}>
+                    {/* Code + badge row */}
+                    <div className="d-flex align-items-center justify-content-between w-100">
+                      <code style={{ fontSize: '1rem', fontWeight: 800, color: '#435ebe', letterSpacing: 1 }}>{c.code}</code>
+                      <span className={
+                        !c.is_active || expired || exhausted ? 'ms-badge-inactive' : 'ms-badge-active'
+                      }>
+                        {!c.is_active ? 'Inactive' : expired ? 'Expired' : exhausted ? 'Exhausted' : 'Active'}
+                      </span>
+                    </div>
+
+                    {/* Discount */}
+                    <div className="d-flex align-items-center gap-2">
+                      <span style={{ background: '#e8f5e9', color: '#2e7d32', borderRadius: 6, padding: '2px 10px', fontSize: '.8rem', fontWeight: 700 }}>
+                        {c.discount_type === 'PERCENTAGE' ? `${c.discount_value}% OFF` : `₹${Number(c.discount_value).toLocaleString('en-IN')} OFF`}
+                      </span>
+                      {c.description && <small className="text-muted text-truncate" style={{ maxWidth: 120 }}>{c.description}</small>}
+                    </div>
+
+                    {/* Usage bar */}
+                    <div className="w-100">
+                      <div className="d-flex justify-content-between mb-1">
+                        <small className="text-muted" style={{ fontSize: '.72rem' }}>Used {c.used_count} / {c.usage_limit}</small>
+                        {c.expiry_date && (
+                          <small className={`${expired ? 'text-danger' : 'text-muted'}`} style={{ fontSize: '.72rem' }}>
+                            {expired ? 'Expired ' : 'Expires '}{fmtDate(c.expiry_date)}
+                          </small>
+                        )}
+                      </div>
+                      <div style={{ background: '#f0f2f5', borderRadius: 10, height: 6, overflow: 'hidden' }}>
+                        <div style={{ width: `${usagePct}%`, background: exhausted ? '#dc3545' : '#435ebe', height: '100%', borderRadius: 10, transition: 'width .4s' }} />
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="d-flex gap-2 w-100 mt-1">
+                      <button className="btn btn-sm btn-outline-secondary flex-fill" onClick={() => setModal({ mode: 'edit', item: c })}>
+                        <i className="bi bi-pencil me-1"></i>Edit
+                      </button>
+                      <button className="btn btn-sm btn-outline-danger" onClick={() => setDeleteTarget(c)}>
+                        <i className="bi bi-trash"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
-        </div>
-
-        {/* Info box */}
-        <div
-          className="p-3 rounded-3 mb-4"
-          style={{ background: '#f0f4ff', border: '1px solid #d0d8f5' }}
-        >
-          <div className="d-flex gap-3 align-items-start">
-            <i className="bi bi-info-circle text-primary mt-1"></i>
-            <div style={{ fontSize: '.85rem', color: '#4a5568' }}>
-              Example: For an event worth <strong>₹1,00,000</strong>, the client
-              pays{' '}
-              <strong>
-                ₹{Math.round((100000 * numPct) / 100).toLocaleString('en-IN')}
-              </strong>{' '}
-              upfront and{' '}
-              <strong>
-                ₹
-                {Math.round((100000 * (100 - numPct)) / 100).toLocaleString(
-                  'en-IN',
-                )}
-              </strong>{' '}
-              on completion.
-            </div>
-          </div>
-        </div>
-
-        <button
-          className="btn btn-primary w-100 py-2 fw-bold"
-          onClick={handleSave}
-          disabled={saving}
-        >
-          {saving ? (
-            <>
-              <span className="spinner-border spinner-border-sm me-2" />
-              Saving…
-            </>
-          ) : (
-            <>
-              <i className="bi bi-check-lg me-2"></i>Update Payment Terms
-            </>
-          )}
-        </button>
-
-        {lastUpd && (
-          <p
-            className="text-center text-muted mt-3 mb-0"
-            style={{ fontSize: '.78rem' }}
-          >
-            <i className="bi bi-clock me-1"></i>Last updated: {fmtDate(lastUpd)}
-          </p>
         )}
+      </div>
+
+      {modal && (
+        <CouponFormModal
+          mode={modal.mode}
+          initial={modal.item}
+          onClose={() => setModal(null)}
+          onSaved={(saved) => {
+            if (modal.mode === 'add') setCoupons((p) => [saved, ...p]);
+            else setCoupons((p) => p.map((c) => (c.id === saved.id ? saved : c)));
+            setModal(null);
+            showToast(modal.mode === 'add' ? 'Coupon created!' : 'Coupon updated!');
+          }}
+        />
+      )}
+      {deleteTarget && (
+        <ConfirmDeleteModal
+          title="Delete Coupon?"
+          message={<>Permanently delete coupon <strong>{deleteTarget.code}</strong>?</>}
+          onConfirm={handleDelete}
+          onClose={() => setDeleteTarget(null)}
+          loading={deleting}
+        />
+      )}
+    </div>
+  );
+}
+
+// ── Coupon Form Modal ──────────────────────────────────────────
+function CouponFormModal({ mode, initial, onClose, onSaved }) {
+  const [form, setForm] = useState({
+    code:           initial?.code          || '',
+    description:    initial?.description   || '',
+    discount_type:  initial?.discount_type || 'FLAT',
+    discount_value: initial?.discount_value ?? '',
+    usage_limit:    initial?.usage_limit   ?? 1,
+    is_active:      initial?.is_active     !== false,
+    expiry_date:    initial?.expiry_date
+      ? new Date(initial.expiry_date).toISOString().split('T')[0]
+      : '',
+  });
+  const [saving, setSaving] = useState(false);
+  const [err, setErr]       = useState('');
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setForm((p) => ({ ...p, [name]: type === 'checkbox' ? checked : value }));
+  };
+
+  const handleSubmit = async () => {
+    if (mode === 'add' && !form.code.trim()) { setErr('Coupon code is required.'); return; }
+    if (form.discount_value === '' || isNaN(Number(form.discount_value))) { setErr('Discount value is required.'); return; }
+    setSaving(true); setErr('');
+    try {
+      const payload = {
+        ...form,
+        code: form.code.trim().toUpperCase(),
+        discount_value: Number(form.discount_value),
+        usage_limit: Number(form.usage_limit),
+        expiry_date: form.expiry_date || null,
+      };
+      const res = mode === 'add' ? await createCoupon(payload) : await updateCoupon(initial.id, payload);
+      onSaved(res.data.data);
+    } catch (e) { setErr(e.response?.data?.message || 'Save failed.'); }
+    finally { setSaving(false); }
+  };
+
+  return (
+    <div className="modal d-block" style={{ background: 'rgba(0,0,0,.5)', zIndex: 1055 }}>
+      <div className="modal-dialog modal-dialog-centered modal-dialog-scrollable" style={{ maxWidth: 480 }}>
+        <div className="modal-content border-0 shadow-lg" style={{ borderRadius: 16 }}>
+          <div className="modal-header border-0 px-4 pt-4 pb-2">
+            <h5 className="fw-bold mb-0">{mode === 'add' ? 'Create Coupon' : 'Edit Coupon'}</h5>
+            <button className="btn-close" onClick={onClose}></button>
+          </div>
+          <div className="modal-body px-4 py-3">
+            {err && <div className="alert alert-danger py-2 mb-3"><i className="bi bi-exclamation-circle me-2"></i>{err}</div>}
+            <div className="row g-3">
+              <div className="col-12">
+                <label className="ms-label">Coupon Code *</label>
+                <input
+                  name="code" className="ms-input fw-bold" value={form.code}
+                  onChange={handleChange} placeholder="e.g. SAVE20"
+                  disabled={mode === 'edit'}
+                  style={{ textTransform: 'uppercase', letterSpacing: 1, ...(mode === 'edit' ? { opacity: .6, cursor: 'not-allowed' } : {}) }}
+                />
+              </div>
+              <div className="col-12">
+                <label className="ms-label">Description</label>
+                <input name="description" className="ms-input" value={form.description} onChange={handleChange} placeholder="e.g. 20% off for new clients" />
+              </div>
+              <div className="col-6">
+                <label className="ms-label">Discount Type</label>
+                <select name="discount_type" className="ms-select" value={form.discount_type} onChange={handleChange}>
+                  <option value="FLAT">Flat (₹)</option>
+                  <option value="PERCENTAGE">Percentage (%)</option>
+                </select>
+              </div>
+              <div className="col-6">
+                <label className="ms-label">Discount Value *</label>
+                <div className="input-group">
+                  <span className="input-group-text" style={{ background: '#f0f2f8', border: '1.5px solid #e0e3ea', fontSize: '.85rem' }}>
+                    {form.discount_type === 'PERCENTAGE' ? '%' : '₹'}
+                  </span>
+                  <input
+                    name="discount_value" type="number" min="0" className="form-control ms-input"
+                    value={form.discount_value} onChange={handleChange} placeholder="0"
+                  />
+                </div>
+              </div>
+              <div className="col-6">
+                <label className="ms-label">Usage Limit</label>
+                <input name="usage_limit" type="number" min="1" className="ms-input" value={form.usage_limit} onChange={handleChange} />
+                <small className="text-muted" style={{ fontSize: '.72rem' }}>Max times this coupon can be used</small>
+              </div>
+              <div className="col-6">
+                <label className="ms-label">Expiry Date</label>
+                <input name="expiry_date" type="date" className="ms-input" value={form.expiry_date} onChange={handleChange} />
+              </div>
+              <div className="col-12">
+                <div className="form-check form-switch">
+                  <input className="form-check-input" type="checkbox" name="is_active" id="couponActive" checked={form.is_active} onChange={handleChange} />
+                  <label className="form-check-label fw-semibold small" htmlFor="couponActive">
+                    {form.is_active ? 'Active (usable by clients)' : 'Inactive (disabled)'}
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="modal-footer border-0 px-4 pb-4 pt-2 d-flex gap-2">
+            <button className="btn btn-light flex-fill" onClick={onClose} disabled={saving}>Cancel</button>
+            <button className="btn btn-primary flex-fill" onClick={handleSubmit} disabled={saving}>
+              {saving ? <><span className="spinner-border spinner-border-sm me-2" />Saving…</> : <><i className="bi bi-check-lg me-2"></i>{mode === 'add' ? 'Create Coupon' : 'Save Changes'}</>}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

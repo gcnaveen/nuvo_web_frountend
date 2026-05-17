@@ -37,6 +37,26 @@ export const getPaymentTerms = () => api.get('/master/payment/');
 export const updatePaymentTerms = (data) =>
   api.put('/master/payment/update/', data);
 
+// ── Coupons ────────────────────────────────────────────────────
+export const listCoupons = () => api.get('/master/coupons/');
+export const createCoupon = (data) => api.post('/master/coupons/create/', data);
+export const updateCoupon = (id, data) => api.put(`/master/coupons/${id}/update/`, data);
+export const deleteCoupon = (id) => api.delete(`/master/coupons/${id}/delete/`);
+
+// ── Crew Members ───────────────────────────────────────────────
+export const listCrewMembers = () => api.get('/master/crew/');
+export const listCrewMembersPublic = () => api.get('/master/crew/public/');
+export const createCrewMember = (fd) =>
+  api.post('/master/crew/create/', fd, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+export const updateCrewMember = (id, fd) =>
+  api.put(`/master/crew/${id}/update/`, fd, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+export const deleteCrewMember = (id) =>
+  api.delete(`/master/crew/${id}/delete/`);
+
 // ── Inventory ──────────────────────────────────────────────────
 export const listInventory = (params) =>
   api.get('/master/inventory/', { params });
