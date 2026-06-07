@@ -163,6 +163,9 @@ export default function StaffDetails() {
   const [deletingImg, setDeletingImg] = useState(null);
   const galleryInputRef = useRef(null);
 
+  const [lightboxSrc, setLightboxSrc] = useState(null);
+  const [confirmDeleteImg, setConfirmDeleteImg] = useState(null);
+
   const [toast, setToast] = useState({ msg: "", type: "success" });
   const showToast = (msg, type = "success") => {
     setToast({ msg, type });
@@ -186,6 +189,13 @@ export default function StaffDetails() {
   useEffect(() => {
     fetchStaff();
   }, [fetchStaff]);
+
+  // ── Close lightbox on ESC ───────────────────────────────────────
+  useEffect(() => {
+    const handler = (e) => { if (e.key === "Escape") setLightboxSrc(null); };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, []);
 
   // ── Edit ────────────────────────────────────────────────────────
   const startEdit = () => {
@@ -507,6 +517,23 @@ export default function StaffDetails() {
         .sd-gallery-item:hover .sd-gallery-img { transform:scale(1.04); }
         .sd-gallery-del { position:absolute; top:7px; right:7px; opacity:0; transition:opacity .2s; }
         .sd-gallery-item:hover .sd-gallery-del { opacity:1; }
+        .sd-gallery-confirm { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; background:rgba(0,0,0,.6); border-radius:10px; animation:sdConfirmPop .15s ease; backdrop-filter:blur(2px); }
+        @keyframes sdConfirmPop { from{opacity:0} to{opacity:1} }
+        .sd-gallery-confirm-label { color:#fff; font-size:.82rem; font-weight:700; letter-spacing:.3px; }
+        .sd-gallery-confirm-actions { display:flex; gap:8px; }
+        .sd-confirm-btn { border:none; border-radius:7px; padding:6px 16px; font-size:.78rem; font-weight:700; cursor:pointer; transition:all .15s; display:flex; align-items:center; gap:5px; }
+        .sd-confirm-btn.yes { background:#dc3545; color:#fff; }
+        .sd-confirm-btn.yes:hover { background:#b02a37; }
+        .sd-confirm-btn.no  { background:rgba(255,255,255,.2); color:#fff; border:1.5px solid rgba(255,255,255,.4); }
+        .sd-confirm-btn.no:hover  { background:rgba(255,255,255,.35); }
+        .sd-gallery-zoom { position:absolute; top:7px; left:7px; opacity:0; transition:opacity .2s; }
+        .sd-gallery-item:hover .sd-gallery-zoom { opacity:1; }
+        .sd-gallery-img { cursor:pointer; }
+        .sd-lightbox { position:fixed; inset:0; z-index:10000; background:rgba(0,0,0,.92); display:flex; align-items:center; justify-content:center; animation:lbFadeIn .18s ease; }
+        @keyframes lbFadeIn { from{opacity:0} to{opacity:1} }
+        .sd-lightbox-img { max-width:90vw; max-height:90vh; object-fit:contain; border-radius:8px; box-shadow:0 8px 40px rgba(0,0,0,.6); }
+        .sd-lightbox-close { position:absolute; top:20px; right:24px; background:rgba(255,255,255,.12); border:none; color:#fff; width:40px; height:40px; border-radius:50%; font-size:1.1rem; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background .2s; }
+        .sd-lightbox-close:hover { background:rgba(255,255,255,.25); }
         .sd-gallery-preview { border:2px dashed #435ebe; border-radius:10px; overflow:hidden; height:160px; position:relative; }
         .sd-gallery-preview img { width:100%; height:100%; object-fit:cover; opacity:.7; }
         .sd-gallery-preview-lbl { position:absolute; bottom:6px; left:50%; transform:translateX(-50%); background:rgba(67,94,190,.85); color:#fff; font-size:.68rem; font-weight:700; padding:2px 8px; border-radius:20px; white-space:nowrap; }
@@ -614,8 +641,14 @@ export default function StaffDetails() {
               <div className="sd-card-bd text-center">
                 <div
                   className="sd-avatar-wrap mb-3"
-                  onClick={() => avatarInputRef.current?.click()}
-                  title="Click to change picture"
+                  onClick={() => {
+                    if (isEditing) {
+                      avatarInputRef.current?.click();
+                    } else if (displayPic) {
+                      setLightboxSrc(displayPic);
+                    }
+                  }}
+                  title={isEditing ? "Click to change picture" : displayPic ? "Click to view full image" : ""}
                 >
                   {displayPic ? (
                     <img
@@ -644,7 +677,7 @@ export default function StaffDetails() {
                     </div>
                   )}
                   <div className="sd-avatar-overlay">
-                    <i className="bi bi-camera-fill"></i>
+                    <i className={`bi ${isEditing ? "bi-camera-fill" : "bi-zoom-in"}`}></i>
                   </div>
                   <span
                     className={`badge bg-${statusCfg.badge} position-absolute bottom-0 end-0`}
@@ -1592,11 +1625,15 @@ export default function StaffDetails() {
                   <div className="row g-2">
                     {staff.gallery_images.map((img, idx) => (
                       <div className="col-md-4 col-6" key={idx}>
-                        <div className="sd-gallery-item">
+                        <div
+                          className="sd-gallery-item"
+                          onMouseLeave={() => { if (confirmDeleteImg === img) setConfirmDeleteImg(null); }}
+                        >
                           <img
                             src={img}
                             alt={`Gallery ${idx + 1}`}
                             className="sd-gallery-img"
+                            onClick={() => setLightboxSrc(img)}
                             onError={(e) => {
                               e.target.closest(
                                 ".sd-gallery-item",
@@ -1604,24 +1641,47 @@ export default function StaffDetails() {
                             }}
                           />
                           <button
-                            className="sd-gallery-del btn btn-danger btn-sm rounded-circle p-0 d-flex align-items-center justify-content-center"
+                            className="sd-gallery-zoom btn btn-light btn-sm rounded-circle p-0 d-flex align-items-center justify-content-center"
                             style={{ width: 28, height: 28 }}
-                            onClick={() => handleDeleteGalleryImage(img)}
-                            disabled={deletingImg === img}
-                            title="Remove image"
+                            onClick={(e) => { e.stopPropagation(); setLightboxSrc(img); }}
+                            title="View full image"
                           >
-                            {deletingImg === img ? (
-                              <span
-                                className="spinner-border spinner-border-sm"
-                                style={{ width: 12, height: 12 }}
-                              />
-                            ) : (
-                              <i
-                                className="bi bi-trash-fill"
-                                style={{ fontSize: ".7rem" }}
-                              ></i>
-                            )}
+                            <i className="bi bi-zoom-in" style={{ fontSize: ".7rem" }}></i>
                           </button>
+                          {confirmDeleteImg === img ? (
+                            <div className="sd-gallery-confirm">
+                              <div className="sd-gallery-confirm-label">
+                                <i className="bi bi-exclamation-triangle me-1"></i>
+                                Delete this image?
+                              </div>
+                              <div className="sd-gallery-confirm-actions">
+                                <button
+                                  className="sd-confirm-btn yes"
+                                  onClick={(e) => { e.stopPropagation(); setConfirmDeleteImg(null); handleDeleteGalleryImage(img); }}
+                                  disabled={deletingImg === img}
+                                >
+                                  {deletingImg === img
+                                    ? <><span className="spinner-border spinner-border-sm" style={{ width: 12, height: 12 }} /> Deleting…</>
+                                    : <><i className="bi bi-trash3"></i> Delete</>}
+                                </button>
+                                <button
+                                  className="sd-confirm-btn no"
+                                  onClick={(e) => { e.stopPropagation(); setConfirmDeleteImg(null); }}
+                                >
+                                  <i className="bi bi-x-lg"></i> Cancel
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <button
+                              className="sd-gallery-del btn btn-danger btn-sm rounded-circle p-0 d-flex align-items-center justify-content-center"
+                              style={{ width: 28, height: 28 }}
+                              onClick={(e) => { e.stopPropagation(); setConfirmDeleteImg(img); }}
+                              title="Remove image"
+                            >
+                              <i className="bi bi-trash-fill" style={{ fontSize: ".7rem" }}></i>
+                            </button>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -1656,6 +1716,28 @@ export default function StaffDetails() {
           </div>
         </div>
       </div>
+
+      {/* ── LIGHTBOX ────────────────────────────────────────────── */}
+      {lightboxSrc && (
+        <div
+          className="sd-lightbox"
+          onClick={() => setLightboxSrc(null)}
+        >
+          <button
+            className="sd-lightbox-close"
+            onClick={() => setLightboxSrc(null)}
+            title="Close (Esc)"
+          >
+            <i className="bi bi-x-lg"></i>
+          </button>
+          <img
+            src={lightboxSrc}
+            alt="Full view"
+            className="sd-lightbox-img"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
 
       {/* ── DELETE MODAL ─────────────────────────────────────────── */}
       <div
