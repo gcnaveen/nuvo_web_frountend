@@ -18,7 +18,7 @@ import isSameDay from "date-fns/isSameDay";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 
 import { listEvents, createEvent } from "../api/eventsApi";
-import { listThemes, listUniforms, listPlans } from "../api/masterApi";
+import { listThemes, listUniforms, listCrewPackages } from "../api/masterApi";
 import api from "../api/axiosInstance";
 
 import * as XLSX from "xlsx";
@@ -126,7 +126,7 @@ export default function Events() {
   const [masterData, setMasterData] = useState({
     themes: [],
     uniforms: [],
-    plans: [],
+    packages: [],   // [{type:"LUXURY", price_per_person:20000, extra_hour_rate:2500}, ...]
   });
   const [clients, setClients] = useState([]);
   const [form, setForm] = useState(initialForm());
@@ -179,16 +179,16 @@ export default function Events() {
     setForm(initialForm());
     setVenueInput("");
     try {
-      const [th, un, pl, cl] = await Promise.all([
+      const [th, un, pk, cl] = await Promise.all([
         listThemes(),
         listUniforms(),
-        listPlans(),
+        listCrewPackages(),
         api.get("/users/api/clients/"),
       ]);
       setMasterData({
-        themes: Array.isArray(th.data.data) ? th.data.data : [],
+        themes:   Array.isArray(th.data.data) ? th.data.data : [],
         uniforms: Array.isArray(un.data.data) ? un.data.data : [],
-        plans: Array.isArray(pl.data.data) ? pl.data.data : [],
+        packages: Array.isArray(pk.data.data) ? pk.data.data : [],
       });
       setClients(
         Array.isArray(cl.data.data?.results) ? cl.data.data.results : [],
@@ -426,13 +426,15 @@ export default function Events() {
         event_end_datetime: form.event_end_datetime,
         no_of_days: Number(form.no_of_days) || 1,
         working_hours: form.working_hours ? Number(form.working_hours) : null,
-        crew_count: Number(form.crew_count) || 0,
-        client_id: form.client_id,
-        theme_id: form.theme_id || undefined,
-        uniform_id: form.uniform_id || undefined,
-        package_id: form.package_id || undefined,
+        client_id:           form.client_id,
+        theme_id:            form.theme_id   || undefined,
+        uniform_id:          form.uniform_id || undefined,
+        package_type:        form.package_type || undefined,
+        luxury_crew_count:   Number(form.luxury_crew_count)  || 0,
+        premium_crew_count:  Number(form.premium_crew_count) || 0,
+        payment_method:      form.payment_method || "ONLINE",
+        advance_type:        form.advance_type   || "FULL",
         payment: {
-          total_amount: Number(form.total_amount) || 0,
           gst_amount: Number(form.gst_amount) || 0,
           tax_amount: Number(form.tax_amount) || 0,
         },
@@ -810,8 +812,11 @@ export default function Events() {
                                   : ""}
                               </small>
                             </td>
-                            <td className="text-center fw-bold">
-                              {ev.crew_count || 0}
+                            <td className="text-center fw-bold" style={{fontSize:'.78rem'}}>
+                              {ev.package_type === 'LUXURY' ? `L×${ev.luxury_crew_count||0}`
+                                : ev.package_type === 'PREMIUM' ? `P×${ev.premium_crew_count||0}`
+                                : ev.package_type === 'BOTH' ? `L×${ev.luxury_crew_count||0} P×${ev.premium_crew_count||0}`
+                                : ev.crew_count || '—'}
                             </td>
                             <td>
                               <span
@@ -1153,19 +1158,63 @@ export default function Events() {
                           />
                         </div>
                       </div>
+                      {/* Package selection */}
                       <div className="mb-3">
-                        <label className="ev-label">Crew Count</label>
-                        <input
-                          type="number"
-                          name="crew_count"
-                          min="0"
-                          className="ev-input"
-                          value={form.crew_count}
+                        <label className="ev-label">Crew Package</label>
+                        <select
+                          name="package_type"
+                          className="form-select ev-select"
+                          value={form.package_type}
                           onChange={handleFormChange}
-                          placeholder="0"
                           disabled={adding}
-                        />
+                        >
+                          <option value="">— None —</option>
+                          <option value="LUXURY">Luxury (₹{(masterData.packages.find(p=>p.type==='LUXURY')?.price_per_person||20000).toLocaleString('en-IN')}/person)</option>
+                          <option value="PREMIUM">Premium (₹{(masterData.packages.find(p=>p.type==='PREMIUM')?.price_per_person||10000).toLocaleString('en-IN')}/person)</option>
+                          <option value="BOTH">Both (Luxury + Premium)</option>
+                        </select>
                       </div>
+                      {form.package_type && (
+                        <div className="row g-2 mb-2">
+                          {(form.package_type === 'LUXURY' || form.package_type === 'BOTH') && (
+                            <div className="col-6">
+                              <label className="ev-label">Luxury Count</label>
+                              <input type="number" name="luxury_crew_count" min="0" className="ev-input"
+                                value={form.luxury_crew_count} onChange={handleFormChange} disabled={adding} placeholder="0" />
+                            </div>
+                          )}
+                          {(form.package_type === 'PREMIUM' || form.package_type === 'BOTH') && (
+                            <div className="col-6">
+                              <label className="ev-label">Premium Count</label>
+                              <input type="number" name="premium_crew_count" min="0" className="ev-input"
+                                value={form.premium_crew_count} onChange={handleFormChange} disabled={adding} placeholder="0" />
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      {/* Live pricing preview */}
+                      {form.package_type && (() => {
+                        const lux = masterData.packages.find(p=>p.type==='LUXURY');
+                        const pre = masterData.packages.find(p=>p.type==='PREMIUM');
+                        const wh  = Number(form.working_hours) || 8;
+                        const stdH = 8;
+                        const extraH = Math.max(0, wh - stdH);
+                        let total = 0;
+                        if ((form.package_type === 'LUXURY' || form.package_type === 'BOTH') && lux) {
+                          const cnt = Number(form.luxury_crew_count) || 0;
+                          total += (lux.price_per_person * cnt) + (extraH * lux.extra_hour_rate * cnt);
+                        }
+                        if ((form.package_type === 'PREMIUM' || form.package_type === 'BOTH') && pre) {
+                          const cnt = Number(form.premium_crew_count) || 0;
+                          total += (pre.price_per_person * cnt) + (extraH * pre.extra_hour_rate * cnt);
+                        }
+                        return total > 0 ? (
+                          <div className="mb-2 p-2 rounded" style={{background:'#f0f7ff',border:'1px solid #bee3f8',fontSize:'.82rem'}}>
+                            <strong>Estimated Total:</strong> ₹{total.toLocaleString('en-IN')}
+                            {extraH > 0 && <span className="text-muted ms-1">(incl. {extraH}hr overtime)</span>}
+                          </div>
+                        ) : null;
+                      })()}
                     </div>
 
                     {/* ── Col 2: Venue + Schedule ── */}
@@ -1460,37 +1509,62 @@ export default function Events() {
                           ))}
                         </select>
                       </div>
+                      {/* Crew Package selection */}
                       <div className="mb-3">
-                        <label className="ev-label">Package Tier</label>
+                        <label className="ev-label">Crew Package</label>
                         <select
-                          name="package_id"
+                          name="package_type"
                           className="form-select ev-select"
-                          value={form.package_id}
+                          value={form.package_type}
                           onChange={handleFormChange}
                           disabled={adding}
                         >
                           <option value="">— None —</option>
-                          {masterData.plans.map((p) => (
-                            <option key={p.id} value={p.id}>
-                              {p.name}
-                            </option>
-                          ))}
+                          <option value="LUXURY">Luxury (₹{(masterData.packages.find(p=>p.type==='LUXURY')?.price_per_person||20000).toLocaleString('en-IN')}/person)</option>
+                          <option value="PREMIUM">Premium (₹{(masterData.packages.find(p=>p.type==='PREMIUM')?.price_per_person||10000).toLocaleString('en-IN')}/person)</option>
+                          <option value="BOTH">Both (Luxury + Premium)</option>
                         </select>
                       </div>
-                      <div className="row g-2 mb-3">
-                        <div className="col-6">
-                          <label className="ev-label">Total Amount (₹)</label>
-                          <input
-                            type="number"
-                            name="total_amount"
-                            min="0"
-                            className="ev-input"
-                            value={form.total_amount}
-                            onChange={handleFormChange}
-                            placeholder="0"
-                            disabled={adding}
-                          />
+                      {form.package_type && (
+                        <div className="row g-2 mb-2">
+                          {(form.package_type === 'LUXURY' || form.package_type === 'BOTH') && (
+                            <div className="col-6">
+                              <label className="ev-label">Luxury Count</label>
+                              <input type="number" name="luxury_crew_count" min="0" className="ev-input"
+                                value={form.luxury_crew_count} onChange={handleFormChange} disabled={adding} placeholder="0" />
+                            </div>
+                          )}
+                          {(form.package_type === 'PREMIUM' || form.package_type === 'BOTH') && (
+                            <div className="col-6">
+                              <label className="ev-label">Premium Count</label>
+                              <input type="number" name="premium_crew_count" min="0" className="ev-input"
+                                value={form.premium_crew_count} onChange={handleFormChange} disabled={adding} placeholder="0" />
+                            </div>
+                          )}
                         </div>
+                      )}
+                      {form.package_type && (() => {
+                        const lux = masterData.packages.find(p=>p.type==='LUXURY');
+                        const pre = masterData.packages.find(p=>p.type==='PREMIUM');
+                        const wh  = Number(form.working_hours) || 8;
+                        const extraH = Math.max(0, wh - 8);
+                        let total = 0;
+                        if ((form.package_type === 'LUXURY' || form.package_type === 'BOTH') && lux) {
+                          const cnt = Number(form.luxury_crew_count) || 0;
+                          total += (lux.price_per_person * cnt) + (extraH * lux.extra_hour_rate * cnt);
+                        }
+                        if ((form.package_type === 'PREMIUM' || form.package_type === 'BOTH') && pre) {
+                          const cnt = Number(form.premium_crew_count) || 0;
+                          total += (pre.price_per_person * cnt) + (extraH * pre.extra_hour_rate * cnt);
+                        }
+                        return total > 0 ? (
+                          <div className="mb-2 p-2 rounded" style={{background:'#f0f7ff',border:'1px solid #bee3f8',fontSize:'.82rem'}}>
+                            <strong>Estimated Total:</strong> ₹{total.toLocaleString('en-IN')}
+                            {extraH > 0 && <span className="text-muted ms-1">(incl. {extraH}hr overtime)</span>}
+                          </div>
+                        ) : null;
+                      })()}
+                      <div className="row g-2 mb-3">
                         <div className="col-6">
                           <label className="ev-label">GST Amount (₹)</label>
                           <input
@@ -1669,11 +1743,13 @@ function initialForm() {
     event_end_datetime: "",
     no_of_days: 1,
     working_hours: "",
-    crew_count: 0,
+    package_type: "",
+    luxury_crew_count: 0,
+    premium_crew_count: 0,
+    payment_method: "ONLINE",
+    advance_type: "FULL",
     theme_id: "",
     uniform_id: "",
-    package_id: "",
-    total_amount: "",
     gst_amount: "",
     tax_amount: "",
     gst_company: "",

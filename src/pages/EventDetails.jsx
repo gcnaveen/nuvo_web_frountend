@@ -396,7 +396,9 @@ export default function EventDetails() {
       state: event.state || '',
       no_of_days: event.no_of_days || 1,
       working_hours: event.working_hours || '',
-      crew_count: event.crew_count || 0,
+      package_type: event.package_type || '',
+      luxury_crew_count: event.luxury_crew_count || 0,
+      premium_crew_count: event.premium_crew_count || 0,
       event_start_datetime: toInputDT(event.event_start_datetime),
       event_end_datetime: toInputDT(event.event_end_datetime),
       'venue.venue_name': event.venue?.venue_name || '',
@@ -450,7 +452,9 @@ export default function EventDetails() {
         state: draft.state,
         no_of_days: Number(draft.no_of_days),
         working_hours: draft.working_hours ? Number(draft.working_hours) : null,
-        crew_count: Number(draft.crew_count),
+        package_type: draft.package_type || undefined,
+        luxury_crew_count: Number(draft.luxury_crew_count) || 0,
+        premium_crew_count: Number(draft.premium_crew_count) || 0,
         event_start_datetime: toISO(draft.event_start_datetime),
         event_end_datetime: toISO(draft.event_end_datetime),
         venue: {
@@ -879,14 +883,27 @@ export default function EventDetails() {
                         />
                       </div>
                       <div className="col-md-4">
-                        <EditInput
-                          label="Crew Count"
-                          name="crew_count"
-                          type="number"
-                          value={draft.crew_count}
-                          onChange={handleDraftChange}
-                        />
+                        <label className="ed-label">Package</label>
+                        <select name="package_type" className="form-select form-select-sm"
+                          value={draft.package_type} onChange={handleDraftChange}>
+                          <option value="">— None —</option>
+                          <option value="LUXURY">Luxury</option>
+                          <option value="PREMIUM">Premium</option>
+                          <option value="BOTH">Both</option>
+                        </select>
                       </div>
+                      {(draft.package_type === 'LUXURY' || draft.package_type === 'BOTH') && (
+                        <div className="col-md-4">
+                          <EditInput label="Luxury Count" name="luxury_crew_count" type="number"
+                            value={draft.luxury_crew_count} onChange={handleDraftChange} />
+                        </div>
+                      )}
+                      {(draft.package_type === 'PREMIUM' || draft.package_type === 'BOTH') && (
+                        <div className="col-md-4">
+                          <EditInput label="Premium Count" name="premium_crew_count" type="number"
+                            value={draft.premium_crew_count} onChange={handleDraftChange} />
+                        </div>
+                      )}
                     </>
                   ) : (
                     <>
@@ -932,8 +949,15 @@ export default function EventDetails() {
                       </div>
                       <div className="col-md-4">
                         <Field
-                          label="Crew Count"
-                          value={event.crew_count}
+                          label="Crew"
+                          value={
+                            event.package_type === 'LUXURY' ? `Luxury ×${event.luxury_crew_count||0}`
+                            : event.package_type === 'PREMIUM' ? `Premium ×${event.premium_crew_count||0}`
+                            : event.package_type === 'BOTH'
+                              ? `Luxury ×${event.luxury_crew_count||0}, Premium ×${event.premium_crew_count||0}`
+                            : event.crew_count ? `${event.crew_count} (legacy)`
+                            : null
+                          }
                         />
                       </div>
                     </>
@@ -1532,27 +1556,23 @@ export default function EventDetails() {
                     />
                   </div>
                   <div className="col-12">
-                    <label className="ed-label">Package</label>
-                    <div className="ed-val">
-                      {event.package ? (
-                        <span
-                          style={{
-                            background:
-                              (PACKAGE_COLORS[event.package.name] ||
-                                '#6c757d') + '18',
-                            color:
-                              PACKAGE_COLORS[event.package.name] || '#6c757d',
-                            borderRadius: 6,
-                            padding: '3px 12px',
-                            fontWeight: 700,
-                            fontSize: '.8rem',
-                          }}
-                        >
-                          {event.package.name}
+                    <label className="ed-label">Crew Package</label>
+                    <div className="ed-val" style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+                      {(event.package_type === 'LUXURY' || event.package_type === 'BOTH') && (
+                        <span style={{background:'#f5f0ff',color:'#6f42c1',borderRadius:6,padding:'3px 12px',fontWeight:700,fontSize:'.8rem'}}>
+                          Luxury ×{event.luxury_crew_count||0}
                         </span>
-                      ) : (
-                        '—'
                       )}
+                      {(event.package_type === 'PREMIUM' || event.package_type === 'BOTH') && (
+                        <span style={{background:'#fff3cd',color:'#856404',borderRadius:6,padding:'3px 12px',fontWeight:700,fontSize:'.8rem'}}>
+                          Premium ×{event.premium_crew_count||0}
+                        </span>
+                      )}
+                      {!event.package_type && (event.package?.name ? (
+                        <span style={{background:'#e9ecef',color:'#6c757d',borderRadius:6,padding:'3px 12px',fontWeight:700,fontSize:'.8rem'}}>
+                          {event.package.name} (legacy)
+                        </span>
+                      ) : '—')}
                     </div>
                   </div>
                 </div>

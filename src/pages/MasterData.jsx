@@ -9,8 +9,8 @@ import {
   createUniform,
   updateUniform,
   deleteUniform,
-  listPlans,
-  updatePlan,
+  listCrewPackages,
+  updateCrewPackage,
   getPaymentTerms,
   updatePaymentTerms,
   listCoupons,
@@ -138,8 +138,7 @@ export default function MasterData() {
           {[
             { key: 'themes', label: 'Event Themes', icon: 'bi-palette' },
             { key: 'uniforms', label: 'Uniforms', icon: 'bi-bag' },
-            { key: 'crew', label: 'Crew Gallery', icon: 'bi-people' },
-            { key: 'subscription', label: 'Subscription', icon: 'bi-gem' },
+            { key: 'packages', label: 'Crew Packages', icon: 'bi-people' },
             { key: 'payment', label: 'Payment Terms', icon: 'bi-credit-card' },
             { key: 'coupons', label: 'Coupons', icon: 'bi-ticket-perforated' },
           ].map((t) => (
@@ -157,10 +156,7 @@ export default function MasterData() {
         {/* ── PANELS ─────────────────────────────────────────── */}
         {activeTab === 'themes' && <ThemesPanel showToast={showToast} />}
         {activeTab === 'uniforms' && <UniformsPanel showToast={showToast} />}
-        {activeTab === 'crew' && <CrewPanel showToast={showToast} />}
-        {activeTab === 'subscription' && (
-          <SubscriptionPanel showToast={showToast} />
-        )}
+        {activeTab === 'packages' && <CrewPackagesPanel showToast={showToast} />}
         {activeTab === 'payment' && <PaymentPanel showToast={showToast} />}
         {activeTab === 'coupons' && <CouponsPanel showToast={showToast} />}
       </div>
@@ -1703,39 +1699,29 @@ function CrewFormModal({ mode, initial, onClose, onSaved }) {
 }
 
 // ══════════════════════════════════════════════════════════════
-// SUBSCRIPTION PANEL
+// CREW PACKAGES PANEL (Luxury / Premium)
 // ══════════════════════════════════════════════════════════════
-function SubscriptionPanel({ showToast }) {
-  const [plans, setPlans] = useState([]);
+const PKG_META = {
+  LUXURY:  { color: '#6f42c1', bg: '#f5f0ff', border: '#d6bbfb', icon: 'bi-star-fill' },
+  PREMIUM: { color: '#856404', bg: '#fff3cd', border: '#ffc107', icon: 'bi-award-fill' },
+};
+
+function CrewPackagesPanel({ showToast }) {
+  const [packages, setPackages] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [drafts, setDrafts] = useState({}); // { [planName]: { monthlyPrice, yearlyPrice, prioritySupport, isFree } }
-  const [saving, setSaving] = useState({}); // { [planName]: bool }
+  const [drafts, setDrafts] = useState({ LUXURY: { price_per_person: 20000, standard_hours: 8 }, PREMIUM: { price_per_person: 10000, standard_hours: 8 } });
+  const [saving, setSaving] = useState({});
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
     (async () => {
       try {
-        const res = await listPlans();
+        const res = await listCrewPackages();
         const fetched = Array.isArray(res.data.data) ? res.data.data : [];
-        setPlans(fetched);
-        const d = {};
+        setPackages(fetched);
+        const d = { ...drafts };
         fetched.forEach((p) => {
-          d[p.name] = {
-            monthlyPrice: p.monthlyPrice ?? 0,
-            yearlyPrice: p.yearlyPrice ?? 0,
-            prioritySupport: !!p.prioritySupport,
-            isFree: !!p.isFree,
-          };
-        });
-        // Init missing plans from PLAN_ORDER
-        PLAN_ORDER.forEach((name) => {
-          if (!d[name])
-            d[name] = {
-              monthlyPrice: 0,
-              yearlyPrice: 0,
-              prioritySupport: false,
-              isFree: false,
-            };
+          d[p.type] = { price_per_person: p.price_per_person ?? 0, standard_hours: p.standard_hours ?? 8 };
         });
         setDrafts(d);
       } catch {
@@ -1743,223 +1729,87 @@ function SubscriptionPanel({ showToast }) {
         setLoading(false);
       }
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleDraftChange = (planName, field, value) => {
-    setDrafts((prev) => ({
-      ...prev,
-      [planName]: { ...prev[planName], [field]: value },
-    }));
-  };
+  const handleChange = (pkgType, field, value) =>
+    setDrafts((prev) => ({ ...prev, [pkgType]: { ...prev[pkgType], [field]: value } }));
 
-  const handleSave = async (planName) => {
-    setSaving((prev) => ({ ...prev, [planName]: true }));
-    setErrors((prev) => ({ ...prev, [planName]: '' }));
+  const handleSave = async (pkgType) => {
+    setSaving((prev) => ({ ...prev, [pkgType]: true }));
+    setErrors((prev) => ({ ...prev, [pkgType]: '' }));
     try {
-      const d = drafts[planName];
-      const res = await updatePlan(planName, {
-        monthlyPrice: parseFloat(d.monthlyPrice) || 0,
-        yearlyPrice: parseFloat(d.yearlyPrice) || 0,
-        prioritySupport: d.prioritySupport,
-        isFree: d.isFree,
+      const d = drafts[pkgType];
+      const res = await updateCrewPackage(pkgType, {
+        price_per_person: parseFloat(d.price_per_person) || 0,
+        standard_hours: parseInt(d.standard_hours, 10) || 8,
       });
       const updated = res.data.data;
-      setPlans((prev) => {
-        const exists = prev.find((p) => p.name === planName);
-        return exists
-          ? prev.map((p) => (p.name === planName ? updated : p))
-          : [...prev, updated];
+      setPackages((prev) => {
+        const exists = prev.find((p) => p.type === pkgType);
+        return exists ? prev.map((p) => (p.type === pkgType ? updated : p)) : [...prev, updated];
       });
-      showToast(`${planName} plan saved!`);
+      showToast(`${pkgType} package saved!`);
     } catch (err) {
-      setErrors((prev) => ({
-        ...prev,
-        [planName]: err.response?.data?.message || 'Save failed.',
-      }));
+      setErrors((prev) => ({ ...prev, [pkgType]: err.response?.data?.message || 'Save failed.' }));
     } finally {
-      setSaving((prev) => ({ ...prev, [planName]: false }));
+      setSaving((prev) => ({ ...prev, [pkgType]: false }));
     }
   };
 
   if (loading)
-    return (
-      <div className="text-center py-5">
-        <div className="spinner-border text-primary" />
-      </div>
-    );
+    return <div className="text-center py-5"><div className="spinner-border text-primary" /></div>;
 
   return (
     <div>
+      <p className="text-muted mb-4" style={{ fontSize: '.9rem' }}>
+        Set the per-person price and standard working hours for each crew package.
+        The extra-hour rate is automatically calculated as <strong>price ÷ standard hours</strong>.
+      </p>
       <div className="row g-4">
-        {PLAN_ORDER.map((planName) => {
-          const cfg = PLAN_COLORS[planName] || PLAN_COLORS.SILVER;
-          const draft = drafts[planName] || {
-            monthlyPrice: 0,
-            yearlyPrice: 0,
-            prioritySupport: false,
-            isFree: false,
-          };
-          const isSav = saving[planName];
-          const err = errors[planName];
+        {['LUXURY', 'PREMIUM'].map((pkgType) => {
+          const cfg = PKG_META[pkgType];
+          const draft = drafts[pkgType] || { price_per_person: 0, standard_hours: 8 };
+          const extraRate = draft.standard_hours > 0
+            ? Math.round(parseFloat(draft.price_per_person || 0) / parseInt(draft.standard_hours, 10))
+            : 0;
           return (
-            <div
-              className="col-md-6 col-lg-4"
-              key={planName}
-            >
-              <div
-                className="plan-card"
-                style={{ background: cfg.bg, borderColor: cfg.border }}
-              >
+            <div className="col-md-6" key={pkgType}>
+              <div className="plan-card" style={{ background: cfg.bg, borderColor: cfg.border }}>
                 <div className="d-flex align-items-center justify-content-between mb-3">
-                  <div>
-                    <span
-                      className="fw-800 fs-5"
-                      style={{ color: cfg.color, fontWeight: 800 }}
-                    >
-                      {planName}
-                    </span>
-                    <div className="d-flex align-items-center gap-2 mt-1">
-                      <div className="form-check form-switch mb-0">
-                        <input
-                          className="form-check-input"
-                          type="checkbox"
-                          id={`free-${planName}`}
-                          checked={draft.isFree}
-                          onChange={(e) =>
-                            handleDraftChange(
-                              planName,
-                              'isFree',
-                              e.target.checked,
-                            )
-                          }
-                        />
-                        <label
-                          className="form-check-label small"
-                          htmlFor={`free-${planName}`}
-                          style={{ color: cfg.color, fontWeight: 600 }}
-                        >
-                          Free plan
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                  <i
-                    className="bi bi-gem fs-3"
-                    style={{ color: cfg.color, opacity: 0.7 }}
-                  ></i>
+                  <span className="fw-800 fs-5" style={{ color: cfg.color, fontWeight: 800 }}>
+                    <i className={`bi ${cfg.icon} me-2`}></i>{pkgType}
+                  </span>
                 </div>
-
-                {err && (
-                  <div
-                    className="alert alert-danger py-1 px-2 mb-2"
-                    style={{ fontSize: '.8rem' }}
-                  >
-                    {err}
+                {errors[pkgType] && (
+                  <div className="alert alert-danger py-1 px-2 mb-2" style={{ fontSize: '.8rem' }}>
+                    {errors[pkgType]}
                   </div>
                 )}
-
                 <div className="row g-2 mb-3">
                   <div className="col-6">
-                    <label
-                      className="ms-label"
-                      style={{ color: cfg.color }}
-                    >
-                      Monthly (₹)
-                    </label>
-                    <input
-                      type="number"
-                      className="plan-input"
-                      min="0"
-                      step="0.01"
-                      value={draft.monthlyPrice}
-                      onChange={(e) =>
-                        handleDraftChange(
-                          planName,
-                          'monthlyPrice',
-                          e.target.value,
-                        )
-                      }
-                      disabled={draft.isFree}
-                      style={
-                        draft.isFree
-                          ? { opacity: 0.5, cursor: 'not-allowed' }
-                          : {}
-                      }
-                    />
+                    <label className="ms-label" style={{ color: cfg.color }}>Price / Person (₹)</label>
+                    <input type="number" className="plan-input" min="0" step="1"
+                      value={draft.price_per_person}
+                      onChange={(e) => handleChange(pkgType, 'price_per_person', e.target.value)} />
                   </div>
                   <div className="col-6">
-                    <label
-                      className="ms-label"
-                      style={{ color: cfg.color }}
-                    >
-                      Yearly (₹)
-                    </label>
-                    <input
-                      type="number"
-                      className="plan-input"
-                      min="0"
-                      step="0.01"
-                      value={draft.yearlyPrice}
-                      onChange={(e) =>
-                        handleDraftChange(
-                          planName,
-                          'yearlyPrice',
-                          e.target.value,
-                        )
-                      }
-                      disabled={draft.isFree}
-                      style={
-                        draft.isFree
-                          ? { opacity: 0.5, cursor: 'not-allowed' }
-                          : {}
-                      }
-                    />
+                    <label className="ms-label" style={{ color: cfg.color }}>Standard Hours</label>
+                    <input type="number" className="plan-input" min="1" step="1"
+                      value={draft.standard_hours}
+                      onChange={(e) => handleChange(pkgType, 'standard_hours', e.target.value)} />
                   </div>
                 </div>
-
-                <div className="form-check form-switch mb-3">
-                  <input
-                    className="form-check-input"
-                    type="checkbox"
-                    id={`ps-${planName}`}
-                    checked={draft.prioritySupport}
-                    onChange={(e) =>
-                      handleDraftChange(
-                        planName,
-                        'prioritySupport',
-                        e.target.checked,
-                      )
-                    }
-                  />
-                  <label
-                    className="form-check-label small fw-semibold"
-                    htmlFor={`ps-${planName}`}
-                    style={{ color: cfg.color }}
-                  >
-                    Priority Support
-                  </label>
+                <div className="mb-3 px-1" style={{ fontSize: '.82rem', color: cfg.color }}>
+                  Extra hour rate: <strong>₹{extraRate.toLocaleString('en-IN')}/hr per person</strong>
                 </div>
-
-                <button
-                  className="btn btn-sm w-100 fw-bold"
-                  style={{
-                    background: cfg.color,
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: 8,
-                  }}
-                  onClick={() => handleSave(planName)}
-                  disabled={isSav}
-                >
-                  {isSav ? (
-                    <>
-                      <span className="spinner-border spinner-border-sm me-2" />
-                      Saving…
-                    </>
+                <button className="btn btn-sm w-100 fw-bold"
+                  style={{ background: cfg.color, color: '#fff', border: 'none', borderRadius: 8 }}
+                  onClick={() => handleSave(pkgType)} disabled={saving[pkgType]}>
+                  {saving[pkgType] ? (
+                    <><span className="spinner-border spinner-border-sm me-2" />Saving…</>
                   ) : (
-                    <>
-                      <i className="bi bi-check-lg me-1"></i>Save {planName}
-                    </>
+                    <><i className="bi bi-check-lg me-1"></i>Save {pkgType}</>
                   )}
                 </button>
               </div>

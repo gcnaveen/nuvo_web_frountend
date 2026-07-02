@@ -27,7 +27,12 @@ export const updateUniform = (id, fd) =>
 export const deleteUniform = (id) =>
   api.delete(`/master/uniform/${id}/delete/`);
 
-// ── Subscription Plans ─────────────────────────────────────────
+// ── Crew Packages (Luxury / Premium) ──────────────────────────
+export const listCrewPackages = () => api.get('/master/packages/');
+export const updateCrewPackage = (type, data) =>
+  api.put(`/master/packages/${type}/`, data);
+
+// ── Subscription Plans (kept for reference — no longer used in product) ───
 export const listPlans = () => api.get('/master/subscription/');
 export const updatePlan = (name, data) =>
   api.put(`/master/subscription/${name}/update/`, data);
