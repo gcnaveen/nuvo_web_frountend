@@ -5,19 +5,16 @@ import { listStaff, createStaff, deleteStaff } from "../../api/staffApi";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 
-const PACKAGE_CONFIG = {
-  PLATINUM: { label: "Platinum", color: "#8E24AA", textColor: "#fff" },
-  DIAMOND: { label: "Diamond", color: "#1E88E5", textColor: "#fff" },
-  GOLD: { label: "Gold", color: "#D4AF37", textColor: "#000" },
-  SILVER: { label: "Silver", color: "#B0BEC5", textColor: "#000" },
-  BRONZE: { label: "Bronze", color: "#CD7F32", textColor: "#fff" },
-};
-
 const STATUS_BADGE = {
   ACTIVE: "success",
   ONEVENT: "warning",
   INACTIVE: "secondary",
   BLOCKED: "danger",
+};
+
+const PKG_CONFIG = {
+  LUXURY:  { label: "Luxury",  bg: "#f5f0ff", color: "#6f42c1", icon: "bi-star-fill" },
+  PREMIUM: { label: "Premium", bg: "#fff3cd", color: "#856404", icon: "bi-award-fill" },
 };
 
 const EMPTY_FORM = {
@@ -28,9 +25,9 @@ const EMPTY_FORM = {
   city: "",
   state: "",
   country: "India",
-  package: "SILVER",
   experience_in_years: "",
   price_of_staff: "",
+  package: "LUXURY",
 };
 
 const initials = (name) =>
@@ -401,17 +398,11 @@ export default function Staff() {
                 <select
                   className="form-select"
                   value={pkg}
-                  onChange={(e) => {
-                    setPkg(e.target.value);
-                    setPage(1);
-                  }}
+                  onChange={(e) => { setPkg(e.target.value); setPage(1); }}
                 >
                   <option value="">All Packages</option>
-                  {Object.entries(PACKAGE_CONFIG).map(([k, v]) => (
-                    <option key={k} value={k}>
-                      {v.label}
-                    </option>
-                  ))}
+                  <option value="LUXURY">Luxury</option>
+                  <option value="PREMIUM">Premium</option>
                 </select>
               </div>
               <div className="col-md-2">
@@ -498,22 +489,18 @@ export default function Staff() {
                       <tr>
                         <th>Staff Member</th>
                         <th>Stage Name</th>
-                        <th>Package</th>
                         <th>City</th>
                         <th>Joined</th>
+                        <th>Package</th>
                         <th>Status</th>
                         <th className="text-end">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
                       {staff.map((member) => {
-                        const pkgKey = member.package?.toUpperCase();
-                        const p = PACKAGE_CONFIG[pkgKey] || {
-                          label: member.package || "—",
-                          color: "#eee",
-                          textColor: "#333",
-                        };
                         const stKey = member.status?.toUpperCase();
+                        const pkgKey = member.package?.toUpperCase();
+                        const pkgCfg = PKG_CONFIG[pkgKey];
                         return (
                           <tr key={member.id}>
                             <td>
@@ -561,20 +548,18 @@ export default function Staff() {
                                 <span className="text-muted">—</span>
                               )}
                             </td>
-                            <td>
-                              <span
-                                className="badge"
-                                style={{
-                                  backgroundColor: p.color,
-                                  color: p.textColor,
-                                  padding: "0.45em 0.8em",
-                                }}
-                              >
-                                {p.label}
-                              </span>
-                            </td>
                             <td>{member.city || "—"}</td>
                             <td>{fmtDate(member.joined_date)}</td>
+                            <td>
+                              {pkgCfg ? (
+                                <span style={{ display: "inline-flex", alignItems: "center", gap: 4, background: pkgCfg.bg, color: pkgCfg.color, borderRadius: 20, padding: "2px 10px", fontSize: ".72rem", fontWeight: 700 }}>
+                                  <i className={`bi ${pkgCfg.icon}`}></i>
+                                  {pkgCfg.label}
+                                </span>
+                              ) : (
+                                <span className="text-muted">—</span>
+                              )}
+                            </td>
                             <td>
                               <span
                                 className={`badge bg-${STATUS_BADGE[stKey] || "secondary"}`}
@@ -828,24 +813,6 @@ export default function Staff() {
                 <div className="row g-3">
                   <div className="col-md-4">
                     <label className="form-label small fw-bold">
-                      Package Tier
-                    </label>
-                    <select
-                      name="package"
-                      className="form-select nuvo-input"
-                      value={form.package}
-                      onChange={handleFormChange}
-                      disabled={submitting}
-                    >
-                      {Object.entries(PACKAGE_CONFIG).map(([k, v]) => (
-                        <option key={k} value={k}>
-                          {v.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="col-md-4">
-                    <label className="form-label small fw-bold">
                       Experience (Years)
                     </label>
                     <input
@@ -873,6 +840,21 @@ export default function Staff() {
                       onChange={handleFormChange}
                       disabled={submitting}
                     />
+                  </div>
+                  <div className="col-md-4">
+                    <label className="form-label small fw-bold">
+                      Package Type
+                    </label>
+                    <select
+                      name="package"
+                      className="form-select nuvo-input"
+                      value={form.package}
+                      onChange={handleFormChange}
+                      disabled={submitting}
+                    >
+                      <option value="LUXURY">Luxury</option>
+                      <option value="PREMIUM">Premium</option>
+                    </select>
                   </div>
                 </div>
 

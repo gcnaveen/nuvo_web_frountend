@@ -10,38 +10,6 @@ import {
 } from "../../api/staffApi";
 
 // ── Constants ──────────────────────────────────────────────────
-const PACKAGE_CONFIG = {
-  PLATINUM: {
-    label: "Platinum",
-    color: "#8E24AA",
-    textColor: "#fff",
-    light: "#f3e5f5",
-  },
-  DIAMOND: {
-    label: "Diamond",
-    color: "#1E88E5",
-    textColor: "#fff",
-    light: "#e3f2fd",
-  },
-  GOLD: {
-    label: "Gold",
-    color: "#D4AF37",
-    textColor: "#000",
-    light: "#fffde7",
-  },
-  SILVER: {
-    label: "Silver",
-    color: "#78909C",
-    textColor: "#fff",
-    light: "#eceff1",
-  },
-  BRONZE: {
-    label: "Bronze",
-    color: "#A1621A",
-    textColor: "#fff",
-    light: "#fbe9e7",
-  },
-};
 const STATUS_CONFIG = {
   ACTIVE: { label: "Active", badge: "success", icon: "bi-check-circle-fill" },
   ONEVENT: {
@@ -56,7 +24,6 @@ const STATUS_CONFIG = {
   },
   BLOCKED: { label: "Blocked", badge: "danger", icon: "bi-x-circle-fill" },
 };
-const PACKAGES = ["PLATINUM", "DIAMOND", "GOLD", "SILVER", "BRONZE"];
 const STATUSES = ["ACTIVE", "INACTIVE", "BLOCKED", "ONEVENT"];
 const GENDERS = ["Male", "Female", "Other"];
 const PROFICIENCY_LEVELS = ["Basic", "Conversational", "Fluent", "Native"];
@@ -226,9 +193,10 @@ export default function StaffDetails() {
       experience_areas: staff.experience_areas || [],
       work_type: staff.work_type || "",
       holiday_work: staff.holiday_work ?? false,
-      package: staff.package?.toUpperCase() || "SILVER",
+
       experience_in_years: staff.experience_in_years ?? "",
       price_of_staff: staff.price_of_staff ?? "",
+      package: staff.package?.toUpperCase() || "LUXURY",
       status: staff.status?.toUpperCase() || "ACTIVE",
     });
     setSaveError("");
@@ -319,13 +287,13 @@ export default function StaffDetails() {
         experience_areas: draft.experience_areas || [],
         work_type: draft.work_type,
         holiday_work: draft.holiday_work,
-        package: draft.package,
         experience_in_years:
           draft.experience_in_years !== ""
             ? Number(draft.experience_in_years)
             : null,
         price_of_staff:
           draft.price_of_staff !== "" ? Number(draft.price_of_staff) : null,
+        package: draft.package,
         status: draft.status,
       };
       const res = await updateStaff(staff.id, payload);
@@ -473,14 +441,7 @@ export default function StaffDetails() {
     );
   if (!staff) return null;
 
-  const pkgKey = (isEditing ? draft.package : staff.package)?.toUpperCase();
   const statusKey = (isEditing ? draft.status : staff.status)?.toUpperCase();
-  const pkg = PACKAGE_CONFIG[pkgKey] || {
-    label: staff.package || "—",
-    color: "#78909C",
-    textColor: "#fff",
-    light: "#eceff1",
-  };
   const statusCfg = STATUS_CONFIG[statusKey] || STATUS_CONFIG.INACTIVE;
   const displayPic = avatarPreview || staff.profile_picture;
 
@@ -659,7 +620,7 @@ export default function StaffDetails() {
                         width: 110,
                         height: 110,
                         objectFit: "cover",
-                        borderColor: pkg.color,
+                        borderColor: "#435ebe",
                       }}
                     />
                   ) : (
@@ -668,9 +629,9 @@ export default function StaffDetails() {
                       style={{
                         width: 110,
                         height: 110,
-                        background: pkg.color,
+                        background: "#435ebe",
                         fontSize: "2rem",
-                        border: `4px solid ${pkg.color}55`,
+                        border: "4px solid #435ebe55",
                       }}
                     >
                       {initials(isEditing ? draft.full_name : staff.full_name)}
@@ -744,14 +705,6 @@ export default function StaffDetails() {
                 <div className="text-muted small mb-3">
                   {(isEditing ? draft.gender : staff.gender) || ""}
                 </div>
-
-                <span
-                  className="sd-pill mb-3 d-inline-flex"
-                  style={{ background: pkg.color, color: pkg.textColor }}
-                >
-                  <i className="bi bi-gem"></i>
-                  {pkg.label}
-                </span>
 
                 <div className="row g-2 text-start">
                   <div className="col-6">
@@ -930,14 +883,14 @@ export default function StaffDetails() {
                       </div>
                       <div className="col-md-6">
                         <EditSelect
-                          label="Package Tier"
+                          label="Package Type"
                           name="package"
                           value={draft.package}
                           onChange={handleDraftChange}
-                          options={PACKAGES.map((p) => ({
-                            value: p,
-                            label: PACKAGE_CONFIG[p]?.label || p,
-                          }))}
+                          options={[
+                            { value: "LUXURY", label: "Luxury" },
+                            { value: "PREMIUM", label: "Premium" },
+                          ]}
                         />
                       </div>
                     </>
@@ -985,34 +938,24 @@ export default function StaffDetails() {
                         />
                       </div>
                       <div className="col-md-4">
-                        <Field label="Package Tier" value={pkg.label} />
+                        <label className="sd-field-label">Package Type</label>
+                        <div className="sd-field-value">
+                          {staff.package === "LUXURY" ? (
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "#f5f0ff", color: "#6f42c1", border: "1.5px solid #d6bbfb", borderRadius: 20, padding: "3px 12px", fontSize: ".75rem", fontWeight: 700 }}>
+                              <i className="bi bi-star-fill"></i> Luxury
+                            </span>
+                          ) : staff.package === "PREMIUM" ? (
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "#fff3cd", color: "#856404", border: "1.5px solid #ffc107", borderRadius: 20, padding: "3px 12px", fontSize: ".75rem", fontWeight: 700 }}>
+                              <i className="bi bi-award-fill"></i> Premium
+                            </span>
+                          ) : (
+                            <span className="text-muted">—</span>
+                          )}
+                        </div>
                       </div>
                     </>
                   )}
                 </div>
-                {!isEditing && (
-                  <div className="sd-pkg-strip">
-                    {PACKAGES.map((p) => {
-                      const cfg = PACKAGE_CONFIG[p];
-                      const active = p === pkgKey;
-                      return (
-                        <span
-                          key={p}
-                          className="sd-pkg-chip"
-                          style={{
-                            background: active ? cfg.color : cfg.light,
-                            color: active ? cfg.textColor : cfg.color,
-                            borderColor: cfg.color + "55",
-                            transform: active ? "scale(1.07)" : "scale(1)",
-                          }}
-                        >
-                          {active && <i className="bi bi-check-lg me-1"></i>}
-                          {cfg.label}
-                        </span>
-                      );
-                    })}
-                  </div>
-                )}
               </div>
             </div>
 

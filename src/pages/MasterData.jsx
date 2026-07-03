@@ -138,7 +138,6 @@ export default function MasterData() {
           {[
             { key: 'themes', label: 'Event Themes', icon: 'bi-palette' },
             { key: 'uniforms', label: 'Uniforms', icon: 'bi-bag' },
-            { key: 'packages', label: 'Crew Packages', icon: 'bi-people' },
             { key: 'payment', label: 'Payment Terms', icon: 'bi-credit-card' },
             { key: 'coupons', label: 'Coupons', icon: 'bi-ticket-perforated' },
           ].map((t) => (
@@ -156,7 +155,6 @@ export default function MasterData() {
         {/* ── PANELS ─────────────────────────────────────────── */}
         {activeTab === 'themes' && <ThemesPanel showToast={showToast} />}
         {activeTab === 'uniforms' && <UniformsPanel showToast={showToast} />}
-        {activeTab === 'packages' && <CrewPackagesPanel showToast={showToast} />}
         {activeTab === 'payment' && <PaymentPanel showToast={showToast} />}
         {activeTab === 'coupons' && <CouponsPanel showToast={showToast} />}
       </div>
@@ -1824,11 +1822,9 @@ function CrewPackagesPanel({ showToast }) {
 // ══════════════════════════════════════════════════════════════
 // PAYMENT PANEL
 // ══════════════════════════════════════════════════════════════
-const STAFF_TIER_META = [
-  { key: 'BRONZE',   label: 'Bronze',   color: '#bf360c', bg: '#fbe9e7' },
-  { key: 'SILVER',   label: 'Silver',   color: '#455a64', bg: '#eceff1' },
-  { key: 'GOLD',     label: 'Gold',     color: '#f57f17', bg: '#fffde7' },
-  { key: 'PLATINUM', label: 'Platinum', color: '#7b1fa2', bg: '#f3e5f5' },
+const STAFF_PKG_META = [
+  { key: 'LUXURY',  label: 'Luxury',  color: '#6f42c1', bg: '#f5f0ff', border: '#d6bbfb', icon: 'bi-star-fill' },
+  { key: 'PREMIUM', label: 'Premium', color: '#856404', bg: '#fff3cd', border: '#ffc107', icon: 'bi-award-fill' },
 ];
 
 function PaymentPanel({ showToast }) {
@@ -1838,7 +1834,7 @@ function PaymentPanel({ showToast }) {
   const [lastUpd, setLastUpd] = useState(null);
 
   const [pct, setPct]               = useState('');
-  const [staffPricing, setStaffPricing] = useState({ BRONZE: 15000, SILVER: 30000, GOLD: 45000, PLATINUM: 65000 });
+  const [staffPricing, setStaffPricing] = useState({ LUXURY: 20000, PREMIUM: 10000 });
   const [hoursPerDay, setHoursPerDay]   = useState('5');
   const [overtimeRate, setOvertimeRate] = useState('3000');
 
@@ -1870,7 +1866,10 @@ function PaymentPanel({ showToast }) {
     try {
       const res = await updatePaymentTerms({
         advancePercentage: val,
-        staff_pricing: staffPricing,
+        staff_pricing: {
+          LUXURY: parseFloat(staffPricing.LUXURY) || 0,
+          PREMIUM: parseFloat(staffPricing.PREMIUM) || 0,
+        },
         default_hours_per_day: parseFloat(hoursPerDay) || 5,
         overtime_rate_per_hour: parseFloat(overtimeRate) || 3000,
       });
@@ -1891,7 +1890,7 @@ function PaymentPanel({ showToast }) {
   return (
     <div className="row g-4">
 
-      {/* ── Left column: Advance % ── */}
+      {/* ── Left column: Advance % + Billing Hours ── */}
       <div className="col-lg-5">
         <div className="ms-card h-100">
           <div className="ms-card-hd">
@@ -1912,7 +1911,6 @@ function PaymentPanel({ showToast }) {
                 <span style={{ fontSize: '2rem', fontWeight: 800, color: '#9aa3af' }}>%</span>
               </div>
             </div>
-            {/* Bar */}
             <div className="mb-4">
               <div className="d-flex justify-content-between mb-1">
                 <small className="text-muted">Advance</small>
@@ -1927,7 +1925,6 @@ function PaymentPanel({ showToast }) {
               </div>
             </div>
 
-            {/* Hours & Overtime */}
             <div className="ms-section-rule">Billing Hours</div>
             <div className="row g-3 mb-3">
               <div className="col-6">
@@ -1968,22 +1965,23 @@ function PaymentPanel({ showToast }) {
         </div>
       </div>
 
-      {/* ── Right column: Staff Pricing ── */}
+      {/* ── Right column: Staff Pricing per Package ── */}
       <div className="col-lg-7">
         <div className="ms-card h-100">
           <div className="ms-card-hd">
-            <h5><i className="bi bi-people me-2 text-primary"></i>Staff Pricing per Tier</h5>
+            <h5><i className="bi bi-people me-2 text-primary"></i>Staff Pricing per Package</h5>
             <span className="text-muted" style={{ fontSize: '.78rem' }}>per person / per day</span>
           </div>
           <div className="ms-card-bd">
             <p className="text-muted mb-4" style={{ fontSize: '.88rem' }}>
-              Price charged per staff member per day for each tier. Diamond pricing is negotiated directly and is not set here.
+              Price charged per staff member per day for each package type. Used by the mobile app to calculate event costs.
             </p>
             <div className="row g-3">
-              {STAFF_TIER_META.map(({ key, label, color, bg }) => (
+              {STAFF_PKG_META.map(({ key, label, color, bg, border, icon }) => (
                 <div className="col-md-6" key={key}>
-                  <div className="p-3 rounded-3" style={{ background: bg, border: `1.5px solid ${color}30` }}>
-                    <label className="ms-label d-block mb-2" style={{ color }}>
+                  <div className="p-3 rounded-3" style={{ background: bg, border: `1.5px solid ${border}` }}>
+                    <label className="ms-label d-flex align-items-center gap-1 mb-2" style={{ color }}>
+                      <i className={`bi ${icon}`}></i>
                       {label} — Price per Person / Day
                     </label>
                     <div className="input-group">
@@ -2003,12 +2001,10 @@ function PaymentPanel({ showToast }) {
                 </div>
               ))}
             </div>
-
-            {/* Diamond note */}
-            <div className="mt-3 p-3 rounded-3 d-flex gap-3 align-items-start" style={{ background: '#e3f2fd', border: '1px solid #90caf9' }}>
-              <i className="bi bi-diamond-fill text-primary mt-1"></i>
-              <div style={{ fontSize: '.83rem', color: '#1565c0' }}>
-                <strong>Diamond tier</strong> — pricing is discussed directly with the client and added manually to the event. No fixed rate applies.
+            <div className="mt-3 p-3 rounded-3 d-flex gap-3 align-items-start" style={{ background: '#f0f4ff', border: '1px solid #d0d8f5' }}>
+              <i className="bi bi-info-circle text-primary mt-1"></i>
+              <div style={{ fontSize: '.83rem', color: '#4a5568' }}>
+                These prices are sent to the mobile app via the public pricing API and used to calculate the total event cost before the client books.
               </div>
             </div>
           </div>

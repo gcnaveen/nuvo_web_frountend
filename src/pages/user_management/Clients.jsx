@@ -6,14 +6,6 @@ import { listClients, createClient, deleteClient } from "../../api/clientApi";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 
-const PLAN_CONFIG = {
-  PLATINUM: { label: "Platinum", color: "#8E24AA", textColor: "#fff" },
-  DIAMOND: { label: "Diamond", color: "#1E88E5", textColor: "#fff" },
-  GOLD: { label: "Gold", color: "#D4AF37", textColor: "#000" },
-  SILVER: { label: "Silver", color: "#B0BEC5", textColor: "#000" },
-  BRONZE: { label: "Bronze", color: "#CD7F32", textColor: "#fff" },
-};
-
 const STATUS_BADGE = {
   ACTIVE: "success",
   INACTIVE: "secondary",
@@ -27,7 +19,6 @@ const EMPTY_FORM = {
   state: "",
   city: "",
   country: "India",
-  subscription_plan: "SILVER",
 };
 
 // ── Google Maps loader (singleton) ────────────────────────────
@@ -67,7 +58,6 @@ export default function Clients() {
   // ── Filter state ───────────────────────────────────────────
   const [search, setSearch] = useState("");
   const [city, setCity] = useState("");
-  const [planFilter, setPlanFilter] = useState("");
   const [status, setStatus] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -100,7 +90,6 @@ export default function Clients() {
       const params = { page, page_size: 10 };
       if (search) params.search = search;
       if (city) params.city = city;
-      if (planFilter) params.plan_type = planFilter;
       if (status) params.status = status;
       if (startDate) params.start_date = startDate;
       if (endDate) params.end_date = endDate;
@@ -114,7 +103,6 @@ export default function Clients() {
       if (
         !city &&
         !search &&
-        !planFilter &&
         !status &&
         !startDate &&
         !endDate
@@ -129,7 +117,7 @@ export default function Clients() {
     } finally {
       setLoading(false);
     }
-  }, [search, city, planFilter, status, startDate, endDate, page]);
+  }, [search, city, status, startDate, endDate, page]);
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -141,7 +129,7 @@ export default function Clients() {
 
   useEffect(() => {
     fetchClients();
-  }, [city, planFilter, status, startDate, endDate, page]);
+  }, [city, status, startDate, endDate, page]);
 
   const handleExportExcel = async () => {
     try {
@@ -159,7 +147,6 @@ export default function Clients() {
 
         if (search) params.search = search;
         if (city) params.city = city;
-        if (planFilter) params.plan_type = planFilter;
         if (status) params.status = status;
         if (startDate) params.start_date = startDate;
         if (endDate) params.end_date = endDate;
@@ -180,7 +167,6 @@ export default function Clients() {
         Phone: c.phone_number,
         City: c.city,
         State: c.state,
-        Plan: c.subscription_plan,
         Status: c.status,
         Joined: c.joined_date
           ? new Date(c.joined_date).toLocaleDateString("en-IN")
@@ -371,7 +357,6 @@ export default function Clients() {
   const resetFilters = () => {
     setSearch("");
     setCity("");
-    setPlanFilter("");
     setStatus("");
     setStartDate("");
     setEndDate("");
@@ -379,7 +364,7 @@ export default function Clients() {
   };
 
   const hasFilters =
-    search || city || planFilter || status || startDate || endDate;
+    search || city || status || startDate || endDate;
 
   return (
     <>
@@ -466,24 +451,6 @@ export default function Clients() {
                       {c}
                     </option>
                   ))}
-                </select>
-              </div>
-              <div className="col-md-2">
-                <label className="small fw-bold">Plan</label>
-                <select
-                  className="form-select"
-                  value={planFilter}
-                  onChange={(e) => {
-                    setPlanFilter(e.target.value);
-                    setPage(1);
-                  }}
-                >
-                  <option value="">All Plans</option>
-                  <option value="PLATINUM">Platinum</option>
-                  <option value="DIAMOND">Diamond</option>
-                  <option value="GOLD">Gold</option>
-                  <option value="SILVER">Silver</option>
-                  <option value="BRONZE">Bronze</option>
                 </select>
               </div>
               <div className="col-md-2">
@@ -574,17 +541,12 @@ export default function Clients() {
                         <th>Phone</th>
                         <th>City</th>
                         <th>Joined</th>
-                        <th>Plan</th>
                         <th>Status</th>
                         <th className="text-end">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
                       {clients.map((client) => {
-                        const plan =
-                          PLAN_CONFIG[
-                            client.subscription_plan?.toUpperCase()
-                          ] || PLAN_CONFIG.SILVER;
                         const statusKey = client.status?.toUpperCase();
                         return (
                           <tr key={client.id}>
@@ -620,17 +582,6 @@ export default function Clients() {
                                     client.joined_date,
                                   ).toLocaleDateString("en-IN")
                                 : "—"}
-                            </td>
-                            <td>
-                              <span
-                                className="badge"
-                                style={{
-                                  backgroundColor: plan.color,
-                                  color: plan.textColor,
-                                }}
-                              >
-                                {plan.label}
-                              </span>
                             </td>
                             <td>
                               <span
@@ -896,42 +847,6 @@ export default function Clients() {
                   </div>
                 </div>
 
-                {/* ── Subscription Plan ── */}
-                <div className="section-title mt-3">Subscription Plan</div>
-                <div className="row g-3">
-                  <div className="col-md-6">
-                    <label className="form-label small fw-bold">
-                      Select Plan
-                    </label>
-                    <select
-                      name="subscription_plan"
-                      className="form-select nuvo-input"
-                      value={form.subscription_plan}
-                      onChange={handleFormChange}
-                      disabled={submitting}
-                    >
-                      <option value="SILVER">Silver</option>
-                      <option value="BRONZE">Bronze</option>
-                      <option value="GOLD">Gold</option>
-                      <option value="PLATINUM">Platinum</option>
-                      <option value="DIAMOND">Diamond</option>
-                    </select>
-                  </div>
-                  <div className="col-md-6 d-flex align-items-end pb-1">
-                    {PLAN_CONFIG[form.subscription_plan] && (
-                      <span
-                        className="badge fs-6 px-3 py-2"
-                        style={{
-                          backgroundColor:
-                            PLAN_CONFIG[form.subscription_plan].color,
-                          color: PLAN_CONFIG[form.subscription_plan].textColor,
-                        }}
-                      >
-                        {PLAN_CONFIG[form.subscription_plan].label} Plan
-                      </span>
-                    )}
-                  </div>
-                </div>
               </form>
             </div>
 

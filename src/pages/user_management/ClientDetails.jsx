@@ -3,20 +3,11 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   getClient,
-  updateSubscription,
   changeClientStatus,
   deleteClient,
 } from '../../api/clientApi';
 
 // ── Constants ──────────────────────────────────────────────────────────────
-const PLAN_CONFIG = {
-  PLATINUM: { label: 'Platinum', color: '#8E24AA', light: '#f3e5f5' },
-  DIAMOND: { label: 'Diamond', color: '#1E88E5', light: '#e3f2fd' },
-  GOLD: { label: 'Gold', color: '#D4AF37', light: '#fffde7' },
-  SILVER: { label: 'Silver', color: '#78909C', light: '#eceff1' },
-  BRONZE: { label: 'Bronze', color: '#A1621A', light: '#fbe9e7' },
-};
-
 const STATUS_CONFIG = {
   ACTIVE: { label: 'Active', badge: 'success', icon: 'bi-check-circle-fill' },
   INACTIVE: {
@@ -27,7 +18,6 @@ const STATUS_CONFIG = {
   BLOCKED: { label: 'Blocked', badge: 'danger', icon: 'bi-x-circle-fill' },
 };
 
-const PLANS = ['SILVER', 'BRONZE', 'GOLD', 'PLATINUM', 'DIAMOND'];
 const STATUSES = ['ACTIVE', 'INACTIVE', 'BLOCKED'];
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -93,7 +83,6 @@ export default function ClientDetails() {
   // ── Edit ──────────────────────────────────────────────────────────────
   const startEdit = () => {
     setDraft({
-      subscription_plan: client.subscription_plan,
       status: client.status,
     });
     setSaveError('');
@@ -117,20 +106,12 @@ export default function ClientDetails() {
     setSaveSuccess('');
     try {
       const promises = [];
-      if (draft.subscription_plan !== client.subscription_plan)
-        promises.push(
-          updateSubscription(client.user_id, draft.subscription_plan),
-        );
       if (draft.status !== client.status)
         promises.push(changeClientStatus(client.user_id, draft.status));
 
       await Promise.all(promises);
 
-      setClient((prev) => ({
-        ...prev,
-        subscription_plan: draft.subscription_plan,
-        status: draft.status,
-      }));
+      setClient((prev) => ({ ...prev, status: draft.status }));
       setSaveSuccess('Changes saved successfully!');
       setIsEditing(false);
       setTimeout(() => setSaveSuccess(''), 3000);
@@ -186,11 +167,7 @@ export default function ClientDetails() {
 
   if (!client) return null;
 
-  const planKey = (
-    isEditing ? draft.subscription_plan : client.subscription_plan
-  )?.toUpperCase();
   const statusKey = (isEditing ? draft.status : client.status)?.toUpperCase();
-  const plan = PLAN_CONFIG[planKey] || PLAN_CONFIG.SILVER;
   const statusCfg = STATUS_CONFIG[statusKey] || STATUS_CONFIG.ACTIVE;
 
   return (
@@ -363,8 +340,8 @@ export default function ClientDetails() {
                   <div
                     className="cd-avatar"
                     style={{
-                      background: plan.color,
-                      borderColor: plan.color + '55',
+                      background: '#435ebe',
+                      borderColor: '#435ebe55',
                     }}
                   >
                     {initials(client.full_name)}
@@ -399,42 +376,6 @@ export default function ClientDetails() {
                       <div className="cd-stat-lbl">City</div>
                     </div>
                   </div>
-                </div>
-
-                {/* Plan */}
-                <div className="cd-rule">Subscription Plan</div>
-                <div
-                  className="rounded-3 p-3 mb-3 d-flex align-items-center justify-content-between gap-2"
-                  style={{
-                    background: plan.light,
-                    border: `1px solid ${plan.color}25`,
-                  }}
-                >
-                  <span
-                    className="cd-pill"
-                    style={{ background: plan.color, color: '#fff' }}
-                  >
-                    <i className="bi bi-gem"></i>
-                    {plan.label}
-                  </span>
-                  {isEditing && (
-                    <select
-                      name="subscription_plan"
-                      className="cd-select"
-                      style={{ width: 'auto', flex: 1, marginLeft: 8 }}
-                      value={draft.subscription_plan}
-                      onChange={handleDraftChange}
-                    >
-                      {PLANS.map((p) => (
-                        <option
-                          key={p}
-                          value={p}
-                        >
-                          {PLAN_CONFIG[p]?.label || p}
-                        </option>
-                      ))}
-                    </select>
-                  )}
                 </div>
 
                 {/* Status */}
@@ -564,122 +505,11 @@ export default function ClientDetails() {
                 >
                   <i className="bi bi-info-circle text-primary"></i>
                   Name, email, and phone are set by the client's account. Only{' '}
-                  <strong className="ms-1 me-1">plan</strong> and{' '}
                   <strong>status</strong> can be edited here.
                 </div>
               </div>
             </div>
 
-            {/* Subscription settings */}
-            <div className="cd-card">
-              <div className="cd-card-hd">
-                <i className="bi bi-gem text-primary"></i>
-                <h6>Subscription Settings</h6>
-              </div>
-              <div className="cd-card-bd">
-                <div className="row g-4">
-                  <div className="col-md-6">
-                    <label className="cd-field-label">Plan Tier</label>
-                    {isEditing ? (
-                      <select
-                        name="subscription_plan"
-                        className="cd-select"
-                        value={draft.subscription_plan}
-                        onChange={handleDraftChange}
-                      >
-                        {PLANS.map((p) => (
-                          <option
-                            key={p}
-                            value={p}
-                          >
-                            {PLAN_CONFIG[p]?.label || p}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <div className="cd-field-value">
-                        <span
-                          className="cd-pill"
-                          style={{ background: plan.color, color: '#fff' }}
-                        >
-                          <i className="bi bi-gem"></i>
-                          {plan.label}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="col-md-6">
-                    <label className="cd-field-label">Account Status</label>
-                    {isEditing ? (
-                      <select
-                        name="status"
-                        className="cd-select"
-                        value={draft.status}
-                        onChange={handleDraftChange}
-                      >
-                        {STATUSES.map((s) => (
-                          <option
-                            key={s}
-                            value={s}
-                          >
-                            {STATUS_CONFIG[s]?.label || s}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <div className="cd-field-value">
-                        <span
-                          className={`badge bg-${statusCfg.badge} px-3 py-2`}
-                          style={{ fontSize: '0.8rem' }}
-                        >
-                          <i className={`bi ${statusCfg.icon} me-1`}></i>
-                          {statusCfg.label}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="col-md-6">
-                    <Field
-                      label="Member Since"
-                      value={fmtDate(client.joined_date)}
-                    />
-                  </div>
-                  <div className="col-md-6">
-                    <Field
-                      label="User ID"
-                      value={client.user_id}
-                    />
-                  </div>
-                </div>
-
-                {/* Plan tier comparison */}
-                <div className="cd-rule mt-4">Plan Tiers</div>
-                <div className="d-flex flex-wrap gap-2">
-                  {PLANS.map((p) => {
-                    const cfg = PLAN_CONFIG[p];
-                    const active = p === planKey;
-                    return (
-                      <span
-                        key={p}
-                        className="cd-pill"
-                        style={{
-                          background: active ? cfg.color : cfg.light,
-                          color: active ? '#fff' : cfg.color,
-                          border: `1.5px solid ${cfg.color}50`,
-                          transform: active ? 'scale(1.07)' : 'scale(1)',
-                          transition: 'all 0.2s',
-                        }}
-                      >
-                        {active && <i className="bi bi-check-lg"></i>}
-                        {cfg.label}
-                      </span>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
