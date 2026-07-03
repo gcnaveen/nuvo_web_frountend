@@ -47,6 +47,7 @@ import ClientDetails from "./pages/user_management/ClientDetails";
 import MasterData from "./pages/MasterData";
 import Uniforms from "./pages/Uniforms";
 import Reports from "./pages/Reports";
+import Database from "./pages/Database";
 
 // Scroll to top on every navigation
 const ScrollToTop = () => {
@@ -124,6 +125,7 @@ function App() {
             <Route path="master-data" element={<MasterData />} />
             <Route path="uniforms" element={<Uniforms />} />
             <Route path="reports" element={<Reports />} />
+            <Route path="database" element={<Database />} />
           </Route>
 
           {/* Unknown /admin/* → dashboard */}

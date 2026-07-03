@@ -45,7 +45,7 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
 
             {/* Dashboard */}
             <li
-              className={`sidebar-item ${isActive('/admin') && !isParentOpen('/admin/events', '/admin/staff', '/admin/makeup-artist', '/admin/clients', '/admin/uniforms', '/admin/master-data', '/admin/reports') ? 'active' : ''}`}
+              className={`sidebar-item ${isActive('/admin') && !isParentOpen('/admin/events', '/admin/staff', '/admin/makeup-artist', '/admin/clients', '/admin/uniforms', '/admin/master-data', '/admin/reports', '/admin/database') ? 'active' : ''}`}
             >
               <Link
                 to="/admin"
@@ -145,6 +145,17 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
               >
                 <i className="bi bi-cloud-arrow-up-fill"></i>
                 <span>Master Data</span>
+              </Link>
+            </li>
+
+            {/* Database */}
+            <li className={`sidebar-item ${isActive('/admin/database')}`}>
+              <Link
+                to="/admin/database"
+                className="sidebar-link"
+              >
+                <i className="bi bi-person-lines-fill"></i>
+                <span>Database</span>
               </Link>
             </li>
 
