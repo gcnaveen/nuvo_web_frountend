@@ -18,7 +18,7 @@ import isSameDay from "date-fns/isSameDay";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 
 import { listEvents, createEvent } from "../api/eventsApi";
-import { listThemes, listUniforms, getPaymentTerms } from "../api/masterApi";
+import { listUniforms, getPaymentTerms } from "../api/masterApi";
 import api from "../api/axiosInstance";
 
 import * as XLSX from "xlsx";
@@ -124,7 +124,6 @@ export default function Events() {
   // ── Add event modal ────────────────────────────────────────────
   const [addOpen, setAddOpen] = useState(false);
   const [masterData, setMasterData] = useState({
-    themes: [],
     uniforms: [],
     staffPricing: { LUXURY: 20000, PREMIUM: 10000 },
     defaultHours: 8,
@@ -181,15 +180,13 @@ export default function Events() {
     setForm(initialForm());
     setVenueInput("");
     try {
-      const [th, un, pt, cl] = await Promise.all([
-        listThemes(),
+      const [un, pt, cl] = await Promise.all([
         listUniforms(),
         getPaymentTerms(),
         api.get("/users/api/clients/"),
       ]);
       const ptData = pt.data.data || {};
       setMasterData({
-        themes:       Array.isArray(th.data.data) ? th.data.data : [],
         uniforms:     Array.isArray(un.data.data) ? un.data.data : [],
         staffPricing: ptData.staff_pricing || { LUXURY: 20000, PREMIUM: 10000 },
         defaultHours: ptData.default_hours_per_day || 8,
@@ -432,7 +429,6 @@ export default function Events() {
         no_of_days: Number(form.no_of_days) || 1,
         working_hours: form.working_hours ? Number(form.working_hours) : null,
         client_id:           form.client_id,
-        theme_id:            form.theme_id   || undefined,
         uniform_id:          form.uniform_id || undefined,
         package_type:        form.package_type || undefined,
         luxury_crew_count:   Number(form.luxury_crew_count)  || 0,
@@ -1481,23 +1477,6 @@ export default function Events() {
                         3. Theme, Uniform & Billing
                       </div>
                       <div className="mb-3">
-                        <label className="ev-label">Theme</label>
-                        <select
-                          name="theme_id"
-                          className="form-select ev-select"
-                          value={form.theme_id}
-                          onChange={handleFormChange}
-                          disabled={adding}
-                        >
-                          <option value="">— None —</option>
-                          {masterData.themes.map((t) => (
-                            <option key={t.id} value={t.id}>
-                              {t.theme_name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className="mb-3">
                         <label className="ev-label">Uniform for Premium Crew</label>
                         <select
                           name="uniform_id"
@@ -1701,7 +1680,6 @@ function initialForm() {
     premium_crew_count: 0,
     payment_method: "ONLINE",
     advance_type: "FULL",
-    theme_id: "",
     uniform_id: "",
     gst_amount: "",
     tax_amount: "",
