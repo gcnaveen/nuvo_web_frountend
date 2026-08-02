@@ -1486,8 +1486,15 @@ export default function StaffDetails() {
                             {staff.experience_areas.map((a) => (
                               <span
                                 key={a}
-                                className="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-3 py-2"
-                                style={{ fontSize: ".78rem" }}
+                                style={{
+                                  fontSize: ".78rem",
+                                  backgroundColor: "rgba(13,110,253,0.1)",
+                                  color: "#0d6efd",
+                                  border: "1px solid rgba(13,110,253,0.25)",
+                                  borderRadius: "0.375rem",
+                                  padding: "0.35rem 0.75rem",
+                                  display: "inline-block",
+                                }}
                               >
                                 {a.charAt(0).toUpperCase() + a.slice(1)}
                               </span>
