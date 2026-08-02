@@ -167,7 +167,10 @@ export default function MakeupArtistDetails() {
     setDeleteError("");
     try {
       await deleteMua(mua.id);
-      navigate("/makeup-artist", { replace: true });
+      document.body.classList.remove("modal-open");
+      document.body.style.removeProperty("padding-right");
+      document.querySelectorAll(".modal-backdrop").forEach((el) => el.remove());
+      navigate("/admin/makeup-artist", { replace: true });
     } catch (err) {
       setDeleteError(err.response?.data?.message || "Failed to delete.");
       setDeleting(false);
@@ -265,7 +268,7 @@ export default function MakeupArtistDetails() {
 
   if (error) return (
     <div className="page-content">
-      <button className="btn btn-light shadow-sm mb-4" onClick={() => navigate("/makeup-artist")}>
+      <button className="btn btn-light shadow-sm mb-4" onClick={() => navigate("/admin/makeup-artist")}>
         <i className="bi bi-arrow-left me-1"></i> Back
       </button>
       <div className="alert alert-danger">{error}</div>
@@ -326,7 +329,7 @@ export default function MakeupArtistDetails() {
       <div className="page-heading">
         <div className="d-flex justify-content-between align-items-center flex-wrap gap-2">
           <div className="d-flex align-items-center gap-3">
-            <button className="btn btn-light shadow-sm" onClick={() => navigate("/makeup-artist")}>
+            <button className="btn btn-light shadow-sm" onClick={() => navigate("/admin/makeup-artist")}>
               <i className="bi bi-arrow-left me-1"></i> MUAs
             </button>
             <div>

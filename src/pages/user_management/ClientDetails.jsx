@@ -128,6 +128,9 @@ export default function ClientDetails() {
     setDeleteError('');
     try {
       await deleteClient(client.id);
+      document.body.classList.remove("modal-open");
+      document.body.style.removeProperty("padding-right");
+      document.querySelectorAll(".modal-backdrop").forEach((el) => el.remove());
       navigate('/admin/clients', { replace: true });
     } catch (err) {
       setDeleteError(err.response?.data?.message || 'Failed to delete client.');

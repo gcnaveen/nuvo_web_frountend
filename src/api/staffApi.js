@@ -33,7 +33,7 @@ export const deleteStaff = (staffId) => {
 
 // ── 6. Change Staff Status ────────────────────────────────────
 export const changeStaffStatus = (userId, status) => {
-  return api.put("/users/admin/change-status/", { user_id: userId, status });
+  return api.put("/auth/admin/change-status/", { user_id: userId, status });
 };
 
 // ── 7. Admin Upload Staff Images (S3) ─────────────────────────

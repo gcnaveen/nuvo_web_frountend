@@ -313,7 +313,11 @@ export default function StaffDetails() {
     setDeleteError("");
     try {
       await deleteStaff(staff.id);
-      navigate("/staff", { replace: true });
+      // Clean up Bootstrap modal DOM side-effects before React Router navigates
+      document.body.classList.remove("modal-open");
+      document.body.style.removeProperty("padding-right");
+      document.querySelectorAll(".modal-backdrop").forEach((el) => el.remove());
+      navigate("/admin/staff", { replace: true });
     } catch (err) {
       setDeleteError(err.response?.data?.message || "Failed to delete.");
       setDeleting(false);
@@ -432,7 +436,7 @@ export default function StaffDetails() {
       <div className="page-content">
         <button
           className="btn btn-light shadow-sm mb-4"
-          onClick={() => navigate("/staff")}
+          onClick={() => navigate("/admin/staff")}
         >
           <i className="bi bi-arrow-left me-1"></i> Back
         </button>

@@ -45,7 +45,7 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
 
             {/* Dashboard */}
             <li
-              className={`sidebar-item ${isActive('/admin') && !isParentOpen('/admin/events', '/admin/staff', '/admin/makeup-artist', '/admin/clients', '/admin/uniforms', '/admin/master-data', '/admin/reports', '/admin/database') ? 'active' : ''}`}
+              className={`sidebar-item ${isActive('/admin') && !isParentOpen('/admin/events', '/admin/staff', '/admin/clients', '/admin/uniforms', '/admin/master-data', '/admin/reports', '/admin/database') ? 'active' : ''}`}
             >
               <Link
                 to="/admin"
@@ -69,7 +69,7 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
 
             {/* User Management */}
             <li
-              className={`sidebar-item has-sub ${isParentOpen('/admin/staff', '/admin/makeup-artist', '/admin/clients') ? 'open' : ''}`}
+              className={`sidebar-item has-sub ${isParentOpen('/admin/staff', '/admin/clients') ? 'open' : ''}`}
             >
               <a
                 href="#"
@@ -90,16 +90,13 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
                     <span>Staff</span>
                   </Link>
                 </li>
-                <li
-                  className={`submenu-item ${isActive('/admin/makeup-artist')}`}
-                >
-                  <Link
-                    to="/admin/makeup-artist"
-                    className="sidebar-link"
-                  >
+                {/* Makeup Artist — disabled, not in use
+                <li className={`submenu-item ${isActive('/admin/makeup-artist')}`}>
+                  <Link to="/admin/makeup-artist" className="sidebar-link">
                     <span>Makeup Artist</span>
                   </Link>
                 </li>
+                */}
                 <li className={`submenu-item ${isActive('/admin/clients')}`}>
                   <Link
                     to="/admin/clients"

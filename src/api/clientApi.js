@@ -38,7 +38,7 @@ export const deleteClient = (clientId) => {
 
 // ── 5. Change Client Status ───────────────────────────────────
 export const changeClientStatus = (userId, status) => {
-  return api.put("/users/admin/change-status/", {
+  return api.put("/auth/admin/change-status/", {
     user_id: userId,
     status,
   });

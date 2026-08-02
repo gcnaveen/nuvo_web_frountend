@@ -40,8 +40,9 @@ import EventDetails from "./pages/EventDetails";
 import TrackEvent from "./pages/TrackEvent";
 import Staff from "./pages/user_management/Staff";
 import StaffDetails from "./pages/user_management/StaffDetails";
-import MakeupArtist from "./pages/user_management/MakeupArtist";
-import MakeupArtistDetails from "./pages/user_management/MakeupArtistDetails";
+// Makeup Artist — disabled, not in use
+// import MakeupArtist from "./pages/user_management/MakeupArtist";
+// import MakeupArtistDetails from "./pages/user_management/MakeupArtistDetails";
 import Clients from "./pages/user_management/Clients";
 import ClientDetails from "./pages/user_management/ClientDetails";
 import MasterData from "./pages/MasterData";
@@ -116,8 +117,10 @@ function App() {
             <Route path="staff" element={<Staff />} />
             <Route path="staff/:id" element={<StaffDetails />} />
 
+            {/* Makeup Artist — disabled, not in use
             <Route path="makeup-artist" element={<MakeupArtist />} />
             <Route path="makeup-artist/:id" element={<MakeupArtistDetails />} />
+            */}
 
             <Route path="clients" element={<Clients />} />
             <Route path="clients/:id" element={<ClientDetails />} />
